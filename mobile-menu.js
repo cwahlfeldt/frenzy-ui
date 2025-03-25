@@ -2,19 +2,19 @@
 class MobileMenu extends HTMLElement {
   constructor() {
     super();
-    
+
     // Create a shadow DOM
     this.attachShadow({ mode: 'open' });
-    
+
     // Initial setup
     this.isOpen = false;
-    
+
     // Create the component structure
     this.render();
-    
+
     // Add styles
     this.addStyles();
-    
+
     // Initialize after DOM is fully loaded
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.initialize());
@@ -22,22 +22,38 @@ class MobileMenu extends HTMLElement {
       this.initialize();
     }
   }
-  
+
   // Render the component structure
   render() {
-    this.shadowRoot.innerHTML = `
+    this.shadowRoot.innerHTML = /*html*/`
       <div class="mobile-menu-component">
         <!-- Mobile Nav -->
         <nav class="mobile-nav">
           <div class="container">
             <div class="mobile-nav-container">
-              <!-- Logo slot -->
-              <slot name="logo"></slot>
+              <!-- Logo slot with default -->
+              <slot name="logo" class="logo-slot">
+                <a href="/" class="default-logo">
+                  <svg width="67" height="41" viewBox="0 0 67 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                          d="M45.0353 4.66312C45.8331 3.77669 46.7195 3.04539 47.6281 2.46921C49.2236 1.47198 50.9079 0.940125 52.6364 0.940125V15.411C51.3732 11.0232 48.6475 7.25591 45.0353 4.66312ZM66.5533 40.9401H15.2957C6.87461 40.9401 0.0712891 34.1146 0.0712891 25.7157C0.0712891 17.6714 6.3206 11.0675 14.232 10.5135V0.940125C16.0048 0.940125 17.7555 1.44982 19.3954 2.46921C20.304 3.02323 21.1904 3.75453 21.9882 4.59663C25.2458 2.31409 29.1904 0.984446 33.4674 0.984446C33.4674 10.2254 30.1433 20.9734 19.3289 20.9955H33.3566C32.9577 19.2005 31.3178 17.8709 29.3677 17.8487H37.5228C35.5727 17.8487 33.9328 19.2005 33.5339 21.0177H46.6087C49.2236 21.0177 51.8164 21.5274 54.2541 22.5468C56.6696 23.544 58.8857 25.0288 60.725 26.8681C62.5865 28.7296 64.0491 30.9235 65.0464 33.339C66.0436 35.7324 66.5533 38.3252 66.5533 40.9401ZM22.8525 10.7795C23.1849 11.6437 24.0713 12.6188 25.3123 13.3279C26.5533 14.0371 27.8386 14.3252 28.7472 14.1922C28.4148 13.3279 27.5284 12.3529 26.2874 11.6437C25.0464 10.9346 23.761 10.6465 22.8525 10.7795ZM41.5117 13.3279C40.2707 14.0371 38.9854 14.3252 38.0768 14.1922C38.4092 13.3279 39.2957 12.3529 40.5367 11.6437C41.7777 10.9346 43.063 10.6465 43.9716 10.7795C43.6613 11.6437 42.7527 12.6188 41.5117 13.3279Z"
+                          fill="#24273a"></path>
+                  </svg>
+                </a>
+              </slot>
               
               <!-- Right-side actions -->
               <div class="mobile-nav-actions">
-                <!-- Search button slot -->
-                <slot name="search-button"></slot>
+                <!-- Search button slot with default -->
+                <slot name="search-button">
+                  <button class="search-btn default-search-btn" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </button>
+                </slot>
                 
                 <!-- Menu toggle button -->
                 <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
@@ -56,26 +72,176 @@ class MobileMenu extends HTMLElement {
         <!-- Mobile Menu Panel -->
         <div class="mobile-menu-wrapper">
           <div class="mobile-menu">
-            <!-- Menu content slot -->
-            <slot name="menu-content"></slot>
+            <!-- Menu content slot with default -->
+            <slot name="menu-content">
+              <div class="default-menu-content">
+                <ul class="mobile-menu-items">
+                  <li><a href="#">Home</a></li>
+                  <li class="menu-item-has-children">
+                    <a href="#">Products</a>
+                    <ul class="sub-menu">
+                      <li><a href="#">Product 1</a></li>
+                      <li><a href="#">Product 2</a></li>
+                    </ul>
+                  </li>
+                  <li><a href="#">About</a></li>
+                  <li><a href="#">Contact</a></li>
+                </ul>
+              </div>
+            </slot>
           </div>
         </div>
       </div>
     `;
   }
-  
+
+  // Initialize component functionality
+  initialize() {
+    // Add body class for mobile nav spacing
+    document.body.classList.add('has-mobile-nav');
+    document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
+
+    // Get elements
+    this.menuToggle = this.shadowRoot.querySelector('.menu-toggle');
+    this.mobileMenuWrapper = this.shadowRoot.querySelector('.mobile-menu-wrapper');
+
+    // Attach event listeners
+    this.addEventListeners();
+
+    // Set up accordion for menu items
+    this.setupAccordion();
+  }
+
+  // Add component event listeners
+  addEventListeners() {
+    // Toggle mobile menu
+    this.menuToggle.addEventListener('click', () => {
+      this.toggleMenu();
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1200) {
+        document.body.classList.remove('has-mobile-nav');
+        document.body.style.paddingTop = '0';
+      } else {
+        document.body.classList.add('has-mobile-nav');
+        document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
+      }
+    });
+  }
+
+  // Toggle menu open/close
+  toggleMenu() {
+    this.isOpen = !this.isOpen;
+    this.menuToggle.classList.toggle('active');
+    this.mobileMenuWrapper.classList.toggle('active');
+    document.body.classList.toggle('mobile-nav-is-open');
+
+    // Update aria-expanded
+    this.menuToggle.setAttribute('aria-expanded', this.isOpen);
+  }
+
+  // Set up accordion functionality for menu items
+  setupAccordion() {
+    // Get both slotted content and default content
+    const setupAccordionForElements = (elements) => {
+      elements.forEach(element => {
+        // Find all menu items with children (submenus)
+        const menuItemsWithChildren = element.querySelectorAll('.menu-item-has-children > a');
+        const submenus = element.querySelectorAll('.sub-menu');
+
+        // Initialize submenus
+        submenus.forEach(submenu => {
+          // Store original height
+          submenu.setAttribute('data-height', submenu.scrollHeight + 'px');
+
+          // Set initial state
+          submenu.style.height = '0';
+          submenu.style.overflow = 'hidden';
+          submenu.style.transition = 'height 0.3s ease-in-out';
+          submenu.style.display = 'block';
+        });
+
+        // Add click handlers to menu items
+        menuItemsWithChildren.forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const currentParent = item.parentNode;
+            const currentSubmenu = currentParent.querySelector('.sub-menu');
+            const isCurrentlyOpen = currentParent.classList.contains('submenu-open');
+
+            // Close all open submenus
+            const allOpenSubmenus = element.querySelectorAll('.menu-item-has-children.submenu-open');
+
+            allOpenSubmenus.forEach(openItem => {
+              if (openItem !== currentParent) {
+                const submenu = openItem.querySelector('.sub-menu');
+                submenu.style.height = '0';
+                openItem.classList.remove('submenu-open');
+              }
+            });
+
+            // Toggle current submenu with animation
+            if (!isCurrentlyOpen) {
+              currentParent.classList.add('submenu-open');
+              currentSubmenu.style.height = currentSubmenu.getAttribute('data-height');
+            } else {
+              currentSubmenu.style.height = '0';
+              currentParent.classList.remove('submenu-open');
+            }
+          });
+        });
+      });
+    };
+
+    // Get the slot element
+    const menuSlot = this.shadowRoot.querySelector('slot[name="menu-content"]');
+
+    // Handle both slotted content and default content
+    menuSlot.addEventListener('slotchange', () => {
+      const assignedElements = menuSlot.assignedElements();
+
+      if (assignedElements.length > 0) {
+        // External content provided
+        setupAccordionForElements(assignedElements);
+      } else {
+        // Using default content
+        const defaultContent = this.shadowRoot.querySelector('.default-menu-content');
+        if (defaultContent) {
+          setupAccordionForElements([defaultContent]);
+        }
+      }
+    });
+
+    // Trigger initial setup
+    const assignedElements = menuSlot.assignedElements();
+    if (assignedElements.length > 0) {
+      setupAccordionForElements(assignedElements);
+    } else {
+      const defaultContent = this.shadowRoot.querySelector('.default-menu-content');
+      if (defaultContent) {
+        setupAccordionForElements([defaultContent]);
+      }
+    }
+  }
+
+  // Called when component is disconnected from the DOM
+  disconnectedCallback() {
+    document.body.classList.remove('has-mobile-nav');
+    document.body.classList.remove('mobile-nav-is-open');
+    document.body.style.paddingTop = '0';
+  }
+
   // Add component styles
   addStyles() {
     const style = document.createElement('style');
-    style.textContent = `
+    style.textContent = /*css*/`
       :host {
-        display: block;
-        --primary: #b31b34;
-        --construction: #e58e1a;
-        --power-sports: #0072e9;
-        --lawn-garden: #ffcf00;
+        --bg-color: #fab387;
         --black: #000000;
-        --white: #ffffff;
+        --hamburger-color: #24273a;
         --grey: #e6e7e8;
         --font-family: 'Open Sans', sans-serif;
         --transition-speed: 0.3s;
@@ -88,43 +254,60 @@ class MobileMenu extends HTMLElement {
       
       /* Mobile Nav */
       .mobile-nav {
-        background-color: var(--primary);
-        padding: 1rem;
+        background-color: var(--bg-color);
+        padding: 1rem 1.5rem;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 1000;
-        height: var(--mobile-nav-height);
+        max-height: var(--mobile-nav-height);
       }
       
       .container {
         width: 100%;
         margin: 0 auto;
-        padding: 0 15px;
       }
       
       .mobile-nav-container {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         position: relative;
       }
       
       .mobile-nav-actions {
-        position: absolute;
+        position: relative;
         right: 0;
         display: flex;
         align-items: center;
+      }
+      
+      /* Default elements styling */
+      .default-logo {
+        color: var(--hamburger-color);
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.5rem;
+      }
+      
+      .default-search-btn {
+        background: none;
+        border: none;
+        color: var(--hamburger-color);
+        cursor: pointer;
+        padding: 0.5rem;
+        margin-bottom: -2px;
       }
       
       /* Hamburger Menu */
       .menu-toggle {
         background: none;
         border: none;
-        color: var(--white);
+        color: var(--hamburger-color);
         cursor: pointer;
         padding: 0.5rem;
+        padding-right: 0;
         margin-left: 0.5rem;
       }
       
@@ -144,7 +327,7 @@ class MobileMenu extends HTMLElement {
         position: absolute;
         height: 2px;
         width: 100%;
-        background: var(--white);
+        background: var(--hamburger-color);
         opacity: 1;
         left: 0;
         transform: rotate(0deg);
@@ -191,7 +374,7 @@ class MobileMenu extends HTMLElement {
         right: 0;
         width: 100%;
         height: 100%;
-        background-color: var(--white);
+        background-color: var(--bg-color);
         transform: translateX(100%);
         transition: transform var(--transition-speed) ease;
         z-index: 999;
@@ -212,134 +395,39 @@ class MobileMenu extends HTMLElement {
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Utility for slotted content */
-      ::slotted(.mobile-menu-items) {
+      /* Utility for slotted content and default content */
+      ::slotted(.mobile-menu-items),
+      .default-menu-content .mobile-menu-items {
         list-style: none;
         padding: 0;
         margin: 0 0 2rem 0;
       }
       
-      ::slotted(.mobile-menu-items li) {
+      ::slotted(.mobile-menu-items li),
+      .default-menu-content .mobile-menu-items li {
         margin-bottom: 1rem;
       }
-    `;
-    
-    this.shadowRoot.appendChild(style);
-  }
-  
-  // Initialize component functionality
-  initialize() {
-    // Add body class for mobile nav spacing
-    document.body.classList.add('has-mobile-nav');
-    document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
-    
-    // Get elements
-    this.menuToggle = this.shadowRoot.querySelector('.menu-toggle');
-    this.mobileMenuWrapper = this.shadowRoot.querySelector('.mobile-menu-wrapper');
-    
-    // Attach event listeners
-    this.addEventListeners();
-    
-    // Set up accordion for menu items
-    this.setupAccordion();
-  }
-  
-  // Add component event listeners
-  addEventListeners() {
-    // Toggle mobile menu
-    this.menuToggle.addEventListener('click', () => {
-      this.toggleMenu();
-    });
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      if (window.innerWidth >= 1200) {
-        document.body.classList.remove('has-mobile-nav');
-        document.body.style.paddingTop = '0';
-      } else {
-        document.body.classList.add('has-mobile-nav');
-        document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
-      }
-    });
-  }
-  
-  // Toggle menu open/close
-  toggleMenu() {
-    this.isOpen = !this.isOpen;
-    this.menuToggle.classList.toggle('active');
-    this.mobileMenuWrapper.classList.toggle('active');
-    document.body.classList.toggle('mobile-nav-is-open');
-    
-    // Update aria-expanded
-    this.menuToggle.setAttribute('aria-expanded', this.isOpen);
-  }
-  
-  // Set up accordion functionality for menu items
-  setupAccordion() {
-    // Get the slot element
-    const menuSlot = this.shadowRoot.querySelector('slot[name="menu-content"]');
-    
-    // Wait for slotchange event to access assigned nodes
-    menuSlot.addEventListener('slotchange', () => {
-      // Get assigned elements from slot
-      const assignedElements = menuSlot.assignedElements();
       
-      assignedElements.forEach(element => {
-        // Find all menu items with children (submenus)
-        const menuItemsWithChildren = element.querySelectorAll('.menu-item-has-children > a');
-        const submenus = element.querySelectorAll('.sub-menu');
-        
-        // Initialize submenus
-        submenus.forEach(submenu => {
-          // Store original height
-          submenu.setAttribute('data-height', submenu.scrollHeight + 'px');
-          
-          // Set initial state
-          submenu.style.height = '0';
-          submenu.style.overflow = 'hidden';
-          submenu.style.transition = 'height 0.3s ease-in-out';
-          submenu.style.display = 'block';
-        });
-        
-        // Add click handlers to menu items
-        menuItemsWithChildren.forEach(item => {
-          item.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            const currentParent = item.parentNode;
-            const currentSubmenu = currentParent.querySelector('.sub-menu');
-            const isCurrentlyOpen = currentParent.classList.contains('submenu-open');
-            
-            // Close all open submenus
-            const allOpenSubmenus = element.querySelectorAll('.menu-item-has-children.submenu-open');
-            
-            allOpenSubmenus.forEach(openItem => {
-              if (openItem !== currentParent) {
-                const submenu = openItem.querySelector('.sub-menu');
-                submenu.style.height = '0';
-                openItem.classList.remove('submenu-open');
-              }
-            });
-            
-            // Toggle current submenu with animation
-            if (!isCurrentlyOpen) {
-              currentParent.classList.add('submenu-open');
-              currentSubmenu.style.height = currentSubmenu.getAttribute('data-height');
-            } else {
-              currentSubmenu.style.height = '0';
-              currentParent.classList.remove('submenu-open');
-            }
-          });
-        });
-      });
-    });
-  }
-  
-  // Called when component is disconnected from the DOM
-  disconnectedCallback() {
-    document.body.classList.remove('has-mobile-nav');
-    document.body.classList.remove('mobile-nav-is-open');
-    document.body.style.paddingTop = '0';
+      .default-menu-content a {
+        display: block;
+        color: var(--black);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--grey);
+      }
+      
+      .default-menu-content .sub-menu {
+        list-style: none;
+        padding-left: 1rem;
+      }
+
+      .logo-slot a {
+        line-height: 0;
+      }
+    `;
+
+    this.shadowRoot.appendChild(style);
   }
 }
 
