@@ -1,5 +1,5 @@
 // Mobile Menu Web Component
-class MobileMenu extends HTMLElement {
+class Navigator extends HTMLElement {
   constructor() {
     super();
 
@@ -26,31 +26,33 @@ class MobileMenu extends HTMLElement {
   // Render the component structure
   render() {
     this.shadowRoot.innerHTML = /*html*/`
-      <div class="mobile-menu-component">
+      <div class="navigator-component">
         <!-- Mobile Nav -->
-        <nav class="mobile-nav">
+        <nav class="navigator">
           <div class="container">
-            <div class="mobile-nav-container">
+            <div class="navigator-container">
+            <span style="width: 88px;"></span>
               <!-- Logo slot with default -->
-              <slot name="logo" class="logo-slot">
-                <a href="/" class="default-logo">
-                  <svg width="67" height="41" viewBox="0 0 67 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                          d="M45.0353 4.66312C45.8331 3.77669 46.7195 3.04539 47.6281 2.46921C49.2236 1.47198 50.9079 0.940125 52.6364 0.940125V15.411C51.3732 11.0232 48.6475 7.25591 45.0353 4.66312ZM66.5533 40.9401H15.2957C6.87461 40.9401 0.0712891 34.1146 0.0712891 25.7157C0.0712891 17.6714 6.3206 11.0675 14.232 10.5135V0.940125C16.0048 0.940125 17.7555 1.44982 19.3954 2.46921C20.304 3.02323 21.1904 3.75453 21.9882 4.59663C25.2458 2.31409 29.1904 0.984446 33.4674 0.984446C33.4674 10.2254 30.1433 20.9734 19.3289 20.9955H33.3566C32.9577 19.2005 31.3178 17.8709 29.3677 17.8487H37.5228C35.5727 17.8487 33.9328 19.2005 33.5339 21.0177H46.6087C49.2236 21.0177 51.8164 21.5274 54.2541 22.5468C56.6696 23.544 58.8857 25.0288 60.725 26.8681C62.5865 28.7296 64.0491 30.9235 65.0464 33.339C66.0436 35.7324 66.5533 38.3252 66.5533 40.9401ZM22.8525 10.7795C23.1849 11.6437 24.0713 12.6188 25.3123 13.3279C26.5533 14.0371 27.8386 14.3252 28.7472 14.1922C28.4148 13.3279 27.5284 12.3529 26.2874 11.6437C25.0464 10.9346 23.761 10.6465 22.8525 10.7795ZM41.5117 13.3279C40.2707 14.0371 38.9854 14.3252 38.0768 14.1922C38.4092 13.3279 39.2957 12.3529 40.5367 11.6437C41.7777 10.9346 43.063 10.6465 43.9716 10.7795C43.6613 11.6437 42.7527 12.6188 41.5117 13.3279Z"
-                          fill="#24273a"></path>
-                  </svg>
-                </a>
-              </slot>
+              <div class="logo-container">
+                <slot name="logo">
+                  <a href="/" class="default-logo">
+                    <svg width="67" height="41" viewBox="0 0 67 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M45.0353 4.66312C45.8331 3.77669 46.7195 3.04539 47.6281 2.46921C49.2236 1.47198 50.9079 0.940125 52.6364 0.940125V15.411C51.3732 11.0232 48.6475 7.25591 45.0353 4.66312ZM66.5533 40.9401H15.2957C6.87461 40.9401 0.0712891 34.1146 0.0712891 25.7157C0.0712891 17.6714 6.3206 11.0675 14.232 10.5135V0.940125C16.0048 0.940125 17.7555 1.44982 19.3954 2.46921C20.304 3.02323 21.1904 3.75453 21.9882 4.59663C25.2458 2.31409 29.1904 0.984446 33.4674 0.984446C33.4674 10.2254 30.1433 20.9734 19.3289 20.9955H33.3566C32.9577 19.2005 31.3178 17.8709 29.3677 17.8487H37.5228C35.5727 17.8487 33.9328 19.2005 33.5339 21.0177H46.6087C49.2236 21.0177 51.8164 21.5274 54.2541 22.5468C56.6696 23.544 58.8857 25.0288 60.725 26.8681C62.5865 28.7296 64.0491 30.9235 65.0464 33.339C66.0436 35.7324 66.5533 38.3252 66.5533 40.9401ZM22.8525 10.7795C23.1849 11.6437 24.0713 12.6188 25.3123 13.3279C26.5533 14.0371 27.8386 14.3252 28.7472 14.1922C28.4148 13.3279 27.5284 12.3529 26.2874 11.6437C25.0464 10.9346 23.761 10.6465 22.8525 10.7795ZM41.5117 13.3279C40.2707 14.0371 38.9854 14.3252 38.0768 14.1922C38.4092 13.3279 39.2957 12.3529 40.5367 11.6437C41.7777 10.9346 43.063 10.6465 43.9716 10.7795C43.6613 11.6437 42.7527 12.6188 41.5117 13.3279Z"
+                            fill="#24273a"></path>
+                    </svg>
+                  </a>
+                </slot>
+              </div>
               
               <!-- Right-side actions -->
-              <div class="mobile-nav-actions">
+              <div class="navigator-actions">
                 <!-- Search button slot with default -->
                 <slot name="search-button">
                   <button class="search-btn default-search-btn" aria-label="Search">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="10" cy="10" r="8"></circle>
+                      <line x1="22" y1="22" x2="16" y2="16"></line>
                     </svg>
                   </button>
                 </slot>
@@ -70,12 +72,12 @@ class MobileMenu extends HTMLElement {
         </nav>
         
         <!-- Mobile Menu Panel -->
-        <div class="mobile-menu-wrapper">
-          <div class="mobile-menu">
+        <div class="navigator-wrapper">
+          <div class="navigator">
             <!-- Menu content slot with default -->
             <slot name="menu-content">
               <div class="default-menu-content">
-                <ul class="mobile-menu-items">
+                <ul class="navigator-items">
                   <li><a href="#">Home</a></li>
                   <li class="menu-item-has-children">
                     <a href="#">Products</a>
@@ -98,12 +100,12 @@ class MobileMenu extends HTMLElement {
   // Initialize component functionality
   initialize() {
     // Add body class for mobile nav spacing
-    document.body.classList.add('has-mobile-nav');
-    document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
+    document.body.classList.add('has-navigator');
+    document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--navigator-height');
 
     // Get elements
     this.menuToggle = this.shadowRoot.querySelector('.menu-toggle');
-    this.mobileMenuWrapper = this.shadowRoot.querySelector('.mobile-menu-wrapper');
+    this.navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
 
     // Attach event listeners
     this.addEventListeners();
@@ -118,25 +120,14 @@ class MobileMenu extends HTMLElement {
     this.menuToggle.addEventListener('click', () => {
       this.toggleMenu();
     });
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      if (window.innerWidth >= 1200) {
-        document.body.classList.remove('has-mobile-nav');
-        document.body.style.paddingTop = '0';
-      } else {
-        document.body.classList.add('has-mobile-nav');
-        document.body.style.paddingTop = getComputedStyle(this).getPropertyValue('--mobile-nav-height');
-      }
-    });
   }
 
   // Toggle menu open/close
   toggleMenu() {
     this.isOpen = !this.isOpen;
     this.menuToggle.classList.toggle('active');
-    this.mobileMenuWrapper.classList.toggle('active');
-    document.body.classList.toggle('mobile-nav-is-open');
+    this.navigatorWrapper.classList.toggle('active');
+    document.body.classList.toggle('navigator-is-open');
 
     // Update aria-expanded
     this.menuToggle.setAttribute('aria-expanded', this.isOpen);
@@ -229,8 +220,8 @@ class MobileMenu extends HTMLElement {
 
   // Called when component is disconnected from the DOM
   disconnectedCallback() {
-    document.body.classList.remove('has-mobile-nav');
-    document.body.classList.remove('mobile-nav-is-open');
+    document.body.classList.remove('has-navigator');
+    document.body.classList.remove('navigator-is-open');
     document.body.style.paddingTop = '0';
   }
 
@@ -245,23 +236,23 @@ class MobileMenu extends HTMLElement {
         --grey: #e6e7e8;
         --font-family: 'Open Sans', sans-serif;
         --transition-speed: 0.3s;
-        --mobile-nav-height: 72px;
+        --navigator-height: 67.5px;
       }
       
-      .mobile-menu-component {
+      .navigator-component {
         font-family: var(--font-family);
       }
       
       /* Mobile Nav */
-      .mobile-nav {
+      .navigator {
         background-color: var(--bg-color);
-        padding: 1rem 1.5rem;
+        padding: 0.5rem 1.5rem;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 1000;
-        max-height: var(--mobile-nav-height);
+        max-height: var(--navigator-height);
       }
       
       .container {
@@ -269,18 +260,24 @@ class MobileMenu extends HTMLElement {
         margin: 0 auto;
       }
       
-      .mobile-nav-container {
+      .navigator-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         position: relative;
       }
       
-      .mobile-nav-actions {
+      .navigator-actions {
         position: relative;
         right: 0;
         display: flex;
         align-items: center;
+      }
+
+      .logo-container {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
       }
       
       /* Default elements styling */
@@ -368,9 +365,9 @@ class MobileMenu extends HTMLElement {
       }
       
       /* Mobile Menu */
-      .mobile-menu-wrapper {
+      .navigator-wrapper {
         position: fixed;
-        top: 0;
+        top: var(--navigator-height);
         right: 0;
         width: 100%;
         height: 100%;
@@ -381,30 +378,23 @@ class MobileMenu extends HTMLElement {
         pointer-events: none;
       }
       
-      .mobile-menu-wrapper.active {
+      .navigator-wrapper.active {
         transform: translateX(0);
         pointer-events: auto;
       }
       
-      .mobile-menu {
-        padding: 2rem 1rem;
-        height: 100%;
-        overflow-y: auto;
-        padding-top: calc(var(--mobile-nav-height) + 1rem);
-        padding-bottom: 2rem;
-        -webkit-overflow-scrolling: touch;
-      }
+
       
       /* Utility for slotted content and default content */
-      ::slotted(.mobile-menu-items),
-      .default-menu-content .mobile-menu-items {
+      ::slotted(.navigator-items),
+      .default-menu-content .navigator-items {
         list-style: none;
         padding: 0;
         margin: 0 0 2rem 0;
       }
       
-      ::slotted(.mobile-menu-items li),
-      .default-menu-content .mobile-menu-items li {
+      ::slotted(.navigator-items li),
+      .default-menu-content .navigator-items li {
         margin-bottom: 1rem;
       }
       
@@ -432,4 +422,4 @@ class MobileMenu extends HTMLElement {
 }
 
 // Register the custom element
-customElements.define('mobile-menu', MobileMenu);
+customElements.define('fz-navigator', Navigator);
