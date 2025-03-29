@@ -1,5 +1,5 @@
 // Mobile Menu Web Component
-class Navigator extends HTMLElement {
+class FzNavigator extends HTMLElement {
   constructor() {
     super();
 
@@ -48,14 +48,12 @@ class Navigator extends HTMLElement {
               <!-- Right-side actions -->
               <div class="navigator-actions">
                 <!-- Search button slot with default -->
-                <slot name="search-button">
-                  <button class="search-btn default-search-btn" aria-label="Search">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="10" cy="10" r="8"></circle>
-                      <line x1="22" y1="22" x2="16" y2="16"></line>
-                    </svg>
-                  </button>
-                </slot>
+                <button class="search-btn default-search-btn" aria-label="Search">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="10" cy="10" r="8"></circle>
+                    <line x1="22" y1="22" x2="16" y2="16"></line>
+                  </svg>
+                </button>
                 
                 <!-- Menu toggle button -->
                 <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
@@ -106,6 +104,10 @@ class Navigator extends HTMLElement {
     // Get elements
     this.menuToggle = this.shadowRoot.querySelector('.menu-toggle');
     this.navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
+    this.searchBtn = this.shadowRoot.querySelector('.search-btn');
+
+    // Create search container if it doesn't exist
+    this.setupSearchElements();
 
     // Attach event listeners
     this.addEventListeners();
@@ -114,12 +116,69 @@ class Navigator extends HTMLElement {
     this.setupAccordion();
   }
 
+  // Set up search elements
+  setupSearchElements() {
+    // Create search container
+    this.searchContainer = document.createElement('div');
+    this.searchContainer.className = 'search-container';
+    this.searchContainer.innerHTML = /*html*/`
+      <form class="search-form">
+        <input type="text" placeholder="Search..." class="search-input">
+        <button type="submit" class="search-submit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="10" r="8"></circle>
+            <line x1="22" y1="22" x2="16" y2="16"></line>
+          </svg>
+        </button>
+      </form>
+    `;
+
+    // Add to shadow DOM
+    this.shadowRoot.querySelector('.navigator-actions').prepend(this.searchContainer);
+
+    // Get search input element
+    this.searchInput = this.searchContainer.querySelector('.search-input');
+    this.searchForm = this.searchContainer.querySelector('.search-form');
+  }
+
   // Add component event listeners
   addEventListeners() {
     // Toggle mobile menu
     this.menuToggle.addEventListener('click', () => {
       this.toggleMenu();
     });
+
+    // Toggle search
+    this.searchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // e.stopPropagation(); // Prevent event from bubbling up
+      this.toggleSearch();
+    });
+
+    // Handle search form submission
+    this.searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Implement search functionality here
+      console.log('Search submitted:', this.searchInput.value);
+      // Close search after submission
+      this.toggleSearch(false);
+    });
+  }
+
+  // Toggle search open/close
+  toggleSearch(forceState) {
+    console.log('Toggle search called, current state:', this.searchContainer.classList.contains('active'));
+    const shouldOpen = forceState !== undefined ? forceState : !this.searchContainer.classList.contains('active');
+    console.log('Should open:', shouldOpen);
+
+    if (shouldOpen) {
+      this.searchContainer.classList.add('active');
+      // Focus the input after animation completes
+      setTimeout(() => this.searchInput.focus(), 300);
+    } else {
+      this.searchContainer.classList.remove('active');
+      this.searchInput.value = '';
+    }
   }
 
   // Toggle menu open/close
@@ -237,6 +296,7 @@ class Navigator extends HTMLElement {
         --font-family: 'Open Sans', sans-serif;
         --transition-speed: 0.3s;
         --navigator-height: 67.5px;
+        --search-height: 56px;
       }
       
       .navigator-component {
@@ -383,6 +443,75 @@ class Navigator extends HTMLElement {
         pointer-events: auto;
       }
       
+      /* Search Functionality */
+      .search-container {
+        position: fixed;
+        top: var(--navigator-height);
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-color);
+        transform: translateY(-100%);
+        transition: transform var(--transition-speed) ease;
+        z-index: 998;
+        padding: 0.5rem 1.5rem;
+        box-sizing: border-box;
+        pointer-events: none;
+      }
+      
+      .search-container.active {
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      
+      .search-form {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        position: relative;
+      }
+      
+      .search-input {
+        flex: 1;
+        height: var(--search-height);
+        border: 1px solid var(--grey);
+        border-radius: 4px;
+        padding: 0.5rem 3rem 0.5rem 1rem;
+        font-size: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+        background: white;
+      }
+      
+      .search-submit {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: var(--search-height);
+        background: none;
+        border: none;
+        color: var(--hamburger-color);
+        cursor: pointer;
+        padding: 0 1rem;
+      }
+      
+      @media (min-width: 768px) {
+        .search-container {
+          position: absolute;
+          top: 50%;
+          right: 80px;
+          left: auto;
+          transform: translateY(-50%) scaleX(0);
+          transform-origin: right center;
+          width: 300px;
+          padding: 0;
+          background: transparent;
+        }
+        
+        .search-container.active {
+          transform: translateY(-50%) scaleX(1);
+        }
+      }
+      
 
       
       /* Utility for slotted content and default content */
@@ -422,4 +551,4 @@ class Navigator extends HTMLElement {
 }
 
 // Register the custom element
-customElements.define('fz-navigator', Navigator);
+customElements.define('fz-navigator', FzNavigator);
