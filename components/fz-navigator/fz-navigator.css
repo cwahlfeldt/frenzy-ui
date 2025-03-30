@@ -7,6 +7,11 @@
     --transition-speed: 0.3s;
     --navigator-height: 67.5px;
     --search-height: 56px;
+    
+    /* Ensure smoother opacity transitions for FOUC prevention */
+    display: block;
+    opacity: 1;
+    transition: opacity 0.2s ease-in;
 }
 
 .navigator-component {
