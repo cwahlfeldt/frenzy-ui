@@ -1,6 +1,14 @@
 import { html, render } from '../../lib/html/lit-html.js';
+import { unsafeHTML } from '../../lib/html/unsafe-html.js';
 import Component from '../../lib/component.js';
 import { navigatorStyles } from './fz-navigator.css.js';
+import { 
+  DEFAULT_MENU, 
+  parseMenuData, 
+  createPrimaryMenuHTML, 
+  createSecondaryMenuHTML, 
+  createEyebrowMenuHTML 
+} from './fz-navigator-menu.js';
 
 /**
  * FZ Navigator Component
@@ -15,21 +23,30 @@ export class FzNavigator extends Component {
   #searchContainer = null;
   #searchInput = null;
   #searchForm = null;
+  #desktopNavItems = null;
+  #eyebrowContainer = null;
+
+  // Menu data
+  #menuData = DEFAULT_MENU;
 
   constructor() {
     // Apply styles immediately through the base component
-    // Pass the CSS string to the base component
     super([navigatorStyles]);
-    
+
+    // Try to parse menu data from attribute
+    if (this.hasAttribute('menu-data')) {
+      this.#menuData = parseMenuData(this.getAttribute('menu-data'));
+    }
+
     // Add initializing class early to document for layout reservation
     document.documentElement.classList.add('fz-navigator-initializing');
-    
+
     // Set early padding to prevent layout shift during initialization
     // This will be replaced with the correct value later
     if (!document.body.style.paddingTop || document.body.style.paddingTop === '0px') {
       document.body.style.paddingTop = 'var(--navigator-height, 67.5px)';
     }
-    
+
     // Initialize as early as possible, but ensure DOM is ready
     if (document.readyState === 'loading') {
       // Use high priority with once: true to ensure execution
@@ -44,13 +61,28 @@ export class FzNavigator extends Component {
    * Render the component structure
    */
   render() {
+    // Generate menu HTML from data
+    const primaryMenuHTML = createPrimaryMenuHTML(this.#menuData.primary);
+    const secondaryMenuHTML = createSecondaryMenuHTML(this.#menuData.secondary);
+    const eyebrowMenuHTML = createEyebrowMenuHTML(this.#menuData.eyebrow);
+    
+    // Mobile primary menu
+    const mobilePrimaryMenuHTML = createPrimaryMenuHTML(this.#menuData.primary, false);
+    
     const template = html`
       <div class="navigator-component">
-        <!-- Mobile Nav -->
+        <!-- Eyebrow Menu -->
+        <div class="eyebrow-container">
+          <div class="container">
+            ${unsafeHTML(eyebrowMenuHTML)}
+            <slot name="eyebrow-slot"></slot>
+          </div>
+        </div>
+        
+        <!-- Main Navigation -->
         <nav class="navigator">
           <div class="container">
             <div class="navigator-container">
-              <span style="width: 88px;"></span>
               <!-- Logo slot with default -->
               <div class="logo-container">
                 <slot name="logo">
@@ -61,6 +93,13 @@ export class FzNavigator extends Component {
                             fill="currentColor"></path>
                     </svg>
                   </a>
+                </slot>
+              </div>
+              
+              <!-- Desktop Primary Nav Items -->
+              <div class="desktop-nav-container">
+                <slot name="nav-items">
+                  ${unsafeHTML(primaryMenuHTML)}
                 </slot>
               </div>
               
@@ -88,33 +127,69 @@ export class FzNavigator extends Component {
           </div>
         </nav>
         
-        <!-- Mobile Menu Panel -->
+        <!-- Menu Panel -->
         <div class="navigator-wrapper">
-          <div class="navigator">
-            <!-- Menu content slot with default -->
-            <slot name="menu-content">
-              <div class="default-menu-content">
-                <ul class="navigator-items">
-                  <li><a href="#">Home</a></li>
-                  <li class="menu-item-has-children">
-                    <a href="#">Products</a>
-                    <ul class="sub-menu">
-                      <li><a href="#">Product 1</a></li>
-                      <li><a href="#">Product 2</a></li>
-                    </ul>
-                  </li>
-                  <li><a href="#">About</a></li>
-                  <li><a href="#">Contact</a></li>
-                </ul>
-              </div>
-            </slot>
+          <div class="navigator drawer-content">
+            <!-- Mobile version of primary nav items -->
+            <div class="mobile-nav-items-container">
+              ${unsafeHTML(mobilePrimaryMenuHTML)}
+            </div>
+            
+            <!-- Secondary menu items -->
+            <div class="secondary-menu-container">
+              ${unsafeHTML(secondaryMenuHTML)}
+            </div>
+            
+            <!-- Custom menu content slot -->
+            <slot name="menu-content"></slot>
           </div>
         </div>
       </div>
     `;
-    
+
     // Render to shadow DOM
     render(template, this.shadowRoot);
+  }
+
+  /**
+   * Initialize component functionality after render
+   */
+  /**
+   * Update the menu data
+   * @param {Object|string} data - New menu data (object or JSON string)
+   */
+  setMenuData(data) {
+    this.#menuData = parseMenuData(data);
+    this.render();
+    this.setupAccordion();
+  }
+
+  /**
+   * Get the current menu data
+   * @returns {Object} Current menu data
+   */
+  getMenuData() {
+    return { ...this.#menuData };
+  }
+
+  /**
+   * Update eyebrow visibility based on attribute
+   */
+  updateEyebrowVisibility() {
+    if (this.#eyebrowContainer) {
+      if (this.hasAttribute('hide-eyebrow')) {
+        this.#eyebrowContainer.style.display = 'none';
+      } else {
+        this.#eyebrowContainer.style.display = '';
+      }
+      
+      // Recalculate padding
+      const navigatorHeight = getComputedStyle(this).getPropertyValue('--navigator-height') || '67.5px';
+      const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : 
+        (getComputedStyle(this).getPropertyValue('--eyebrow-height') || '36px');
+      
+      document.body.style.paddingTop = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+    }
   }
 
   /**
@@ -123,14 +198,18 @@ export class FzNavigator extends Component {
   initialize() {
     // Render the initial structure
     this.render();
-    
+
     // Calculate and apply navigator height
     const navigatorHeight = getComputedStyle(this).getPropertyValue('--navigator-height') || '67.5px';
+    const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : 
+      (getComputedStyle(this).getPropertyValue('--eyebrow-height') || '36px');
     
+    const totalHeight = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+
     // Add body class for mobile nav spacing with precise height
     document.body.classList.add('has-navigator');
-    document.body.style.paddingTop = navigatorHeight;
-    
+    document.body.style.paddingTop = totalHeight;
+
     // Remove the initializing class to allow normal flow
     document.documentElement.classList.remove('fz-navigator-initializing');
 
@@ -138,6 +217,8 @@ export class FzNavigator extends Component {
     this.#menuToggle = this.shadowRoot.querySelector('.menu-toggle');
     this.#navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
     this.#searchBtn = this.shadowRoot.querySelector('.search-btn');
+    this.#desktopNavItems = this.shadowRoot.querySelector('.desktop-nav-container');
+    this.#eyebrowContainer = this.shadowRoot.querySelector('.eyebrow-container');
 
     // Create search container if it doesn't exist
     this.setupSearchElements();
@@ -147,7 +228,10 @@ export class FzNavigator extends Component {
 
     // Set up accordion for menu items
     this.setupAccordion();
-    
+
+    // Apply eyebrow visibility
+    this.updateEyebrowVisibility();
+
     // Mark component as fully initialized
     this.classList.add('fz-navigator-initialized');
   }
@@ -159,7 +243,7 @@ export class FzNavigator extends Component {
     // Create search container
     this.#searchContainer = document.createElement('div');
     this.#searchContainer.className = 'search-container';
-    this.#searchContainer.innerHTML = `
+    this.#searchContainer.innerHTML = /*html*/`
       <form class="search-form">
         <input type="text" placeholder="Search..." class="search-input">
         <button type="submit" class="search-submit">
@@ -186,7 +270,7 @@ export class FzNavigator extends Component {
     // Bind methods to this instance to ensure proper removal later
     this.toggleMenu = this.toggleMenu.bind(this);
     this.toggleSearch = this.toggleSearch.bind(this);
-    
+
     // Handler for search form submission
     this.handleSearchSubmit = (e) => {
       e.preventDefault();
@@ -334,7 +418,7 @@ export class FzNavigator extends Component {
     document.body.classList.remove('navigator-is-open');
     document.body.style.paddingTop = '0';
     document.documentElement.classList.remove('fz-navigator-initializing');
-    
+
     // Remove all event listeners to prevent memory leaks
     if (this.#menuToggle) {
       this.#menuToggle.removeEventListener('click', this.toggleMenu);
@@ -351,7 +435,34 @@ export class FzNavigator extends Component {
    * Static defines which attributes should be observed
    */
   static get observedAttributes() {
-    return [];
+    return ['hide-desktop-nav', 'hide-eyebrow', 'menu-data'];
+  }
+
+  /**
+   * Handle attribute changes
+   */
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    
+    if (name === 'hide-desktop-nav' && this.#desktopNavItems) {
+      if (this.hasAttribute('hide-desktop-nav')) {
+        this.#desktopNavItems.style.display = 'none';
+      } else {
+        this.#desktopNavItems.style.display = '';
+      }
+    } 
+    else if (name === 'hide-eyebrow') {
+      this.updateEyebrowVisibility();
+    }
+    else if (name === 'menu-data') {
+      this.#menuData = parseMenuData(newValue);
+      this.render();
+      
+      // Re-setup accordion after render
+      requestAnimationFrame(() => {
+        this.setupAccordion();
+      });
+    }
   }
 }
 

@@ -3,13 +3,17 @@
 
 // This is a self-executing function to create a module scope
 (async function () {
+  // Store the script path early, before entering async context
+  const scriptPath = document.currentScript?.src || '';
+  const basePath = scriptPath ? scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1) : './';
+
   // Pre-emptively add style to hide uninitialized elements and reserve layout space
   const styleEl = document.createElement('style');
   styleEl.textContent = /*css*/`
     /* Hide custom elements while loading to prevent FOUC */
     @font-face {
       font-family: "Open Sans";
-      src: url("./assets/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
+      src: url("${basePath}assets/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
       font-optical-sizing: auto;
       font-weight: 300 800;
       font-style: normal;
@@ -18,7 +22,7 @@
     
     @font-face {
       font-family: "Open Sans Italic";
-      src: url("./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
+      src: url("${basePath}assets/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
       font-optical-sizing: auto;
       font-weight: 300 800;
       font-style: italic;
@@ -34,7 +38,11 @@
     body {
       font-family: var(--font-family);
       padding-top: var(--fz-navigator-height, 67.5px);
-      transition: padding-top 0.01s ease-out;
+    }
+    
+    /* Add transition only when not in performance testing mode */
+    html body {
+      transition: padding-top 0.2s ease-out;
     }
     
     /* Hide navigator until it's defined */
@@ -50,64 +58,41 @@
   `;
   document.head.appendChild(styleEl);
 
-  // Track loading state
-  let componentsLoaded = false;
-
-  // Pre-load fonts to prevent FOUC and text reflow
-  const fontLoadPromise = Promise.all([
-    // Load Open Sans Regular
-    new FontFace('Open Sans', 'url("./assets/OpenSans-VariableFont_wdth,wght.ttf")', {
-      style: 'normal',
-      weight: '300 800',
-    }).load(),
-
-    // Load Open Sans Italic
-    new FontFace('Open Sans Italic', 'url("./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf")', {
-      style: 'italic',
-      weight: '300 800'
-    }).load()
-  ]).then(fonts => {
-    // Add fonts to document
-    fonts.forEach(font => document.fonts.add(font));
-    console.debug('Fonts loaded successfully');
-  }).catch(error => {
-    console.warn('Error loading fonts:', error);
-  });
-
-  // Set a timeout to remove the style if loading takes too long
-  const fallbackTimer = setTimeout(() => {
-    if (!componentsLoaded) {
-      console.warn('Frenzy UI components taking longer than expected to load. Removing placeholder styles.');
-      styleEl.remove();
-    }
-  }, 2000);
-
-  // Dynamic import the main library to ensure it's loaded as a module
+  // Simple parallel loading approach
   try {
-    // Get the path to this script to calculate the base path
-    const scriptPath = document.currentScript.src;
-    const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1);
+    // Start loading fonts immediately
+    const fontPromise = Promise.all([
+      // Load Open Sans Regular
+      new FontFace('Open Sans', `url("${basePath}assets/OpenSans-VariableFont_wdth,wght.ttf")`, {
+        style: 'normal',
+        weight: '300 800',
+      }).load(),
 
-    // Import the library using the base path
+      // Load Open Sans Italic
+      new FontFace('Open Sans Italic', `url("${basePath}assets/OpenSans-Italic-VariableFont_wdth,wght.ttf")`, {
+        style: 'italic',
+        weight: '300 800'
+      }).load()
+    ]).then(fonts => {
+      // Add fonts to document
+      fonts.forEach(font => document.fonts.add(font));
+      return fonts;
+    });
+
+    // Load the library in parallel with fonts
     const FrenzyUI = await import(`${basePath}lib/index.js`);
 
-    // Wait for fonts to load before initializing
-    await fontLoadPromise;
+    // Ensure fonts are loaded before initializing
+    await fontPromise;
 
-    // Initialize the library
+    // Initialize the library - this is now faster with the optimized initialize() function
     await FrenzyUI.initialize();
 
     // Make the library available globally
     window.FrenzyUI = FrenzyUI;
 
-    // Set loading state
-    componentsLoaded = true;
-
-    // Remove the temporary style element as it's now managed by the library
-    clearTimeout(fallbackTimer);
-    setTimeout(() => {
-      styleEl.remove();
-    }, 300); // Give components a moment to fully initialize
+    // No delays if transitions are disabled
+    styleEl.remove();
 
     // Dispatch event when ready
     window.dispatchEvent(new CustomEvent('frenzy-ui-ready'));

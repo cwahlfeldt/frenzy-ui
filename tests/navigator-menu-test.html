@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FZ Navigator Menu Test</title>
+    <script src="../frenzy-ui.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding-top: 100px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>FZ Navigator Menu Tests</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Setting Menu Data via Attribute</h2>
+        <fz-navigator id="test1" menu-data='{"eyebrow":[{"label":"Test","url":"#test"}],"primary":[{"label":"Home","url":"#"}],"secondary":[{"label":"About","url":"#about"}]}'></fz-navigator>
+        <div id="test1Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Setting Menu Data via JavaScript Method</h2>
+        <fz-navigator id="test2"></fz-navigator>
+        <div id="test2Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Updating Menu Data</h2>
+        <fz-navigator id="test3"></fz-navigator>
+        <button id="updateMenuBtn">Update Menu</button>
+        <div id="test3Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Handling Invalid JSON</h2>
+        <fz-navigator id="test4"></fz-navigator>
+        <button id="setInvalidJson">Set Invalid JSON</button>
+        <div id="test4Result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: Toggle Attributes</h2>
+        <fz-navigator id="test5"></fz-navigator>
+        <button id="toggleEyebrow">Toggle Eyebrow</button>
+        <button id="toggleDesktopNav">Toggle Desktop Nav</button>
+        <div id="test5Result"></div>
+    </div>
+
+    <script>
+        // Wait for Frenzy UI to be ready
+        window.addEventListener('frenzy-ui-ready', () => {
+            runTests();
+        });
+        
+        function runTests() {
+            // Test 1: Check attribute initialization
+            const test1 = document.getElementById('test1');
+            const test1Data = test1.getMenuData();
+            if (test1Data.eyebrow[0].label === 'Test' && 
+                test1Data.primary[0].label === 'Home' && 
+                test1Data.secondary[0].label === 'About') {
+                document.getElementById('test1Result').innerHTML = `<p class="success">PASS: Menu data correctly initialized from attribute</p>`;
+            } else {
+                document.getElementById('test1Result').innerHTML = `<p class="error">FAIL: Menu data does not match expected values</p>`;
+                console.error('Test 1 failed', test1Data);
+            }
+            
+            // Test 2: Set menu data via JavaScript
+            const test2 = document.getElementById('test2');
+            const test2Data = {
+                eyebrow: [{ label: "JavaScript", url: "#js" }],
+                primary: [{ label: "Method", url: "#method" }],
+                secondary: [{ label: "Test", url: "#test" }]
+            };
+            test2.setMenuData(test2Data);
+            const retrievedData = test2.getMenuData();
+            
+            if (retrievedData.primary[0].label === 'Method') {
+                document.getElementById('test2Result').innerHTML = `<p class="success">PASS: Menu data correctly set via JavaScript method</p>`;
+            } else {
+                document.getElementById('test2Result').innerHTML = `<p class="error">FAIL: Menu data does not match expected values</p>`;
+                console.error('Test 2 failed', retrievedData);
+            }
+            
+            // Test 3: Update menu data
+            const test3 = document.getElementById('test3');
+            test3.setMenuData({
+                eyebrow: [{ label: "Original", url: "#original" }],
+                primary: [{ label: "Data", url: "#data" }],
+                secondary: []
+            });
+            
+            document.getElementById('updateMenuBtn').addEventListener('click', () => {
+                test3.setMenuData({
+                    eyebrow: [{ label: "Updated", url: "#updated" }],
+                    primary: [{ label: "New Data", url: "#new" }],
+                    secondary: [{ label: "Added", url: "#added" }]
+                });
+                
+                const updatedData = test3.getMenuData();
+                if (updatedData.eyebrow[0].label === 'Updated' && 
+                    updatedData.primary[0].label === 'New Data') {
+                    document.getElementById('test3Result').innerHTML = `<p class="success">PASS: Menu data successfully updated</p>`;
+                } else {
+                    document.getElementById('test3Result').innerHTML = `<p class="error">FAIL: Menu data update failed</p>`;
+                    console.error('Test 3 failed', updatedData);
+                }
+            });
+            document.getElementById('test3Result').innerHTML = `<p>Click the button to run the test</p>`;
+            
+            // Test 4: Invalid JSON handling
+            const test4 = document.getElementById('test4');
+            document.getElementById('setInvalidJson').addEventListener('click', () => {
+                // Try setting invalid JSON string
+                test4.setAttribute('menu-data', '{invalid: json}');
+                
+                // Check if default data was used
+                const data = test4.getMenuData();
+                if (data && data.primary && data.primary.length > 0) {
+                    document.getElementById('test4Result').innerHTML = `
+                        <p class="success">PASS: Invalid JSON handled gracefully, default data used</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    document.getElementById('test4Result').innerHTML = `<p class="error">FAIL: Invalid JSON not handled properly</p>`;
+                    console.error('Test 4 failed', data);
+                }
+            });
+            document.getElementById('test4Result').innerHTML = `<p>Click the button to run the test</p>`;
+            
+            // Test 5: Toggle attributes
+            const test5 = document.getElementById('test5');
+            test5.setMenuData({
+                eyebrow: [{ label: "Attribute", url: "#attr" }],
+                primary: [{ label: "Toggle", url: "#toggle" }],
+                secondary: [{ label: "Test", url: "#test" }]
+            });
+            
+            document.getElementById('toggleEyebrow').addEventListener('click', () => {
+                test5.toggleAttribute('hide-eyebrow');
+                updateTest5Status();
+            });
+            
+            document.getElementById('toggleDesktopNav').addEventListener('click', () => {
+                test5.toggleAttribute('hide-desktop-nav');
+                updateTest5Status();
+            });
+            
+            function updateTest5Status() {
+                const eyebrowHidden = test5.hasAttribute('hide-eyebrow');
+                const desktopNavHidden = test5.hasAttribute('hide-desktop-nav');
+                
+                document.getElementById('test5Result').innerHTML = `
+                    <p>Current state:</p>
+                    <ul>
+                        <li>Eyebrow: ${eyebrowHidden ? 'hidden' : 'visible'}</li>
+                        <li>Desktop Nav: ${desktopNavHidden ? 'hidden' : 'visible'}</li>
+                    </ul>
+                `;
+            }
+            
+            updateTest5Status();
+        }
+    </script>
+</body>
+</html>

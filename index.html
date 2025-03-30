@@ -4,10 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frenzy UI - All Components</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+    <title>Frenzy UI</title>
 
-    <!-- Include Frenzy UI with a single script tag -->
-    <script src="frenzy-ui.js" async></script>
+    <!-- Preload resources for faster loading -->
+    <link rel="preload" href="./assets/OpenSans-VariableFont_wdth,wght.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="preload" href="./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf" as="font" type="font/ttf"
+        crossorigin>
+
+    <!-- preload and import frenzy-ui -->
+    <link rel="preload" href="./frenzy-ui.js" as="script">
+    <script src="frenzy-ui.js"></script>
 
     <style>
         body {
@@ -57,11 +65,48 @@
             font-size: 0.9em;
         }
 
-        /* Custom navigator menu content */
+        /* Custom navigator styles */
         .custom-menu {
-            padding: 2rem;
+            padding: 1rem 2rem;
         }
 
+        /* Custom styling for horizontal nav items */
+        .nav-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        .nav-items li {
+            margin: 0 1rem;
+        }
+
+        .nav-items a {
+            color: #4a2c82;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 0;
+            position: relative;
+            display: block;
+        }
+
+        .nav-items a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #4a2c82;
+            transition: width 0.3s ease;
+        }
+
+        .nav-items a:hover::after {
+            width: 100%;
+        }
+
+        /* Drawer menu styles */
         .navigator-items {
             list-style: none;
             padding: 0;
@@ -84,13 +129,14 @@
         .sub-menu {
             list-style: none;
             padding-left: 1.5rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 
 <body>
-    <!-- Navigator Component - with custom menu content -->
-    <fz-navigator>
+    <!-- Navigator Component with JSON menu data -->
+    <fz-navigator id="mainNavigator">
         <!-- Custom logo -->
         <a href="/" slot="logo">
             <svg width="67" height="41" viewBox="0 0 67 41" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -100,23 +146,6 @@
                     fill="currentColor"></path>
             </svg>
         </a>
-
-        <!-- Custom menu content -->
-        <div slot="menu-content" class="custom-menu">
-            <ul class="navigator-items">
-                <li><a href="#">Home</a></li>
-                <li class="menu-item-has-children">
-                    <a href="#">Components</a>
-                    <ul class="sub-menu">
-                        <li><a href="#buttons">Buttons</a></li>
-                        <li><a href="#navigator">Navigator</a></li>
-                    </ul>
-                </li>
-                <li><a href="#">Documentation</a></li>
-                <li><a href="#">Examples</a></li>
-                <li><a href="#">GitHub</a></li>
-            </ul>
-        </div>
     </fz-navigator>
 
     <div class="content">
@@ -189,25 +218,138 @@
 
             <h3>Navigator Controls</h3>
             <div class="button-group">
-                <fz-button onClick="document.querySelector('fz-navigator').toggleMenu()">Toggle Menu</fz-button>
-                <fz-button onClick="document.querySelector('fz-navigator').toggleSearch()">Toggle Search</fz-button>
+                <fz-button onClick="document.getElementById('mainNavigator').toggleMenu()">Toggle Menu</fz-button>
+                <fz-button onClick="document.getElementById('mainNavigator').toggleSearch()">Toggle Search</fz-button>
+                <fz-button onClick="document.getElementById('mainNavigator').toggleAttribute('hide-desktop-nav')">Toggle
+                    Desktop Nav</fz-button>
+                <fz-button onClick="document.getElementById('mainNavigator').toggleAttribute('hide-eyebrow')">Toggle
+                    Eyebrow</fz-button>
             </div>
 
-            <h3>Customization</h3>
-            <p>The navigator can be customized using slots:</p>
+            <h3>JSON Menu Data</h3>
+            <p>The navigator can now be configured using JSON data instead of HTML:</p>
+            <pre><code id="menuDataDisplay"></code></pre>
+            <div class="button-group">
+                <fz-button onClick="setSimpleMenu()">Simple Menu</fz-button>
+                <fz-button onClick="setFullMenu()">Full Menu</fz-button>
+            </div>
+
+            <h3>Menu Structure</h3>
+            <p>The navigator now supports three menu sections:</p>
             <ul>
-                <li><code>slot="logo"</code> - Custom logo in the header</li>
-                <li><code>slot="menu-content"</code> - Custom menu items and content</li>
+                <li><strong>Eyebrow Menu</strong> - Small utility links at the very top</li>
+                <li><strong>Primary Menu</strong> - Main navigation shown horizontally on desktop</li>
+                <li><strong>Secondary Menu</strong> - Additional menu items in the side drawer</li>
             </ul>
+
+            <h3>Implementation Options</h3>
+            <p>You can define menus in multiple ways:</p>
+            <ul>
+                <li>Using the <code>menu-data</code> attribute with a JSON string</li>
+                <li>Using the <code>setMenuData()</code> JavaScript method</li>
+                <li>Using traditional HTML with slots (still supported)</li>
+            </ul>
+
+            <p>Check out the <a href="examples/menu-data-demo.html">Menu Data Demo</a> for more examples.</p>
 
             <p>See the page source for an example of how to customize the navigator component.</p>
         </section>
     </div>
-
+    <!-- JavaScript for Menu Data Demo -->
     <script>
-        // Wait for Frenzy UI to be fully initialized
+        // Default menu data
+        const simpleMenu = {
+            eyebrow: [
+                { label: "Contact", url: "#contact" },
+                { label: "Support", url: "#support" }
+            ],
+            primary: [
+                { label: "Home", url: "#home" },
+                { label: "Components", url: "#components" },
+                { label: "Documentation", url: "#docs" }
+            ],
+            secondary: [
+                {
+                    label: "Components",
+                    url: "#components",
+                    children: [
+                        { label: "Buttons", url: "#buttons" },
+                        { label: "Navigator", url: "#navigator" }
+                    ]
+                },
+                { label: "GitHub", url: "https://github.com" },
+                { label: "Support", url: "#support" }
+            ]
+        };
+
+        // More complex menu
+        const fullMenu = {
+            eyebrow: [
+                { label: "Contact", url: "#contact" },
+                { label: "Support", url: "#support" },
+                { label: "Careers", url: "#careers" }
+            ],
+            primary: [
+                { label: "Home", url: "#home" },
+                {
+                    label: "Components",
+                    url: "#components",
+                    children: [
+                        { label: "Buttons", url: "#buttons" },
+                        { label: "Navigator", url: "#navigator" },
+                        { label: "Future Components", url: "#future" }
+                    ]
+                },
+                { label: "Documentation", url: "#docs" },
+                { label: "Examples", url: "#examples" }
+            ],
+            secondary: [
+                {
+                    label: "Resources",
+                    url: "#resources",
+                    children: [
+                        { label: "Getting Started", url: "#getting-started" },
+                        { label: "API Reference", url: "#api" },
+                        { label: "Tutorials", url: "#tutorials" }
+                    ]
+                },
+                {
+                    label: "Company",
+                    url: "#company",
+                    children: [
+                        { label: "About", url: "#about" },
+                        { label: "Team", url: "#team" },
+                        { label: "Press", url: "#press" }
+                    ]
+                },
+                { label: "GitHub", url: "https://github.com" },
+                { label: "Support", url: "#support" }
+            ]
+        };
+
+        // Function to set simple menu
+        function setSimpleMenu() {
+            const navigator = document.getElementById('mainNavigator');
+            navigator.setMenuData(simpleMenu);
+            displayMenuData(simpleMenu);
+        }
+
+        // Function to set full menu
+        function setFullMenu() {
+            const navigator = document.getElementById('mainNavigator');
+            navigator.setMenuData(fullMenu);
+            displayMenuData(fullMenu);
+        }
+
+        // Display the menu data in the code block
+        function displayMenuData(data) {
+            const displayEl = document.getElementById('menuDataDisplay');
+            displayEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Set initial menu when page loads
         window.addEventListener('frenzy-ui-ready', () => {
-            console.log('Frenzy UI components are ready!');
+            setFullMenu();
         });
     </script>
 </body>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Menu Data Navigator - Frenzy UI</title>
+
+    <!-- Import Frenzy UI -->
+    <script src="../frenzy-ui.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            background-color: #f8f9fa;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #4a2c82;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            color: #4a2c82;
+            margin-bottom: 1rem;
+        }
+        
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        pre {
+            background-color: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #4a2c82;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        button:hover {
+            background-color: #3a2062;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- JSON-based Navigation -->
+    <fz-navigator id="jsonNavigator"></fz-navigator>
+
+    <!-- Page Content -->
+    <div class="hero">
+        <h1>JSON Menu Data Demo</h1>
+        <p>This demo showcases how to configure the FZ Navigator using a JSON menu structure instead of HTML.</p>
+    </div>
+
+    <div class="content">
+        <div class="section">
+            <h2>Menu Configuration</h2>
+            <div class="card">
+                <h3>Current Menu Structure</h3>
+                <pre id="currentMenuOutput"></pre>
+                
+                <div class="controls">
+                    <button onclick="setBasicMenu()">Basic Menu</button>
+                    <button onclick="setAdvancedMenu()">Advanced Menu</button>
+                    <button onclick="toggleEyebrow()">Toggle Eyebrow</button>
+                    <button onclick="toggleDesktopNav()">Toggle Desktop Nav</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Implementation</h2>
+            <div class="card">
+                <h3>Using JSON Menu Data</h3>
+                <p>You can define your menu structure in three ways:</p>
+                <ol>
+                    <li>As a JSON string in the <code>menu-data</code> attribute</li>
+                    <li>By using the <code>setMenuData()</code> method with a JavaScript object</li>
+                    <li>By using the <code>setMenuData()</code> method with a JSON string</li>
+                </ol>
+
+                <h3>Example Code</h3>
+                <pre>
+// Get navigator instance
+const navigator = document.querySelector('fz-navigator');
+
+// Set menu data using JavaScript object
+navigator.setMenuData({
+  eyebrow: [
+    { label: "Contact", url: "#contact" },
+    { label: "Support", url: "#support" }
+  ],
+  primary: [
+    { label: "Home", url: "#" },
+    { label: "Products", url: "#products" }
+  ],
+  secondary: [
+    { label: "About", url: "#about" },
+    { label: "Blog", url: "#blog" }
+  ]
+});
+
+// Or set using attribute (JSON string)
+navigator.setAttribute('menu-data', JSON.stringify(menuData));
+                </pre>
+
+                <h3>Menu Structure</h3>
+                <p>The menu data structure consists of three main sections:</p>
+                <ul>
+                    <li><strong>eyebrow</strong> - Top utility links (optional)</li>
+                    <li><strong>primary</strong> - Main horizontal navigation items (optional)</li>
+                    <li><strong>secondary</strong> - Additional items for the drawer menu (optional)</li>
+                </ul>
+                <p>Each section contains an array of menu items. Menu items can have children for dropdown functionality.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to display the current menu data
+        function displayMenuData() {
+            const navigator = document.getElementById('jsonNavigator');
+            const currentMenu = navigator.getMenuData();
+            document.getElementById('currentMenuOutput').textContent = JSON.stringify(currentMenu, null, 2);
+        }
+        
+        // Basic menu configuration
+        function setBasicMenu() {
+            const basicMenu = {
+                eyebrow: [
+                    { label: "Contact", url: "#contact" },
+                    { label: "Support", url: "#support" }
+                ],
+                primary: [
+                    { label: "Home", url: "#" },
+                    { label: "Products", url: "#products" },
+                    { label: "Features", url: "#features" }
+                ],
+                secondary: [
+                    { label: "About", url: "#about" },
+                    { label: "Blog", url: "#blog" }
+                ]
+            };
+            
+            document.getElementById('jsonNavigator').setMenuData(basicMenu);
+            displayMenuData();
+        }
+        
+        // Advanced menu with dropdowns
+        function setAdvancedMenu() {
+            const advancedMenu = {
+                eyebrow: [
+                    { label: "Contact Us", url: "#contact" },
+                    { label: "Support Portal", url: "#support" },
+                    { label: "Careers", url: "#careers" }
+                ],
+                primary: [
+                    { label: "Home", url: "#" },
+                    { 
+                        label: "Products", 
+                        url: "#products",
+                        children: [
+                            { label: "Product A", url: "#product-a" },
+                            { label: "Product B", url: "#product-b" },
+                            { label: "Product C", url: "#product-c" }
+                        ]
+                    },
+                    { 
+                        label: "Solutions", 
+                        url: "#solutions",
+                        children: [
+                            { label: "Enterprise", url: "#enterprise" },
+                            { label: "Small Business", url: "#small-business" },
+                            { label: "Personal", url: "#personal" }
+                        ]
+                    },
+                    { label: "Pricing", url: "#pricing" }
+                ],
+                secondary: [
+                    { label: "About Us", url: "#about" },
+                    { 
+                        label: "Resources", 
+                        url: "#resources",
+                        children: [
+                            { label: "Documentation", url: "#docs" },
+                            { label: "Tutorials", url: "#tutorials" },
+                            { label: "API Reference", url: "#api" }
+                        ]
+                    },
+                    { 
+                        label: "Company", 
+                        url: "#company",
+                        children: [
+                            { label: "Our Team", url: "#team" },
+                            { label: "Careers", url: "#careers" },
+                            { label: "Press", url: "#press" }
+                        ]
+                    },
+                    { label: "Blog", url: "#blog" }
+                ]
+            };
+            
+            document.getElementById('jsonNavigator').setMenuData(advancedMenu);
+            displayMenuData();
+        }
+        
+        // Toggle eyebrow visibility
+        function toggleEyebrow() {
+            const navigator = document.getElementById('jsonNavigator');
+            if (navigator.hasAttribute('hide-eyebrow')) {
+                navigator.removeAttribute('hide-eyebrow');
+            } else {
+                navigator.setAttribute('hide-eyebrow', '');
+            }
+        }
+        
+        // Toggle desktop nav visibility
+        function toggleDesktopNav() {
+            const navigator = document.getElementById('jsonNavigator');
+            if (navigator.hasAttribute('hide-desktop-nav')) {
+                navigator.removeAttribute('hide-desktop-nav');
+            } else {
+                navigator.setAttribute('hide-desktop-nav', '');
+            }
+        }
+        
+        // Initialize with basic menu on load
+        window.addEventListener('frenzy-ui-ready', () => {
+            setBasicMenu();
+        });
+    </script>
+</body>
+
+</html>
