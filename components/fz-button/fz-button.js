@@ -1,18 +1,24 @@
 import { html, render } from '../../lib/html/lit-html.js';
 import { unsafeHTML } from '../../lib/html/unsafe-html.js';
-import FzBaseComponent from '../../lib/component.js';
+import Component from '../../lib/component.js';
 import buttonStyles from './fz-button.css' with { type: 'css' };
 
 /**
  * FZ Button Component
  */
-export class FzButton extends FzBaseComponent {
+export class FzButton extends Component {
     #icon = null;
     #iconPosition = 'left';
     #colorScheme = 'primary';
 
     constructor() {
+        // Apply styles immediately through the base component
         super([buttonStyles]);
+        
+        // Set defaults that might be overridden by attributes
+        this.#iconPosition = this.getAttribute('icon-position') || 'left';
+        this.#colorScheme = this.getAttribute('color-scheme') || 'primary';
+        this.#icon = this.getAttribute('icon') || null;
     }
 
     static get observedAttributes() {
@@ -39,11 +45,13 @@ export class FzButton extends FzBaseComponent {
             this.#colorScheme = newValue || 'primary';
         }
 
-        this.render();
+        // Render after style initialization is complete to prevent FOUC
+        requestAnimationFrame(() => this.render());
     }
 
     connectedCallback() {
-        this.render();
+        // Render on next frame to ensure styles are applied first
+        requestAnimationFrame(() => this.render());
     }
 
     #createIconTemplate() {

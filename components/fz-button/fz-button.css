@@ -2,6 +2,8 @@
 
 :host {
     display: inline-block;
+    /* Ensure smoother opacity transitions */
+    transition: opacity 0.2s ease-in;
 }
 
 .button {
@@ -17,8 +19,9 @@
     text-decoration: none;
     cursor: pointer;
     border: var(--fz-button-border, none);
-    transition: all 0.2s ease;
+    transition: all 0.2s ease-in-out;
     outline: none;
+    opacity: 1;
     position: relative;
     overflow: hidden;
 }

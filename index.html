@@ -4,14 +4,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navigtor Example</title>
-    <script src="../components/navigator/navigator.js" defer></script>
+    <title>Frenzy UI Component Library</title>
+    <!-- Import the component library via the main entry point -->
+    <script type="module" src="./lib/index.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+    
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            padding: 2rem;
+        }
+        
+        .component-demo {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        
+        h2 {
+            margin-top: 2rem;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Check out the navigator! -->
-    <fz-navigator></fz-navigator>
+    <header>
+        <h1>Frenzy UI Components</h1>
+        <p>A lightweight, customizable web component library</p>
+    </header>
+    
+    <main>
+        <section class="component-demo">
+            <h2>Button Component</h2>
+            <p>Versatile button component with various styles and options</p>
+            
+            <div class="button-group">
+                <fz-button>Default Button</fz-button>
+                <fz-button color-scheme="primary">Primary</fz-button>
+                <fz-button color-scheme="secondary">Secondary</fz-button>
+                <fz-button color-scheme="success">Success</fz-button>
+                <fz-button color-scheme="danger">Danger</fz-button>
+                <fz-button color-scheme="outline">Outline</fz-button>
+                <fz-button color-scheme="ghost">Ghost</fz-button>
+            </div>
+            
+            <h3>With Icons</h3>
+            <div class="button-group">
+                <fz-button icon="★">Star</fz-button>
+                <fz-button icon="→" icon-position="right">Next</fz-button>
+            </div>
+        </section>
 
     <main>
         <br>
