@@ -183,12 +183,29 @@ export class FzNavigator extends Component {
         this.#eyebrowContainer.style.display = '';
       }
       
-      // Recalculate padding
-      const navigatorHeight = getComputedStyle(this).getPropertyValue('--navigator-height') || '67.5px';
-      const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : 
-        (getComputedStyle(this).getPropertyValue('--eyebrow-height') || '36px');
-      
-      document.body.style.paddingTop = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+      // Only update padding if not using static positioning
+      if (this.getAttribute('position-type') !== 'static') {
+        // Recalculate padding
+        const navigatorHeight = '67.5px';
+        const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
+        
+        document.body.style.paddingTop = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+        
+        // Update navigator wrapper position
+        if (this.#navigatorWrapper) {
+          if (this.hasAttribute('hide-eyebrow')) {
+            this.#navigatorWrapper.style.top = 'var(--navigator-height)';
+          } else {
+            this.#navigatorWrapper.style.top = 'calc(var(--navigator-height) + var(--eyebrow-height))';
+          }
+        }
+        
+        // Update navigator position
+        const navigator = this.shadowRoot.querySelector('.navigator');
+        if (navigator) {
+          navigator.style.top = this.hasAttribute('hide-eyebrow') ? '0' : 'var(--eyebrow-height)';
+        }
+      }
     }
   }
 
@@ -199,15 +216,30 @@ export class FzNavigator extends Component {
     // Render the initial structure immediately
     this.render();
 
-    // Calculate and apply navigator height - use cached values when possible
-    const navigatorHeight = '67.5px'; // Default value used directly to avoid getComputedStyle
-    const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
-    
-    const totalHeight = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+    // Get references to necessary elements
+    this.#menuToggle = this.shadowRoot.querySelector('.menu-toggle');
+    this.#navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
+    this.#searchBtn = this.shadowRoot.querySelector('.search-btn');
+    this.#desktopNavItems = this.shadowRoot.querySelector('.desktop-nav-container');
+    this.#eyebrowContainer = this.shadowRoot.querySelector('.eyebrow-container');
 
-    // Add body class for mobile nav spacing with precise height
-    document.body.classList.add('has-navigator');
-    document.body.style.paddingTop = totalHeight;
+    // Check position type and apply appropriate layout
+    const isStatic = this.getAttribute('position-type') === 'static';
+    
+    if (!isStatic) {
+      // Calculate and apply navigator height for fixed position (default)
+      const navigatorHeight = '67.5px'; // Default value used directly to avoid getComputedStyle
+      const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
+      
+      const totalHeight = `calc(${navigatorHeight} + ${eyebrowHeight})`;
+  
+      // Add body class for mobile nav spacing with precise height
+      document.body.classList.add('has-navigator');
+      document.body.style.paddingTop = totalHeight;
+    }
+    
+    // Apply position type settings
+    this.updatePositionType();
 
     // Remove the initializing class to allow normal flow
     document.documentElement.classList.remove('fz-navigator-initializing');
@@ -315,8 +347,18 @@ export class FzNavigator extends Component {
   toggleMenu() {
     this.#isOpen = !this.#isOpen;
     this.#menuToggle.classList.toggle('active');
-    this.#navigatorWrapper.classList.toggle('active');
-    document.body.classList.toggle('navigator-is-open');
+    
+    // Get position type
+    const isStatic = this.getAttribute('position-type') === 'static';
+    
+    if (isStatic) {
+      // For static positioning, use display instead of transform
+      this.#navigatorWrapper.style.display = this.#isOpen ? 'block' : 'none';
+    } else {
+      // For fixed positioning, use transform as before
+      this.#navigatorWrapper.classList.toggle('active');
+      document.body.classList.toggle('navigator-is-open');
+    }
 
     // Update aria-expanded
     this.#menuToggle.setAttribute('aria-expanded', this.#isOpen);
@@ -413,9 +455,13 @@ export class FzNavigator extends Component {
    * Called when component is disconnected from the DOM
    */
   disconnectedCallback() {
-    document.body.classList.remove('has-navigator');
+    // Only restore body padding if the navigator was fixed position
+    if (this.getAttribute('position-type') !== 'static') {
+      document.body.classList.remove('has-navigator');
+      document.body.style.paddingTop = '0';
+    }
+    
     document.body.classList.remove('navigator-is-open');
-    document.body.style.paddingTop = '0';
     document.documentElement.classList.remove('fz-navigator-initializing');
 
     // Remove all event listeners to prevent memory leaks
@@ -434,7 +480,7 @@ export class FzNavigator extends Component {
    * Static defines which attributes should be observed
    */
   static get observedAttributes() {
-    return ['hide-desktop-nav', 'hide-eyebrow', 'menu-data'];
+    return ['hide-desktop-nav', 'hide-eyebrow', 'menu-data', 'position-type'];
   }
 
   /**
@@ -461,6 +507,81 @@ export class FzNavigator extends Component {
       requestAnimationFrame(() => {
         this.setupAccordion();
       });
+    }
+    else if (name === 'position-type') {
+      // Update navigator position type (fixed or static)
+      this.updatePositionType();
+    }
+  }
+
+  /**
+   * Update navigator position based on position-type attribute
+   */
+  updatePositionType() {
+    const navigatorElement = this.shadowRoot.querySelector('.navigator');
+    const eyebrowElement = this.shadowRoot.querySelector('.eyebrow-container');
+    const wrapperElement = this.shadowRoot.querySelector('.navigator-wrapper');
+    
+    if (!navigatorElement) return;
+    
+    // Get position type (fixed or static)
+    const isStatic = this.getAttribute('position-type') === 'static';
+    
+    // Update navigation components
+    if (isStatic) {
+      // Static positioning
+      navigatorElement.style.position = 'relative';
+      navigatorElement.style.top = '0';
+      if (eyebrowElement) {
+        eyebrowElement.style.position = 'relative';
+        eyebrowElement.style.top = '0';
+      }
+      if (wrapperElement) {
+        wrapperElement.style.position = 'absolute';
+        wrapperElement.style.top = '100%';
+        wrapperElement.style.height = 'auto';
+        wrapperElement.style.maxHeight = '80vh';
+        
+        // Reset transform since we'll use different animation approach
+        wrapperElement.style.transform = '';
+        wrapperElement.style.display = this.#isOpen ? 'block' : 'none';
+      }
+      
+      // Remove body padding for static navigator
+      document.body.style.paddingTop = '0';
+      
+      // Add position relative to host for correct stacking context
+      this.style.position = 'relative';
+      this.style.zIndex = '100';
+    } else {
+      // Fixed positioning (default)
+      navigatorElement.style.position = 'fixed';
+      navigatorElement.style.top = this.hasAttribute('hide-eyebrow') ? '0' : 'var(--eyebrow-height)';
+      if (eyebrowElement) {
+        eyebrowElement.style.position = 'fixed';
+        eyebrowElement.style.top = '0';
+      }
+      if (wrapperElement) {
+        wrapperElement.style.position = 'fixed';
+        wrapperElement.style.top = 'calc(var(--navigator-height) + var(--eyebrow-height))';
+        wrapperElement.style.height = 'calc(100vh - var(--navigator-height) - var(--eyebrow-height))';
+        wrapperElement.style.display = '';
+        
+        // Reset to transform-based animation
+        wrapperElement.style.transform = this.#isOpen ? 'translateX(0)' : 'translateX(100%)';
+        
+        if (this.hasAttribute('hide-eyebrow')) {
+          wrapperElement.style.top = 'var(--navigator-height)';
+          wrapperElement.style.height = 'calc(100vh - var(--navigator-height))';
+        }
+      }
+      
+      // Reset host positioning
+      this.style.position = '';
+      this.style.zIndex = '';
+      
+      // Restore body padding for fixed navigator
+      this.updateEyebrowVisibility(); // This will also update body padding
     }
   }
 }

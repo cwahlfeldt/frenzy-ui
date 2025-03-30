@@ -41,16 +41,6 @@ document.documentElement.classList.add('frenzy-loading');
       font-variation-settings: "wdth" 100;
       font-display: swap;
     }
-    
-    /* Reserve space for navigator component */
-    body {
-      padding-top: var(--fz-navigator-height, 67.5px);
-    }
-    
-    /* No transitions during initial load */
-    html body {
-      font-family: var(--fz-font-family-base);
-    }
   `;
   document.head.insertBefore(fadeStyle, document.head.firstChild);
 })();
@@ -59,7 +49,6 @@ document.documentElement.classList.add('frenzy-loading');
 (async function () {
 
   try {
-
     // Load and initialize the library
     const FrenzyUI = await import(`./lib/index.js`);
     await FrenzyUI.initialize();

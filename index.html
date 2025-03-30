@@ -9,41 +9,13 @@
     />
     <title>Frenzy UI</title>
 
-    <!-- Critical fade-in styles to prevent FOUC -->
-    <style>
-      /* Initial hidden state styles (will be overridden by frenzy-ui.js) */
-      html {
-        opacity: 0;
-      }
-    </style>
-
-    <!-- Preload resources with high priority for faster loading -->
-    <link
-      rel="preload"
-      href="./assets/OpenSans-VariableFont_wdth,wght.ttf"
-      as="font"
-      type="font/ttf"
-      crossorigin="anonymous"
-    />
-    <link
-      rel="preload"
-      href="./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf"
-      as="font"
-      type="font/ttf"
-      crossorigin="anonymous"
-    />
-    <link rel="preload" href="./frenzy-ui.js" as="script" />
-
-    <!-- Preconnect to improve perf when loading modules -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Import frenzy-ui -->
+    <link rel="preload" href="frenzy-ui.js" type="text/script" />
     <script src="frenzy-ui.js"></script>
 
     <style>
       body {
         padding-top: var(--fz-navigator-height, 67.5px);
-        font-family: var(--fz-font-family-base);
+        font-family: "Open Sans", sans-serif;
       }
 
       .content {
@@ -321,6 +293,30 @@
           <li>Using traditional HTML with slots (still supported)</li>
         </ul>
 
+        <h3>Position Types</h3>
+        <p>The navigator now supports two position types:</p>
+        <ul>
+          <li>
+            <strong>Fixed</strong> (default) - Navigator is fixed to the top of
+            the viewport
+          </li>
+          <li>
+            <strong>Static</strong> - Navigator is part of the document flow,
+            scrolling with content
+          </li>
+        </ul>
+        <p>
+          Set the position type with the <code>position-type</code> attribute:
+        </p>
+        <pre><code>&lt;fz-navigator position-type="static"&gt;...&lt;/fz-navigator&gt;</code></pre>
+        <p>
+          Check out the
+          <a href="examples/static-navigator-demo.html"
+            >Static Navigator Demo</a
+          >
+          for an example of embedding the navigator within page content.
+        </p>
+
         <p>
           Check out the
           <a href="examples/menu-data-demo.html">Menu Data Demo</a> for more
@@ -379,7 +375,7 @@
             ],
           },
           { label: "Documentation", url: "#docs" },
-          { label: "Examples", url: "#examples" },
+          { label: "Examples", url: "/examples" },
         ],
         secondary: [
           {

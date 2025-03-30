@@ -78,6 +78,31 @@ export const navigatorStyles = /*css*/`
     top: 0;
 }
 
+/* Static position type styles */
+:host([position-type="static"]) .navigator {
+    position: relative;
+    top: 0;
+}
+
+:host([position-type="static"]) .eyebrow-container {
+    position: relative;
+    top: 0;
+}
+
+:host([position-type="static"]) .navigator-wrapper {
+    position: absolute;
+    top: 100%;
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Ensure container has proper positioning context for absolute children */
+:host([position-type="static"]) {
+    position: relative;
+    z-index: 100;
+}
+
 .container {
     width: 100%;
     margin: 0 auto;
@@ -306,6 +331,7 @@ export const navigatorStyles = /*css*/`
     z-index: 999;
     pointer-events: none;
     overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 :host([hide-eyebrow]) .navigator-wrapper {
@@ -316,6 +342,16 @@ export const navigatorStyles = /*css*/`
 .navigator-wrapper.active {
     transform: translateX(0);
     pointer-events: auto;
+}
+
+/* Styles for static navigator drawer */
+:host([position-type="static"]) .navigator-wrapper {
+    transform: none;
+    transition: none;
+    display: none;
+    pointer-events: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 4px 4px;
 }
 
 @media (min-width: 992px) {

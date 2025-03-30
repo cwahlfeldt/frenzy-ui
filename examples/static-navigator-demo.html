@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Static Navigator Demo - Frenzy UI</title>
+
+    <!-- Import Frenzy UI -->
+    <script src="../frenzy-ui.js"></script>
+
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      .content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header-container {
+        background-color: #f5f5f5;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+      }
+
+      .demo-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #4a2c82;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        color: #4a2c82;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        margin-bottom: 1.5rem;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        background-color: #4a2c82;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      button:hover {
+        background-color: #3a2062;
+      }
+
+      /* Custom nav items */
+      .nav-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+      }
+
+      .nav-items li {
+        margin: 0 1rem;
+      }
+
+      .nav-items a {
+        color: #4a2c82;
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.5rem 0;
+        position: relative;
+      }
+
+      .nav-items a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: #4a2c82;
+        transition: width 0.3s ease;
+      }
+
+      .nav-items a:hover::after {
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <fz-navigator position-type="static"> </fz-navigator>
+
+    <div class="header-container">
+      <div class="content">
+        <h1>Static Navigator Demo</h1>
+        <p>
+          This demo showcases the Frenzy UI Navigator component with the new
+          static positioning option, allowing it to be embedded within page
+          content rather than fixed at the top.
+        </p>
+      </div>
+    </div>
+
+    <!-- Static Navigator Component -->
+    <div class="content">
+      <div class="demo-section">
+        <h2>Static Navigator</h2>
+        <p>
+          The navigator below uses <code>position-type="static"</code> to embed
+          it within the page flow instead of fixing it to the top of the
+          viewport.
+        </p>
+
+          <div style="margin-top: 2rem">
+          <p>
+            Unlike a fixed navigator, this one remains part of the document
+            flow, allowing content to scroll past it. It's perfect for sections
+            where you want a navigation bar that stays with a specific content
+            area rather than the whole page.
+          </p>
+
+          <div class="button-group">
+            <button id="toggleEyebrow">Toggle Eyebrow</button>
+            <button id="toggleDesktopNav">Toggle Desktop Nav</button>
+            <button id="toggleMenu">Toggle Menu</button>
+            <button id="toggleSearch">Toggle Search</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-section" id="features">
+        <h2>Features</h2>
+        <p>
+          The static navigator supports all the same features as the fixed
+          navigator:
+        </p>
+        <ul>
+          <li>Menu toggle for mobile</li>
+          <li>Search functionality</li>
+          <li>Customizable desktop navigation</li>
+          <li>Eyebrow menu for utility links</li>
+          <li>JSON or HTML-based configuration</li>
+        </ul>
+        <p>
+          The only difference is that it doesn't affix itself to the viewport,
+          allowing it to scroll with the page content.
+        </p>
+      </div>
+
+      <div class="demo-section" id="usage">
+        <h2>Usage</h2>
+        <p>
+          To use the static navigator, simply add the
+          <code>position-type="static"</code> attribute:
+        </p>
+        <pre><code>&lt;fz-navigator position-type="static"&gt;
+  &lt;!-- Navigator content here --&gt;
+&lt;/fz-navigator&gt;</code></pre>
+
+        <p>
+          This makes the navigator behave like a normal block element in the
+          document flow, with the menu dropdown positioned absolutely relative
+          to it.
+        </p>
+      </div>
+
+      <div class="demo-section" id="examples">
+        <h2>Example Use Cases</h2>
+        <ul>
+          <li>Section-specific navigation areas</li>
+          <li>Content dashboards with their own navigation</li>
+          <li>
+            Multi-panel interfaces where each panel needs its own controls
+          </li>
+          <li>
+            Wizard-style flows where navigation controls should stay with a
+            specific step
+          </li>
+          <li>Embedded web applications with their own navigation context</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      window.addEventListener("frenzy-ui-ready", () => {
+        // Set up menu data
+        const staticNavigator = document.querySelector(
+          'fz-navigator[position-type="static"]'
+        );
+        staticNavigator.setMenuData({
+          eyebrow: [
+            { label: "Contact", url: "#contact" },
+            { label: "Support", url: "#support" },
+          ],
+          primary: [
+            { label: "Features", url: "#features" },
+            { label: "Usage", url: "#usage" },
+            { label: "Examples", url: "#examples" },
+            { label: "About", url: "#about" },
+          ],
+          secondary: [
+            { label: "Documentation", url: "#docs" },
+            {
+              label: "Resources",
+              url: "#resources",
+              children: [
+                { label: "Getting Started", url: "#getting-started" },
+                { label: "API Reference", url: "#api" },
+                { label: "Tutorials", url: "#tutorials" },
+              ],
+            },
+            { label: "GitHub", url: "https://github.com" },
+          ],
+        });
+
+        // Add toggle buttons
+        document
+          .getElementById("toggleEyebrow")
+          .addEventListener("click", () => {
+            staticNavigator.toggleAttribute("hide-eyebrow");
+          });
+
+        document
+          .getElementById("toggleDesktopNav")
+          .addEventListener("click", () => {
+            staticNavigator.toggleAttribute("hide-desktop-nav");
+          });
+          
+        document
+          .getElementById("toggleMenu")
+          .addEventListener("click", () => {
+            staticNavigator.toggleMenu();
+          });
+          
+        document
+          .getElementById("toggleSearch")
+          .addEventListener("click", () => {
+            staticNavigator.toggleSearch();
+          });
+      });
+    </script>
+  </body>
+</html>

@@ -12,10 +12,11 @@ export const DEFAULT_MENU = {
   ],
   primary: [
     { label: "Home", url: "#" },
+    { label: "Examples", url: "/examples" },
     { label: "Products", url: "#products" },
     { label: "Features", url: "#features" },
-    { 
-      label: "Solutions", 
+    {
+      label: "Solutions",
       url: "#solutions",
       children: [
         { label: "Enterprise", url: "#enterprise" },
@@ -27,8 +28,8 @@ export const DEFAULT_MENU = {
   secondary: [
     { label: "About", url: "#about" },
     { label: "Blog", url: "#blog" },
-    { 
-      label: "Resources", 
+    {
+      label: "Resources",
       url: "#resources",
       children: [
         { label: "Documentation", url: "#docs" },
@@ -49,7 +50,7 @@ export function parseMenuData(data) {
   if (!data) {
     return DEFAULT_MENU;
   }
-  
+
   if (typeof data === 'string') {
     try {
       return JSON.parse(data);
@@ -58,7 +59,7 @@ export function parseMenuData(data) {
       return DEFAULT_MENU;
     }
   }
-  
+
   return data;
 }
 
@@ -72,18 +73,18 @@ export function createPrimaryMenuHTML(items, isDesktop = true) {
   if (!items || !items.length) {
     return '';
   }
-  
+
   const containerClass = isDesktop ? 'desktop-nav-items' : 'mobile-nav-items';
-  
+
   let html = `<ul class="${containerClass}">`;
-  
+
   items.forEach(item => {
     const hasChildren = item.children && item.children.length > 0;
     const itemClass = hasChildren ? 'menu-item-has-children' : '';
-    
+
     html += `<li class="${itemClass}">`;
     html += `<a href="${item.url || '#'}">${item.label}</a>`;
-    
+
     if (hasChildren) {
       html += '<ul class="sub-menu">';
       item.children.forEach(child => {
@@ -91,10 +92,10 @@ export function createPrimaryMenuHTML(items, isDesktop = true) {
       });
       html += '</ul>';
     }
-    
+
     html += '</li>';
   });
-  
+
   html += '</ul>';
   return html;
 }
@@ -108,16 +109,16 @@ export function createSecondaryMenuHTML(items) {
   if (!items || !items.length) {
     return '';
   }
-  
+
   let html = '<ul class="navigator-items secondary-menu">';
-  
+
   items.forEach(item => {
     const hasChildren = item.children && item.children.length > 0;
     const itemClass = hasChildren ? 'menu-item-has-children' : '';
-    
+
     html += `<li class="${itemClass}">`;
     html += `<a href="${item.url || '#'}">${item.label}</a>`;
-    
+
     if (hasChildren) {
       html += '<ul class="sub-menu">';
       item.children.forEach(child => {
@@ -125,10 +126,10 @@ export function createSecondaryMenuHTML(items) {
       });
       html += '</ul>';
     }
-    
+
     html += '</li>';
   });
-  
+
   html += '</ul>';
   return html;
 }
@@ -142,13 +143,13 @@ export function createEyebrowMenuHTML(items) {
   if (!items || !items.length) {
     return '';
   }
-  
+
   let html = '<ul class="eyebrow-menu">';
-  
+
   items.forEach(item => {
     html += `<li><a href="${item.url || '#'}">${item.label}</a></li>`;
   });
-  
+
   html += '</ul>';
   return html;
 }
