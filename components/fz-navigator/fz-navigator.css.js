@@ -13,7 +13,6 @@ export const navigatorStyles = /*css*/`
     /* Ensure smoother opacity transitions for FOUC prevention */
     display: block;
     opacity: 1;
-    transition: opacity 0.2s ease-in;
 }
 
 .navigator-component {

@@ -3,9 +3,7 @@ export const buttonStyles = /*css*/`
 /* FzButton Styles */
 :host {
     display: inline-block;
-    /* Ensure smoother opacity transitions */
-    transition: opacity 0.2s ease-in;
-}
+    /* Ensure smoother opacity transitions */}
 
 .button {
     display: inline-flex;

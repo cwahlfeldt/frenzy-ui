@@ -34,7 +34,7 @@
     body {
       font-family: var(--font-family);
       padding-top: var(--fz-navigator-height, 67.5px);
-      transition: padding-top 0.2s ease-out;
+      transition: padding-top 0.01s ease-out;
     }
     
     /* Hide navigator until it's defined */
@@ -53,6 +53,27 @@
   // Track loading state
   let componentsLoaded = false;
 
+  // Pre-load fonts to prevent FOUC and text reflow
+  const fontLoadPromise = Promise.all([
+    // Load Open Sans Regular
+    new FontFace('Open Sans', 'url("./assets/OpenSans-VariableFont_wdth,wght.ttf")', {
+      style: 'normal',
+      weight: '300 800',
+    }).load(),
+
+    // Load Open Sans Italic
+    new FontFace('Open Sans Italic', 'url("./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf")', {
+      style: 'italic',
+      weight: '300 800'
+    }).load()
+  ]).then(fonts => {
+    // Add fonts to document
+    fonts.forEach(font => document.fonts.add(font));
+    console.debug('Fonts loaded successfully');
+  }).catch(error => {
+    console.warn('Error loading fonts:', error);
+  });
+
   // Set a timeout to remove the style if loading takes too long
   const fallbackTimer = setTimeout(() => {
     if (!componentsLoaded) {
@@ -69,6 +90,9 @@
 
     // Import the library using the base path
     const FrenzyUI = await import(`${basePath}lib/index.js`);
+
+    // Wait for fonts to load before initializing
+    await fontLoadPromise;
 
     // Initialize the library
     await FrenzyUI.initialize();
