@@ -1,7 +1,7 @@
 import { html, render } from '../../lib/html/lit-html.js';
 import { unsafeHTML } from '../../lib/html/unsafe-html.js';
 import Component from '../../lib/component.js';
-import buttonStyles from './fz-button.css' with { type: 'css' };
+import { buttonStyles } from './fz-button.css.js';
 
 /**
  * FZ Button Component
@@ -12,7 +12,7 @@ export class FzButton extends Component {
     #colorScheme = 'primary';
 
     constructor() {
-        // Apply styles immediately through the base component
+        // Pass the CSS string to the base component
         super([buttonStyles]);
         
         // Set defaults that might be overridden by attributes

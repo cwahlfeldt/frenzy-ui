@@ -9,23 +9,20 @@
     /* Hide custom elements while loading to prevent FOUC */
     @font-face {
       font-family: "Open Sans";
-      src: url("../assets/fonts/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
+      src: url("./assets/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
       font-optical-sizing: auto;
       font-weight: 300 800;
       font-style: normal;
-      font-variation-settings:
-          "wdth" 100;
+      font-variation-settings: "wdth" 100;
     }
     
     @font-face {
-        font-family: "Open Sans Italic";
-        src: url("../assets/fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
-        font-optical-sizing: auto;
-        font-weight: 300 800;
-        font-style: normal;
-        font-variation-settings:
-            "wdth" 100;
-        font-style: italic;
+      font-family: "Open Sans Italic";
+      src: url("./assets/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
+      font-optical-sizing: auto;
+      font-weight: 300 800;
+      font-style: italic;
+      font-variation-settings: "wdth" 100;
     }
     
     :not(:defined) {

@@ -1,6 +1,6 @@
 import { html, render } from '../../lib/html/lit-html.js';
 import Component from '../../lib/component.js';
-import navigatorStyles from './fz-navigator.css' with { type: 'css' };
+import { navigatorStyles } from './fz-navigator.css.js';
 
 /**
  * FZ Navigator Component
@@ -18,6 +18,7 @@ export class FzNavigator extends Component {
 
   constructor() {
     // Apply styles immediately through the base component
+    // Pass the CSS string to the base component
     super([navigatorStyles]);
     
     // Add initializing class early to document for layout reservation
@@ -111,7 +112,7 @@ export class FzNavigator extends Component {
         </div>
       </div>
     `;
-
+    
     // Render to shadow DOM
     render(template, this.shadowRoot);
   }

@@ -1,5 +1,6 @@
+// Button component styles
+export const buttonStyles = /*css*/`
 /* FzButton Styles */
-
 :host {
     display: inline-block;
     /* Ensure smoother opacity transitions */
@@ -117,3 +118,6 @@
 .ghost:hover:not([disabled]):not([aria-disabled="true"]) {
     background-color: var(--fz-button-ghost-hover-bg, rgba(0, 102, 204, 0.1));
 }
+`;
+
+export default buttonStyles;

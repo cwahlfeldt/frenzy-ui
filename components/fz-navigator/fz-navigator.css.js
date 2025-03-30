@@ -1,3 +1,5 @@
+// Navigator component styles
+export const navigatorStyles = /*css*/`
 :host {
     --bg-color: #fab387;
     --black: #000000;
@@ -259,3 +261,6 @@
 .logo-slot a {
     line-height: 0;
 }
+`;
+
+export default navigatorStyles;
