@@ -1,105 +1,90 @@
 // Frenzy UI Library Entry Point
 // This file serves as the main entry point for using the library with a single script tag
 
-// This is a self-executing function to create a module scope
-(async function () {
-  // Store the script path early, before entering async context
-  const scriptPath = document.currentScript?.src || '';
-  const basePath = scriptPath ? scriptPath.substring(0, scriptPath.lastIndexOf('/') + 1) : './';
+// Add fade-in class to document immediately
+document.documentElement.classList.add('frenzy-loading');
 
-  // Pre-emptively add style to hide uninitialized elements and reserve layout space
-  const styleEl = document.createElement('style');
-  styleEl.textContent = /*css*/`
-    /* Hide custom elements while loading to prevent FOUC */
+// Add critical styles for fade-in
+(function () {
+  const fadeStyle = document.createElement('style');
+
+  fadeStyle.id = 'frenzy-fade-style';
+  fadeStyle.textContent = /*css*/`
+    /* Initial loading state - everything hidden */
+    .frenzy-loading {
+      opacity: 0;
+      transition: none;
+    }
+    
+    /* Fade-in transition when ready */
+    .frenzy-ready {
+      opacity: 1;
+      transition: opacity 0.2s ease-out;
+    }
+
     @font-face {
       font-family: "Open Sans";
-      src: url("${basePath}assets/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
+      src: url("/assets/OpenSans-VariableFont_wdth,wght.ttf") format("truetype");
       font-optical-sizing: auto;
       font-weight: 300 800;
       font-style: normal;
       font-variation-settings: "wdth" 100;
+      font-display: swap;
     }
     
     @font-face {
       font-family: "Open Sans Italic";
-      src: url("${basePath}assets/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
+      src: url("/assets/OpenSans-Italic-VariableFont_wdth,wght.ttf") format("truetype");
       font-optical-sizing: auto;
       font-weight: 300 800;
       font-style: italic;
       font-variation-settings: "wdth" 100;
-    }
-    
-    :not(:defined) {
-      opacity: 0 !important;
-      visibility: hidden;
+      font-display: swap;
     }
     
     /* Reserve space for navigator component */
     body {
-      font-family: var(--font-family);
       padding-top: var(--fz-navigator-height, 67.5px);
     }
     
-    /* Add transition only when not in performance testing mode */
+    /* No transitions during initial load */
     html body {
-      transition: padding-top 0.2s ease-out;
-    }
-    
-    /* Hide navigator until it's defined */
-    fz-navigator:not(:defined) {
-      display: block;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: var(--fz-navigator-height, 67.5px);
-      z-index: 1000;
+      font-family: var(--fz-font-family-base);
     }
   `;
-  document.head.appendChild(styleEl);
+  document.head.insertBefore(fadeStyle, document.head.firstChild);
+})();
 
-  // Simple parallel loading approach
+// This is a self-executing function to create a module scope
+(async function () {
+
   try {
-    // Start loading fonts immediately
-    const fontPromise = Promise.all([
-      // Load Open Sans Regular
-      new FontFace('Open Sans', `url("${basePath}assets/OpenSans-VariableFont_wdth,wght.ttf")`, {
-        style: 'normal',
-        weight: '300 800',
-      }).load(),
 
-      // Load Open Sans Italic
-      new FontFace('Open Sans Italic', `url("${basePath}assets/OpenSans-Italic-VariableFont_wdth,wght.ttf")`, {
-        style: 'italic',
-        weight: '300 800'
-      }).load()
-    ]).then(fonts => {
-      // Add fonts to document
-      fonts.forEach(font => document.fonts.add(font));
-      return fonts;
-    });
-
-    // Load the library in parallel with fonts
-    const FrenzyUI = await import(`${basePath}lib/index.js`);
-
-    // Ensure fonts are loaded before initializing
-    await fontPromise;
-
-    // Initialize the library - this is now faster with the optimized initialize() function
+    // Load and initialize the library
+    const FrenzyUI = await import(`./lib/index.js`);
     await FrenzyUI.initialize();
 
     // Make the library available globally
     window.FrenzyUI = FrenzyUI;
 
-    // No delays if transitions are disabled
-    styleEl.remove();
+    // Wait for next frame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      // Allow layout to stabilize
+      setTimeout(() => {
+        // Change from loading to ready state (this will trigger the fade-in)
+        document.documentElement.classList.remove('frenzy-loading');
+        document.documentElement.classList.add('frenzy-ready');
 
-    // Dispatch event when ready
-    window.dispatchEvent(new CustomEvent('frenzy-ui-ready'));
+        // Dispatch the ready event
+        window.dispatchEvent(new CustomEvent('frenzy-ui-ready'));
+      }, 50); // Short delay to ensure components are rendered
+    });
 
   } catch (error) {
     console.error('Failed to load Frenzy UI library:', error);
-    // Remove style element on error to prevent permanent styling issues
-    styleEl.remove();
+
+    // Show the page even if there's an error
+    document.documentElement.classList.remove('frenzy-loading');
+    document.documentElement.classList.add('frenzy-ready');
   }
 })();

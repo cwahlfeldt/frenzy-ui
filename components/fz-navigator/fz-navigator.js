@@ -196,13 +196,12 @@ export class FzNavigator extends Component {
    * Initialize component functionality after render
    */
   initialize() {
-    // Render the initial structure
+    // Render the initial structure immediately
     this.render();
 
-    // Calculate and apply navigator height
-    const navigatorHeight = getComputedStyle(this).getPropertyValue('--navigator-height') || '67.5px';
-    const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : 
-      (getComputedStyle(this).getPropertyValue('--eyebrow-height') || '36px');
+    // Calculate and apply navigator height - use cached values when possible
+    const navigatorHeight = '67.5px'; // Default value used directly to avoid getComputedStyle
+    const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
     
     const totalHeight = `calc(${navigatorHeight} + ${eyebrowHeight})`;
 

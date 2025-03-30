@@ -17,9 +17,9 @@ export const navigatorStyles = /*css*/`
     --eyebrow-text-color: #ffffff;
     --eyebrow-hover-color: #fab387;
     
-    /* Ensure smoother opacity transitions for FOUC prevention */
+    /* Ensure immediate visibility without transition for FOUC prevention */
     display: block;
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 .navigator-component {
