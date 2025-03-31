@@ -2,12 +2,12 @@ import { html, render } from '../../lib/html/lit-html.js';
 import { unsafeHTML } from '../../lib/html/unsafe-html.js';
 import Component from '../../lib/component.js';
 import { navigatorStyles } from './fz-navigator.css.js';
-import { 
-  DEFAULT_MENU, 
-  parseMenuData, 
-  createPrimaryMenuHTML, 
-  createSecondaryMenuHTML, 
-  createEyebrowMenuHTML 
+import {
+  DEFAULT_MENU,
+  parseMenuData,
+  createPrimaryMenuHTML,
+  createSecondaryMenuHTML,
+  createEyebrowMenuHTML
 } from './fz-navigator-menu.js';
 
 /**
@@ -65,10 +65,10 @@ export class FzNavigator extends Component {
     const primaryMenuHTML = createPrimaryMenuHTML(this.#menuData.primary);
     const secondaryMenuHTML = createSecondaryMenuHTML(this.#menuData.secondary);
     const eyebrowMenuHTML = createEyebrowMenuHTML(this.#menuData.eyebrow);
-    
+
     // Mobile primary menu
     const mobilePrimaryMenuHTML = createPrimaryMenuHTML(this.#menuData.primary, false);
-    
+
     const template = html`
       <div class="navigator-component">
         <!-- Eyebrow Menu -->
@@ -107,11 +107,16 @@ export class FzNavigator extends Component {
               <div class="navigator-actions">
                 <!-- Search button slot with default -->
                 <button class="search-btn default-search-btn" aria-label="Search">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="10" cy="10" r="8"></circle>
-                    <line x1="22" y1="22" x2="16" y2="16"></line>
-                  </svg>
-                </button>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="10" cy="10" r="8"></circle>
+                  <line x1="22" y1="22" x2="16" y2="16"></line>
+                </svg>
+              </button>
+                <div class="search-container">
+                  <form class="search-form">
+                    <input type="text" placeholder="Search..." class="search-input">
+                  </form>
+                </div>
                 
                 <!-- Menu toggle button -->
                 <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
@@ -182,15 +187,15 @@ export class FzNavigator extends Component {
       } else {
         this.#eyebrowContainer.style.display = '';
       }
-      
+
       // Only update padding if not using static positioning
       if (this.getAttribute('position-type') !== 'static') {
         // Recalculate padding
         const navigatorHeight = '67.5px';
         const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
-        
+
         document.body.style.paddingTop = `calc(${navigatorHeight} + ${eyebrowHeight})`;
-        
+
         // Update navigator wrapper position
         if (this.#navigatorWrapper) {
           if (this.hasAttribute('hide-eyebrow')) {
@@ -199,7 +204,7 @@ export class FzNavigator extends Component {
             this.#navigatorWrapper.style.top = 'calc(var(--navigator-height) + var(--eyebrow-height))';
           }
         }
-        
+
         // Update navigator position
         const navigator = this.shadowRoot.querySelector('.navigator');
         if (navigator) {
@@ -225,34 +230,24 @@ export class FzNavigator extends Component {
 
     // Check position type and apply appropriate layout
     const isStatic = this.getAttribute('position-type') === 'static';
-    
+
     if (!isStatic) {
       // Calculate and apply navigator height for fixed position (default)
       const navigatorHeight = '67.5px'; // Default value used directly to avoid getComputedStyle
       const eyebrowHeight = this.hasAttribute('hide-eyebrow') ? '0px' : '36px';
-      
+
       const totalHeight = `calc(${navigatorHeight} + ${eyebrowHeight})`;
-  
+
       // Add body class for mobile nav spacing with precise height
       document.body.classList.add('has-navigator');
       document.body.style.paddingTop = totalHeight;
     }
-    
-    // Apply position type settings
-    this.updatePositionType();
-
-    // Remove the initializing class to allow normal flow
-    document.documentElement.classList.remove('fz-navigator-initializing');
-
-    // Get elements after rendering
-    this.#menuToggle = this.shadowRoot.querySelector('.menu-toggle');
-    this.#navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
-    this.#searchBtn = this.shadowRoot.querySelector('.search-btn');
-    this.#desktopNavItems = this.shadowRoot.querySelector('.desktop-nav-container');
-    this.#eyebrowContainer = this.shadowRoot.querySelector('.eyebrow-container');
 
     // Create search container if it doesn't exist
     this.setupSearchElements();
+
+    // Apply position type settings (this needs to happen after search setup)
+    this.updatePositionType();
 
     // Attach event listeners
     this.addEventListeners();
@@ -263,6 +258,9 @@ export class FzNavigator extends Component {
     // Apply eyebrow visibility
     this.updateEyebrowVisibility();
 
+    // Remove the initializing class to allow normal flow
+    document.documentElement.classList.remove('fz-navigator-initializing');
+
     // Mark component as fully initialized
     this.classList.add('fz-navigator-initialized');
   }
@@ -271,25 +269,26 @@ export class FzNavigator extends Component {
    * Set up search elements
    */
   setupSearchElements() {
-    // Create search container
-    this.#searchContainer = document.createElement('div');
-    this.#searchContainer.className = 'search-container';
-    this.#searchContainer.innerHTML = /*html*/`
-      <form class="search-form">
-        <input type="text" placeholder="Search..." class="search-input">
-        <button type="submit" class="search-submit">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="10" cy="10" r="8"></circle>
-            <line x1="22" y1="22" x2="16" y2="16"></line>
-          </svg>
-        </button>
-      </form>
-    `;
+    // // Create search container
+    // this.#searchContainer = document.createElement('div');
+    // this.#searchContainer.className = 'search-container';
+    // this.#searchContainer.innerHTML = /*html*/`
+    //   <form class="search-form">
+    //     <input type="text" placeholder="Search..." class="search-input">
+    //     <button type="submit" class="search-submit">
+    //       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    //         <circle cx="10" cy="10" r="8"></circle>
+    //         <line x1="22" y1="22" x2="16" y2="16"></line>
+    //       </svg>
+    //     </button>
+    //   </form>
+    // `;
 
-    // Add to shadow DOM
-    this.shadowRoot.querySelector('.navigator-actions').prepend(this.#searchContainer);
+    // // Add to shadow DOM
+    // this.shadowRoot.querySelector('.navigator-actions').prepend(this.#searchContainer);
 
-    // Get search input element
+    // // Get search input element
+    this.#searchContainer = this.shadowRoot.querySelector('.search-container');
     this.#searchInput = this.#searchContainer.querySelector('.search-input');
     this.#searchForm = this.#searchContainer.querySelector('.search-form');
   }
@@ -347,18 +346,20 @@ export class FzNavigator extends Component {
   toggleMenu() {
     this.#isOpen = !this.#isOpen;
     this.#menuToggle.classList.toggle('active');
-    
-    // Get position type
-    const isStatic = this.getAttribute('position-type') === 'static';
-    
-    if (isStatic) {
-      // For static positioning, use display instead of transform
-      this.#navigatorWrapper.style.display = this.#isOpen ? 'block' : 'none';
-    } else {
-      // For fixed positioning, use transform as before
-      this.#navigatorWrapper.classList.toggle('active');
+
+    // Both static and fixed use the same animation style with transform and active class
+    this.#navigatorWrapper.classList.toggle('active');
+
+    // Ensure transform is applied consistently (direct style has priority over CSS classes)
+    this.#navigatorWrapper.style.transform = this.#isOpen ? 'translateX(0)' : 'translateX(100%)';
+
+    // For fixed position only, toggle body class
+    if (this.getAttribute('position-type') !== 'static') {
       document.body.classList.toggle('navigator-is-open');
     }
+
+    // Force a reflow to ensure visual changes take effect immediately
+    void this.#navigatorWrapper.offsetWidth;
 
     // Update aria-expanded
     this.#menuToggle.setAttribute('aria-expanded', this.#isOpen);
@@ -460,7 +461,7 @@ export class FzNavigator extends Component {
       document.body.classList.remove('has-navigator');
       document.body.style.paddingTop = '0';
     }
-    
+
     document.body.classList.remove('navigator-is-open');
     document.documentElement.classList.remove('fz-navigator-initializing');
 
@@ -488,21 +489,21 @@ export class FzNavigator extends Component {
    */
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
-    
+
     if (name === 'hide-desktop-nav' && this.#desktopNavItems) {
       if (this.hasAttribute('hide-desktop-nav')) {
         this.#desktopNavItems.style.display = 'none';
       } else {
         this.#desktopNavItems.style.display = '';
       }
-    } 
+    }
     else if (name === 'hide-eyebrow') {
       this.updateEyebrowVisibility();
     }
     else if (name === 'menu-data') {
       this.#menuData = parseMenuData(newValue);
       this.render();
-      
+
       // Re-setup accordion after render
       requestAnimationFrame(() => {
         this.setupAccordion();
@@ -521,12 +522,15 @@ export class FzNavigator extends Component {
     const navigatorElement = this.shadowRoot.querySelector('.navigator');
     const eyebrowElement = this.shadowRoot.querySelector('.eyebrow-container');
     const wrapperElement = this.shadowRoot.querySelector('.navigator-wrapper');
-    
+
     if (!navigatorElement) return;
-    
+
+    // Store current state before updating
+    const wasOpen = this.#isOpen;
+
     // Get position type (fixed or static)
     const isStatic = this.getAttribute('position-type') === 'static';
-    
+
     // Update navigation components
     if (isStatic) {
       // Static positioning
@@ -537,19 +541,24 @@ export class FzNavigator extends Component {
         eyebrowElement.style.top = '0';
       }
       if (wrapperElement) {
+        // Reset all CSS classes first to avoid conflicts
+        wrapperElement.className = 'navigator-wrapper';
+        wrapperElement.classList.add('static-wrapper');
+
+        // Configure for static positioning
         wrapperElement.style.position = 'absolute';
         wrapperElement.style.top = '100%';
         wrapperElement.style.height = 'auto';
         wrapperElement.style.maxHeight = '80vh';
-        
-        // Reset transform since we'll use different animation approach
+
+        // Use display-based animation for static position
         wrapperElement.style.transform = '';
         wrapperElement.style.display = this.#isOpen ? 'block' : 'none';
       }
-      
+
       // Remove body padding for static navigator
       document.body.style.paddingTop = '0';
-      
+
       // Add position relative to host for correct stacking context
       this.style.position = 'relative';
       this.style.zIndex = '100';
@@ -562,26 +571,52 @@ export class FzNavigator extends Component {
         eyebrowElement.style.top = '0';
       }
       if (wrapperElement) {
+        // Reset all CSS classes first to avoid conflicts
+        wrapperElement.className = 'navigator-wrapper';
+
+        // Configure for fixed positioning
         wrapperElement.style.position = 'fixed';
         wrapperElement.style.top = 'calc(var(--navigator-height) + var(--eyebrow-height))';
         wrapperElement.style.height = 'calc(100vh - var(--navigator-height) - var(--eyebrow-height))';
+
+        // Clear any inline display style
         wrapperElement.style.display = '';
-        
-        // Reset to transform-based animation
+
+        // Add active class if menu is open
+        if (this.#isOpen) {
+          wrapperElement.classList.add('active');
+        }
+
+        // Apply transform based on current state - important to override CSS
         wrapperElement.style.transform = this.#isOpen ? 'translateX(0)' : 'translateX(100%)';
-        
+
+        // Force a reflow to ensure visual changes take effect
+        void wrapperElement.offsetWidth;
+
         if (this.hasAttribute('hide-eyebrow')) {
           wrapperElement.style.top = 'var(--navigator-height)';
           wrapperElement.style.height = 'calc(100vh - var(--navigator-height))';
         }
       }
-      
+
       // Reset host positioning
       this.style.position = '';
       this.style.zIndex = '';
-      
+
       // Restore body padding for fixed navigator
       this.updateEyebrowVisibility(); // This will also update body padding
+    }
+
+    // Restore menu state if it was open before the update
+    if (wasOpen) {
+      if (isStatic) {
+        // For static, use display
+        wrapperElement.style.display = 'block';
+      } else {
+        // For fixed, use transform and class
+        wrapperElement.classList.add('active');
+        wrapperElement.style.transform = 'translateX(0)';
+      }
     }
   }
 }

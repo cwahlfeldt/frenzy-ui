@@ -329,9 +329,10 @@ export const navigatorStyles = /*css*/`
     transform: translateX(100%);
     transition: transform var(--transition-speed) ease;
     z-index: 999;
-    pointer-events: none;
+    pointer-events: auto; /* Change to auto to ensure clicks work */
     overflow-y: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    will-change: transform; /* Optimize performance */
 }
 
 :host([hide-eyebrow]) .navigator-wrapper {
@@ -340,18 +341,30 @@ export const navigatorStyles = /*css*/`
 }
 
 .navigator-wrapper.active {
-    transform: translateX(0);
+    transform: translateX(0) !important;
     pointer-events: auto;
 }
 
-/* Styles for static navigator drawer */
-:host([position-type="static"]) .navigator-wrapper {
-    transform: none;
-    transition: none;
-    display: none;
+/* Styles for static navigator drawer - same slide effect as fixed */
+.navigator-wrapper.static-wrapper {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    transform: translateX(100%);
+    transition: transform var(--transition-speed) ease;
     pointer-events: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 0 0 4px 4px;
+    overflow-y: auto;
+    width: 100%;
+    max-height: 80vh;
+    will-change: transform;
+    z-index: 100;
+}
+
+/* Active state for static wrapper - use same animation as fixed */
+.navigator-wrapper.static-wrapper.active {
+    transform: translateX(0) !important;
 }
 
 @media (min-width: 992px) {
