@@ -23,21 +23,19 @@ export const navigatorStyles = /*css*/`
 }
 
 .navigator-component {
-    font-family: var(--font-family);
-}
-
-/* Eyebrow Menu */
-.eyebrow-container {
-    background-color: var(--eyebrow-bg-color);
-    color: var(--eyebrow-text-color);
-    padding: 0.5rem 1.5rem;
-    font-size: 0.85rem;
+    font-family: var(--fz-font-family);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1001;
-    height: var(--eyebrow-height);
+}
+
+/* Eyebrow Menu */
+.eyebrow-container {
+    background-color: var(--fz-navigator-eyebrow-bg-color);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.85rem;
 }
 
 .eyebrow-menu {
@@ -54,24 +52,20 @@ export const navigatorStyles = /*css*/`
 
 .eyebrow-menu a {
     color: var(--eyebrow-text-color);
+    color: var(--fz-navigator-eyebrow-text-color);
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 .eyebrow-menu a:hover {
-    color: var(--eyebrow-hover-color);
+    color: var(--fz-navigator-eyebrow-hover-color);
 }
 
 /* Main Navigation */
 .navigator {
     background-color: var(--bg-color);
     padding: 0.5rem 1.5rem;
-    position: fixed;
-    top: var(--eyebrow-height);
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    max-height: var(--navigator-height);
+    max-height: var(--fz-navigator-height);
 }
 
 :host([hide-eyebrow]) .navigator {
