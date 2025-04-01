@@ -1,4 +1,4 @@
-import { html, render } from '../../lib/html/lit-html.js';
+import { html, render, nothing } from '../../lib/html/lit-html.js';
 import { unsafeHTML } from '../../lib/html/unsafe-html.js';
 import Component from '../../lib/component.js';
 import { navigatorStyles } from './fz-navigator.css.js';
@@ -23,8 +23,6 @@ export class FzNavigator extends Component {
   #searchContainer = null;
   #searchInput = null;
   #searchForm = null;
-  #desktopNavItems = null;
-  #eyebrowContainer = null;
 
   // Menu data
   #menuData = DEFAULT_MENU;
@@ -74,8 +72,6 @@ export class FzNavigator extends Component {
     this.#menuToggle = this.shadowRoot.querySelector('.menu-toggle');
     this.#navigatorWrapper = this.shadowRoot.querySelector('.navigator-wrapper');
     this.#searchBtn = this.shadowRoot.querySelector('.search-btn');
-    this.#desktopNavItems = this.shadowRoot.querySelector('.desktop-nav-container');
-    this.#eyebrowContainer = this.shadowRoot.querySelector('.eyebrow-container');
     this.#searchContainer = this.shadowRoot.querySelector('.search-container');
     this.#searchInput = this.#searchContainer.querySelector('.search-input');
     this.#searchForm = this.#searchContainer.querySelector('.search-form');
@@ -285,18 +281,21 @@ export class FzNavigator extends Component {
     const secondaryMenuHTML = createSecondaryMenuHTML(this.#menuData?.secondary);
     const eyebrowMenuHTML = createEyebrowMenuHTML(this.#menuData?.eyebrow);
     const mobilePrimaryMenuHTML = createPrimaryMenuHTML(this.#menuData?.primary, false);
-    const eyebrowSlot = this.shadowRoot.querySelector()
+    const eyebrowSlot = this.shadowRoot.querySelector('slot[name=eyebrow-slot]')
+    const eyebrowSlotFilled = eyebrowSlot ? eyebrowSlot.assignedNodes().length > 0 : false;
+    console.log(eyebrowSlotFilled)
 
     const template = html`
         <section class="navigator-component">
           <!-- Eyebrow Menu -->
-          ${(eyebrowMenuHTML) && html`
-          <div class="eyebrow-container">
-            <div class="container">
-              ${unsafeHTML(eyebrowMenuHTML)}
-              <slot name="eyebrow-slot"></slot>
-            </div>
-          </div>`
+          ${(eyebrowSlotFilled || eyebrowMenuHTML) ? html`
+            <div class="eyebrow-container">
+              <div class="container">
+                <slot name="eyebrow-slot">
+                  ${eyebrowMenuHTML ? unsafeHTML(eyebrowMenuHTML) : nothing}
+                </slot>
+              </div>
+            </div>` : nothing
       }
           
           <!-- Main Navigation -->
