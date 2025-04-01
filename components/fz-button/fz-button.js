@@ -14,7 +14,7 @@ export class FzButton extends Component {
     constructor() {
         // Pass the CSS string to the base component
         super([buttonStyles]);
-        
+
         // Set defaults that might be overridden by attributes
         this.#iconPosition = this.getAttribute('icon-position') || 'left';
         this.#colorScheme = this.getAttribute('color-scheme') || 'primary';

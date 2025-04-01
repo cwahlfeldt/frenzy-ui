@@ -1,25 +1,32 @@
 // Frenzy UI Library Entry Point
 // This file serves as the main entry point for using the library with a single script tag
 
-// Add fade-in class to document immediately
-document.documentElement.classList.add('frenzy-loading');
+document.documentElement.classList.add('fz-loading');
 
-// Add critical styles for fade-in
 (function () {
   const fadeStyle = document.createElement('style');
 
-  fadeStyle.id = 'frenzy-fade-style';
+  fadeStyle.id = 'fz-fade-style';
   fadeStyle.textContent = /*css*/`
-    /* Initial loading state - everything hidden */
-    .frenzy-loading {
+    .fz-loading {
       opacity: 0;
       transition: none;
     }
-    
-    /* Fade-in transition when ready */
-    .frenzy-ready {
+
+    .fz-ready {
       opacity: 1;
-      transition: opacity 0.2s ease-out;
+    }
+
+    @-moz-document url-prefix() {
+      .fz-ready {
+        opacity: 1;
+        transition: opacity 100ms ease-in;
+      }
+    }
+
+    body {
+      padding-top: var(--fz-navigator-height);
+      font-family: "Open Sans", sans-serif;
     }
 
     @font-face {
@@ -61,11 +68,11 @@ document.documentElement.classList.add('frenzy-loading');
       // Allow layout to stabilize
       setTimeout(() => {
         // Change from loading to ready state (this will trigger the fade-in)
-        document.documentElement.classList.remove('frenzy-loading');
-        document.documentElement.classList.add('frenzy-ready');
+        document.documentElement.classList.remove('fz-loading');
+        document.documentElement.classList.add('fz-ready');
 
         // Dispatch the ready event
-        window.dispatchEvent(new CustomEvent('frenzy-ui-ready'));
+        window.dispatchEvent(new CustomEvent('fz-ui-ready'));
       }, 50); // Short delay to ensure components are rendered
     });
 
@@ -73,7 +80,7 @@ document.documentElement.classList.add('frenzy-loading');
     console.error('Failed to load Frenzy UI library:', error);
 
     // Show the page even if there's an error
-    document.documentElement.classList.remove('frenzy-loading');
-    document.documentElement.classList.add('frenzy-ready');
+    document.documentElement.classList.remove('fz-loading');
+    document.documentElement.classList.add('fz-ready');
   }
 })();

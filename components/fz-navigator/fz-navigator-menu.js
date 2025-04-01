@@ -2,6 +2,8 @@
  * FZ Navigator Menu - Helper module for handling menu data and rendering
  */
 
+import { html } from '../../lib/html/lit-html.js';
+
 /**
  * Default menu structure
  */
@@ -64,92 +66,95 @@ export function parseMenuData(data) {
 }
 
 /**
- * Create HTML for the primary menu (horizontal desktop nav)
+ * Create lit-html template for the primary menu (horizontal desktop nav)
  * @param {Array} items - Menu items
  * @param {boolean} isDesktop - Whether this is for desktop view
- * @returns {string} HTML for the menu
+ * @returns {TemplateResult} Lit-html template for the menu
  */
-export function createPrimaryMenuHTML(items, isDesktop = true) {
+export function createPrimaryMenu(items, isDesktop = true) {
   if (!items || !items.length) {
-    return '';
+    return html``;
   }
 
   const containerClass = isDesktop ? 'desktop-nav-items' : 'mobile-nav-items';
 
-  let html = `<ul class="${containerClass}">`;
-
-  items.forEach(item => {
+  return html`
+    <ul class="${containerClass}">
+      ${items.map(item => {
     const hasChildren = item.children && item.children.length > 0;
     const itemClass = hasChildren ? 'menu-item-has-children' : '';
 
-    html += `<li class="${itemClass}">`;
-    html += `<a href="${item.url || '#'}">${item.label}</a>`;
-
-    if (hasChildren) {
-      html += '<ul class="sub-menu">';
-      item.children.forEach(child => {
-        html += `<li><a href="${child.url || '#'}">${child.label}</a></li>`;
-      });
-      html += '</ul>';
-    }
-
-    html += '</li>';
-  });
-
-  html += '</ul>';
-  return html;
+    return html`
+          <li class="${itemClass}">
+            <a href="${item.url || '#'}">${item.label}</a>
+            ${hasChildren ?
+        html`
+                <ul class="sub-menu">
+                  ${item.children.map(child => html`
+                    <li><a href="${child.url || '#'}">${child.label}</a></li>
+                  `)}
+                </ul>
+              ` :
+        null
+      }
+          </li>
+        `;
+  })}
+    </ul>
+  `;
 }
 
 /**
- * Create HTML for the secondary menu (drawer menu)
+ * Create lit-html template for the secondary menu (drawer menu)
  * @param {Array} items - Menu items
- * @returns {string} HTML for the menu
+ * @returns {TemplateResult} Lit-html template for the menu
  */
-export function createSecondaryMenuHTML(items) {
+export function createSecondaryMenu(items) {
   if (!items || !items.length) {
-    return '';
+    return html``;
   }
 
-  let html = '<ul class="navigator-items secondary-menu">';
-
-  items.forEach(item => {
+  return html`
+    <ul class="navigator-items secondary-menu">
+      ${items.map(item => {
     const hasChildren = item.children && item.children.length > 0;
     const itemClass = hasChildren ? 'menu-item-has-children' : '';
 
-    html += `<li class="${itemClass}">`;
-    html += `<a href="${item.url || '#'}">${item.label}</a>`;
-
-    if (hasChildren) {
-      html += '<ul class="sub-menu">';
-      item.children.forEach(child => {
-        html += `<li><a href="${child.url || '#'}">${child.label}</a></li>`;
-      });
-      html += '</ul>';
-    }
-
-    html += '</li>';
-  });
-
-  html += '</ul>';
-  return html;
+    return html`
+          <li class="${itemClass}">
+            <a href="${item.url || '#'}">${item.label}</a>
+            ${hasChildren ?
+        html`
+                <ul class="sub-menu">
+                  ${item.children.map(child => html`
+                    <li><a href="${child.url || '#'}">${child.label}</a></li>
+                  `)}
+                </ul>
+              ` :
+        null
+      }
+          </li>
+        `;
+  })}
+    </ul>
+  `;
 }
 
 /**
- * Create HTML for the eyebrow menu (top utility links)
+ * Create lit-html template for the eyebrow menu (top utility links)
  * @param {Array} items - Menu items
- * @returns {string} HTML for the menu
+ * @returns {TemplateResult} Lit-html template for the menu
  */
-export function createEyebrowMenuHTML(items) {
+export function createEyebrowMenu(items) {
   if (!items || !items.length) {
-    return '';
+    return html``;
   }
 
-  let html = '<ul class="eyebrow-menu">';
-
-  items.forEach(item => {
-    html += `<li><a href="${item.url || '#'}">${item.label}</a></li>`;
-  });
-
-  html += '</ul>';
-  return html;
+  return html`
+    <ul class="eyebrow-menu">
+      ${items.map(item => html`
+        <li><a href="${item.url || '#'}">${item.label}</a></li>
+      `)}
+    </ul>
+  `;
 }

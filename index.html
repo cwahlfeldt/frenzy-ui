@@ -11,345 +11,194 @@
 
     <link rel="preload" href="frenzy-ui.js" as="script" />
     <script src="frenzy-ui.js"></script>
-
-    <style>
-      body {
-        padding-top: var(--fz-navigator-height);
-        font-family: "Open Sans", sans-serif;
-      }
-
-      .content {
-        padding: 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-
-      .section {
-        margin: 3rem 0;
-        padding: 2rem;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-      }
-
-      .button-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 1.5rem 0;
-      }
-
-      h1 {
-        font-size: 2.5rem;
-        margin: 0.5rem 0;
-      }
-
-      h2 {
-        font-size: 1.8rem;
-        margin: 2rem 0 1rem;
-      }
-
-      p {
-        margin: 1rem 0;
-        max-width: 800px;
-      }
-
-      code {
-        background: #f1f1f1;
-        padding: 0.2em 0.4em;
-        border-radius: 3px;
-        font-family: monospace;
-        font-size: 0.9em;
-      }
-
-      /* Custom navigator styles */
-      .custom-menu {
-        padding: 1rem 2rem;
-      }
-
-      /* Custom styling for horizontal nav items */
-      .nav-items {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-      }
-
-      .nav-items li {
-        margin: 0 1rem;
-      }
-
-      .nav-items a {
-        color: #4a2c82;
-        text-decoration: none;
-        font-weight: 600;
-        padding: 0.5rem 0;
-        position: relative;
-        display: block;
-      }
-
-      .nav-items a::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 0;
-        height: 2px;
-        background-color: #4a2c82;
-        transition: width 0.3s ease;
-      }
-
-      .nav-items a:hover::after {
-        width: 100%;
-      }
-
-      /* Drawer menu styles */
-      .navigator-items {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .navigator-items li {
-        margin-bottom: 1rem;
-      }
-
-      .navigator-items a {
-        color: #333;
-        text-decoration: none;
-        font-weight: 500;
-        display: block;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #ddd;
-      }
-
-      .sub-menu {
-        list-style: none;
-        padding-left: 1.5rem;
-        margin-top: 0.5rem;
-      }
-    </style>
   </head>
 
   <body>
     <!-- Navigator Component with JSON menu data -->
-    <fz-navigator id="mainNavigator">
-      <ul name="eyebrow-slot">
-        <li>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi rerum
-          fugiat hic neque illum sapiente repellat nesciunt in iusto mollitia.
-          Sequi odio quaerat, ea cum quis odit aspernatur nostrum quae.
-        </li>
-        <li>
-          Dolorem numquam suscipit ab adipisci, porro laudantium officiis culpa
-          cum ipsam fugiat rem delectus incidunt perferendis alias fugit quo
-          dolore veniam laboriosam praesentium! Reprehenderit accusantium, rerum
-          rem atque ullam corporis.
-        </li>
-        <li>
-          Ad cum iure incidunt accusantium eum doloremque, ullam libero officiis
-          neque iste mollitia eius aliquam odio reprehenderit! Voluptatibus
-          sequi nulla et eaque, eveniet, architecto eos quos asperiores
-          expedita, officiis quidem.
-        </li>
-        <li>
-          Sequi adipisci possimus blanditiis tempore nobis quam repellat itaque,
-          nemo totam nam exercitationem, maiores recusandae. Architecto at
-          eveniet repudiandae, quibusdam necessitatibus voluptate voluptatibus
-          odit explicabo expedita temporibus? Cum, officia nihil?
-        </li>
-        <li>
-          Et quas quasi animi eveniet? At voluptate aspernatur unde quas autem
-          veritatis ea consectetur dolorem? Dolores impedit iste quos recusandae
-          ratione reiciendis, optio quaerat voluptates, autem similique laborum
-          doloremque. Repellat.
-        </li>
-        <li>
-          Nostrum quis vero iusto fugit obcaecati ex placeat accusantium dolorum
-          distinctio soluta incidunt asperiores, ut quo quisquam corrupti
-          dolorem deserunt officia. Eveniet harum quos tempore rem, maiores odit
-          officiis dolor.
-        </li>
-      </ul>
-    </fz-navigator>
-
-    <div class="content">
-      <h1>Frenzy UI Components</h1>
-      <p>
-        A showcase of all available Frenzy UI components, demonstrating their
-        usage and customization options.
-      </p>
-
-      <section id="buttons" class="section">
-        <h2>Button Component</h2>
+    <fz-navigator id="mainNavigator"> </fz-navigator>
+    <main class="container">
+      <div class="content">
+        <h1>Frenzy UI Components</h1>
         <p>
-          The <code>fz-button</code> component provides a versatile,
-          customizable button with support for various styles, states, and icon
-          integration.
+          A showcase of all available Frenzy UI components, demonstrating their
+          usage and customization options.
         </p>
 
-        <h3>Color Schemes</h3>
-        <div class="button-group">
-          <fz-button>Default</fz-button>
-          <fz-button color-scheme="primary">Primary</fz-button>
-          <fz-button color-scheme="secondary">Secondary</fz-button>
-          <fz-button color-scheme="success">Success</fz-button>
-          <fz-button color-scheme="danger">Danger</fz-button>
-          <fz-button color-scheme="outline">Outline</fz-button>
-          <fz-button color-scheme="ghost">Ghost</fz-button>
-        </div>
+        <section id="buttons" class="section">
+          <h2>Button Component</h2>
+          <p>
+            The <code>fz-button</code> component provides a versatile,
+            customizable button with support for various styles, states, and
+            icon integration.
+          </p>
 
-        <h3>With Icons</h3>
-        <div class="button-group">
-          <fz-button icon="★">Star</fz-button>
-          <fz-button icon="→" icon-position="right">Next</fz-button>
-          <fz-button icon="🔍">Search</fz-button>
-          <fz-button icon="💾" icon-position="right">Save</fz-button>
-        </div>
-
-        <h3>With SVG Icons</h3>
-        <div class="button-group">
-          <fz-button
-            icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>'
-          >
-            Send
-          </fz-button>
-          <fz-button
-            icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>'
-            icon-position="right"
-            color-scheme="success"
-          >
-            Complete
-          </fz-button>
-        </div>
-
-        <h3>Link Buttons</h3>
-        <div class="button-group">
-          <fz-button href="#">Link</fz-button>
-          <fz-button
-            href="#"
-            icon="↗"
-            icon-position="right"
-            color-scheme="primary"
-            >External Link</fz-button
-          >
-          <fz-button href="#" color-scheme="outline">Documentation</fz-button>
-        </div>
-
-        <h3>States</h3>
-        <div class="button-group">
-          <fz-button disabled>Disabled Button</fz-button>
-          <fz-button href="#" disabled>Disabled Link</fz-button>
-        </div>
-
-        <h3>Form Buttons</h3>
-        <form id="demoForm">
+          <h3>Color Schemes</h3>
           <div class="button-group">
-            <fz-button type="submit" form="demoForm">Submit Form</fz-button>
-            <fz-button type="reset" form="demoForm" color-scheme="secondary"
-              >Reset Form</fz-button
+            <fz-button>Default</fz-button>
+            <fz-button color-scheme="primary">Primary</fz-button>
+            <fz-button color-scheme="secondary">Secondary</fz-button>
+            <fz-button color-scheme="success">Success</fz-button>
+            <fz-button color-scheme="danger">Danger</fz-button>
+            <fz-button color-scheme="outline">Outline</fz-button>
+            <fz-button color-scheme="ghost">Ghost</fz-button>
+          </div>
+
+          <h3>With Icons</h3>
+          <div class="button-group">
+            <fz-button icon="★">Star</fz-button>
+            <fz-button icon="→" icon-position="right">Next</fz-button>
+            <fz-button icon="🔍">Search</fz-button>
+            <fz-button icon="💾" icon-position="right">Save</fz-button>
+          </div>
+
+          <h3>With SVG Icons</h3>
+          <div class="button-group">
+            <fz-button
+              icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>'
+            >
+              Send
+            </fz-button>
+            <fz-button
+              icon='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>'
+              icon-position="right"
+              color-scheme="success"
+            >
+              Complete
+            </fz-button>
+          </div>
+
+          <h3>Link Buttons</h3>
+          <div class="button-group">
+            <fz-button href="#">Link</fz-button>
+            <fz-button
+              href="#"
+              icon="↗"
+              icon-position="right"
+              color-scheme="primary"
+              >External Link</fz-button
+            >
+            <fz-button href="#" color-scheme="outline">Documentation</fz-button>
+          </div>
+
+          <h3>States</h3>
+          <div class="button-group">
+            <fz-button disabled>Disabled Button</fz-button>
+            <fz-button href="#" disabled>Disabled Link</fz-button>
+          </div>
+
+          <h3>Form Buttons</h3>
+          <form id="demoForm">
+            <div class="button-group">
+              <fz-button type="submit" form="demoForm">Submit Form</fz-button>
+              <fz-button type="reset" form="demoForm" color-scheme="secondary"
+                >Reset Form</fz-button
+              >
+            </div>
+          </form>
+        </section>
+
+        <section id="navigator" class="section">
+          <h2>Navigator Component</h2>
+          <p>
+            The <code>fz-navigator</code> component provides a responsive
+            navigation system with hamburger menu, search functionality, and
+            customizable content.
+          </p>
+
+          <h3>Navigator Controls</h3>
+          <div class="button-group">
+            <fz-button
+              onClick="document.getElementById('mainNavigator').toggleMenu()"
+              >Toggle Menu</fz-button
+            >
+            <fz-button
+              onClick="document.getElementById('mainNavigator').toggleSearch()"
+              >Toggle Search</fz-button
+            >
+            <fz-button
+              onClick="document.getElementById('mainNavigator').toggleAttribute('hide-desktop-nav')"
+              >Toggle Desktop Nav</fz-button
+            >
+            <fz-button
+              onClick="document.getElementById('mainNavigator').toggleAttribute('hide-eyebrow')"
+              >Toggle Eyebrow</fz-button
             >
           </div>
-        </form>
-      </section>
 
-      <section id="navigator" class="section">
-        <h2>Navigator Component</h2>
-        <p>
-          The <code>fz-navigator</code> component provides a responsive
-          navigation system with hamburger menu, search functionality, and
-          customizable content.
-        </p>
+          <h3>JSON Menu Data</h3>
+          <p>
+            The navigator can now be configured using JSON data instead of HTML:
+          </p>
+          <pre><code id="menuDataDisplay"></code></pre>
+          <div class="button-group">
+            <fz-button onClick="setSimpleMenu()">Simple Menu</fz-button>
+            <fz-button onClick="setFullMenu()">Full Menu</fz-button>
+          </div>
 
-        <h3>Navigator Controls</h3>
-        <div class="button-group">
-          <fz-button
-            onClick="document.getElementById('mainNavigator').toggleMenu()"
-            >Toggle Menu</fz-button
-          >
-          <fz-button
-            onClick="document.getElementById('mainNavigator').toggleSearch()"
-            >Toggle Search</fz-button
-          >
-          <fz-button
-            onClick="document.getElementById('mainNavigator').toggleAttribute('hide-desktop-nav')"
-            >Toggle Desktop Nav</fz-button
-          >
-          <fz-button
-            onClick="document.getElementById('mainNavigator').toggleAttribute('hide-eyebrow')"
-            >Toggle Eyebrow</fz-button
-          >
-        </div>
+          <h3>Menu Structure</h3>
+          <p>The navigator now supports three menu sections:</p>
+          <ul>
+            <li>
+              <strong>Eyebrow Menu</strong> - Small utility links at the very
+              top
+            </li>
+            <li>
+              <strong>Primary Menu</strong> - Main navigation shown horizontally
+              on desktop
+            </li>
+            <li>
+              <strong>Secondary Menu</strong> - Additional menu items in the
+              side drawer
+            </li>
+          </ul>
 
-        <h3>JSON Menu Data</h3>
-        <p>
-          The navigator can now be configured using JSON data instead of HTML:
-        </p>
-        <pre><code id="menuDataDisplay"></code></pre>
-        <div class="button-group">
-          <fz-button onClick="setSimpleMenu()">Simple Menu</fz-button>
-          <fz-button onClick="setFullMenu()">Full Menu</fz-button>
-        </div>
+          <h3>Implementation Options</h3>
+          <p>You can define menus in multiple ways:</p>
+          <ul>
+            <li>
+              Using the <code>menu-data</code> attribute with a JSON string
+            </li>
+            <li>Using the <code>setMenuData()</code> JavaScript method</li>
+            <li>Using traditional HTML with slots (still supported)</li>
+          </ul>
 
-        <h3>Menu Structure</h3>
-        <p>The navigator now supports three menu sections:</p>
-        <ul>
-          <li>
-            <strong>Eyebrow Menu</strong> - Small utility links at the very top
-          </li>
-          <li>
-            <strong>Primary Menu</strong> - Main navigation shown horizontally
-            on desktop
-          </li>
-          <li>
-            <strong>Secondary Menu</strong> - Additional menu items in the side
-            drawer
-          </li>
-        </ul>
+          <h3>Position Types</h3>
+          <p>The navigator now supports two position types:</p>
+          <ul>
+            <li>
+              <strong>Fixed</strong> (default) - Navigator is fixed to the top
+              of the viewport
+            </li>
+            <li>
+              <strong>Static</strong> - Navigator is part of the document flow,
+              scrolling with content
+            </li>
+          </ul>
+          <p>
+            Set the position type with the <code>position-type</code> attribute:
+          </p>
+          <pre><code>&lt;fz-navigator position-type="static"&gt;...&lt;/fz-navigator&gt;</code></pre>
+          <p>
+            Check out the
+            <a href="examples/static-navigator-demo.html"
+              >Static Navigator Demo</a
+            >
+            for an example of embedding the navigator within page content.
+          </p>
 
-        <h3>Implementation Options</h3>
-        <p>You can define menus in multiple ways:</p>
-        <ul>
-          <li>Using the <code>menu-data</code> attribute with a JSON string</li>
-          <li>Using the <code>setMenuData()</code> JavaScript method</li>
-          <li>Using traditional HTML with slots (still supported)</li>
-        </ul>
+          <p>
+            Check out the
+            <a href="examples/menu-data-demo.html">Menu Data Demo</a> for more
+            examples.
+          </p>
 
-        <h3>Position Types</h3>
-        <p>The navigator now supports two position types:</p>
-        <ul>
-          <li>
-            <strong>Fixed</strong> (default) - Navigator is fixed to the top of
-            the viewport
-          </li>
-          <li>
-            <strong>Static</strong> - Navigator is part of the document flow,
-            scrolling with content
-          </li>
-        </ul>
-        <p>
-          Set the position type with the <code>position-type</code> attribute:
-        </p>
-        <pre><code>&lt;fz-navigator position-type="static"&gt;...&lt;/fz-navigator&gt;</code></pre>
-        <p>
-          Check out the
-          <a href="examples/static-navigator-demo.html"
-            >Static Navigator Demo</a
-          >
-          for an example of embedding the navigator within page content.
-        </p>
-
-        <p>
-          Check out the
-          <a href="examples/menu-data-demo.html">Menu Data Demo</a> for more
-          examples.
-        </p>
-
-        <p>
-          See the page source for an example of how to customize the navigator
-          component.
-        </p>
-      </section>
-    </div>
+          <p>
+            See the page source for an example of how to customize the navigator
+            component.
+          </p>
+        </section>
+      </div>
+    </main>
     <!-- JavaScript for Menu Data Demo -->
     <script>
       // Default menu data
@@ -379,11 +228,11 @@
 
       // More complex menu
       const fullMenu = {
-        // eyebrow: [
-        //   { label: "Contact", url: "#contact" },
-        //   { label: "Support", url: "#support" },
-        //   { label: "Careers", url: "#careers" },
-        // ],
+        eyebrow: [
+          { label: "Contact", url: "#contact" },
+          { label: "Support", url: "#support" },
+          { label: "Careers", url: "#careers" },
+        ],
         primary: [
           { label: "Home", url: "#home" },
           {

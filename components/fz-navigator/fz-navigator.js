@@ -1,13 +1,13 @@
-import { html, render, nothing } from '../../lib/html/lit-html.js';
+import { html, render } from '../../lib/html/lit-html.js';
 import { unsafeHTML } from '../../lib/html/unsafe-html.js';
 import Component from '../../lib/component.js';
 import { navigatorStyles } from './fz-navigator.css.js';
 import {
   DEFAULT_MENU,
   parseMenuData,
-  createPrimaryMenuHTML,
-  createSecondaryMenuHTML,
-  createEyebrowMenuHTML
+  createPrimaryMenu,
+  createSecondaryMenu,
+  createEyebrowMenu
 } from './fz-navigator-menu.js';
 
 /**
@@ -15,7 +15,6 @@ import {
  * Mobile-friendly navigation component with search and dropdown menus
  */
 export class FzNavigator extends Component {
-  // Private properties
   #isOpen = false;
   #menuToggle = null;
   #navigatorWrapper = null;
@@ -23,8 +22,6 @@ export class FzNavigator extends Component {
   #searchContainer = null;
   #searchInput = null;
   #searchForm = null;
-
-  // Menu data
   #menuData = DEFAULT_MENU;
 
   constructor() {
@@ -277,26 +274,26 @@ export class FzNavigator extends Component {
  */
   render() {
     // Generate menu HTML from data
-    const primaryMenuHTML = createPrimaryMenuHTML(this.#menuData?.primary);
-    const secondaryMenuHTML = createSecondaryMenuHTML(this.#menuData?.secondary);
-    const eyebrowMenuHTML = createEyebrowMenuHTML(this.#menuData?.eyebrow);
-    const mobilePrimaryMenuHTML = createPrimaryMenuHTML(this.#menuData?.primary, false);
-    const eyebrowSlot = this.shadowRoot.querySelector('slot[name=eyebrow-slot]')
-    const eyebrowSlotFilled = eyebrowSlot ? eyebrowSlot.assignedNodes().length > 0 : false;
-    console.log(eyebrowSlotFilled)
+    const primaryMenu = createPrimaryMenu(this.#menuData?.primary);
+    const secondaryMenu = createSecondaryMenu(this.#menuData?.secondary);
+    const eyebrowMenu = createEyebrowMenu(this.#menuData?.eyebrow);
+    const mobilePrimaryMenu = createPrimaryMenu(this.#menuData?.primary, false);
+
+    if (!(this.isSlotFilled('eyebrow-slot') || eyebrowMenu.values.length)) {
+      document.documentElement.style.setProperty('--fz-navigator-eyebrow-height', '0px')
+    }
 
     const template = html`
         <section class="navigator-component">
           <!-- Eyebrow Menu -->
-          ${(eyebrowSlotFilled || eyebrowMenuHTML) ? html`
-            <div class="eyebrow-container">
-              <div class="container">
-                <slot name="eyebrow-slot">
-                  ${eyebrowMenuHTML ? unsafeHTML(eyebrowMenuHTML) : nothing}
-                </slot>
-              </div>
-            </div>` : nothing
-      }
+          ${(this.isSlotFilled('eyebrow-slot') || eyebrowMenu.values.length) ? html`
+          <div class="eyebrow-container">
+            <div class="container">
+              <slot name="eyebrow-slot">
+                ${eyebrowMenu}
+              </slot>
+            </div>
+          </div>` : null}
           
           <!-- Main Navigation -->
           <nav class="navigator">
@@ -318,7 +315,7 @@ export class FzNavigator extends Component {
                 <!-- Desktop Primary Nav Items -->
                 <div class="desktop-nav-container">
                   <slot name="nav-items">
-                    ${unsafeHTML(primaryMenuHTML)}
+                    ${primaryMenu}
                   </slot>
                 </div>
                 
@@ -356,12 +353,12 @@ export class FzNavigator extends Component {
             <div class="navigator drawer-content">
               <!-- Mobile version of primary nav items -->
               <div class="mobile-nav-items-container">
-                ${unsafeHTML(mobilePrimaryMenuHTML)}
+                ${mobilePrimaryMenu}
               </div>
               
               <!-- Secondary menu items -->
               <div class="secondary-menu-container">
-                ${unsafeHTML(secondaryMenuHTML)}
+                ${secondaryMenu}
               </div>
               
               <!-- Custom menu content slot -->

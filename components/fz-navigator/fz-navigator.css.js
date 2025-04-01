@@ -7,7 +7,6 @@ export const navigatorStyles = /*css*/`
     --grey: #e6e7e8;
     --font-family: 'Open Sans', sans-serif;
     --transition-speed: 0.3s;
-    --navigator-height: 67.5px;
     --eyebrow-height: 36px;
     --search-height: 56px;
     --nav-item-color: #24273a;
@@ -16,19 +15,30 @@ export const navigatorStyles = /*css*/`
     --eyebrow-bg-color: #24273a;
     --eyebrow-text-color: #ffffff;
     --eyebrow-hover-color: #fab387;
-    
-    /* Ensure immediate visibility without transition for FOUC prevention */
-    display: block;
-    opacity: 1 !important;
+
+    --fz-navigator-search-height: 56px;
+    --fz-navigator-font-family: 'Open Sans', sans-serif;
+    --fz-navigator-transition-speed: 0.3s;
+
+    --fz-navigator-bg-color: #fab387;
+    --fz-navigator-hamburger-color: #24273a;
+    --fz-navigator-item-color: #24273a;
+    --fz-navigator-item-hover-color: #000000;
+    --fz-navigator-item-active-color: #000000;
+  
+    --fz-navigator-eyebrow-bg-color: #24273a;
+    --fz-navigator-eyebrow-text-color: #ffffff;
+    --fz-navigator-eyebrow-hover-color: #fab387;
 }
 
 .navigator-component {
     font-family: var(--fz-font-family);
-    position: fixed;
+    position: var(--fz-navigator-position);
     top: 0;
     left: 0;
     right: 0;
     z-index: 1001;
+    height: var(--fz-navigator-height);
 }
 
 /* Eyebrow Menu */
@@ -51,7 +61,6 @@ export const navigatorStyles = /*css*/`
 }
 
 .eyebrow-menu a {
-    color: var(--eyebrow-text-color);
     color: var(--fz-navigator-eyebrow-text-color);
     text-decoration: none;
     transition: color 0.2s ease;
@@ -65,11 +74,6 @@ export const navigatorStyles = /*css*/`
 .navigator {
     background-color: var(--bg-color);
     padding: 0.5rem 1.5rem;
-    max-height: var(--fz-navigator-height);
-}
-
-:host([hide-eyebrow]) .navigator {
-    top: 0;
 }
 
 /* Static position type styles */
@@ -315,10 +319,10 @@ export const navigatorStyles = /*css*/`
 /* Menu Panel */
 .navigator-wrapper {
     position: fixed;
-    top: calc(var(--navigator-height) + var(--eyebrow-height));
+    top: var(--fz-navigator-height);
     right: 0;
     width: 100%;
-    height: calc(100vh - var(--navigator-height) - var(--eyebrow-height));
+    height: calc(100vh - var(--fz-navigator-height));
     background-color: var(--bg-color);
     transform: translateX(100%);
     transition: transform var(--transition-speed) ease;
@@ -328,12 +332,6 @@ export const navigatorStyles = /*css*/`
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     will-change: transform; /* Optimize performance */
 }
-
-:host([hide-eyebrow]) .navigator-wrapper {
-    top: var(--navigator-height);
-    height: calc(100vh - var(--navigator-height));
-}
-
 .navigator-wrapper.active {
     transform: translateX(0) !important;
     pointer-events: auto;
@@ -370,7 +368,6 @@ export const navigatorStyles = /*css*/`
 /* Drawer content styles */
 .drawer-content {
     position: relative;
-    height: 100%;
     padding: 1rem 0;
     overflow-y: auto;
 }
@@ -415,10 +412,6 @@ export const navigatorStyles = /*css*/`
     padding: 0.5rem 1.5rem;
     box-sizing: border-box;
     pointer-events: none;
-}
-
-:host([hide-eyebrow]) .search-container {
-    top: var(--navigator-height);
 }
 
 .search-container.active {
