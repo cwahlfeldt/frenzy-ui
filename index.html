@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Frenzy UI Components Demo</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <script type="module" src="/fz-carousel.js"></script>
+        <script defer type="module" src="/fz-modal.js"></script>
+        <script type="module" src="/fz-pager.js"></script>
+
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #f3f4f6;
+                color: #1f2937;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .component-demo-container {
+                width: 100%;
+                max-width: 800px;
+                margin-bottom: 40px;
+                background-color: white;
+                padding: 25px;
+                border-radius: 12px;
+                box-shadow:
+                    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            h1 {
+                text-align: center;
+                color: #111827;
+                margin-bottom: 40px;
+                font-size: 2.5rem;
+            }
+            h2 {
+                margin-top: 0;
+                margin-bottom: 25px;
+                font-size: 1.75rem;
+                border-bottom: 1px solid #e5e7eb;
+                padding-bottom: 15px;
+                color: #1f2937;
+            }
+
+            /* Carousel Demo Slide Styles */
+            .demo-slide {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: white;
+                height: 280px;
+                border-radius: 8px;
+                padding: 15px;
+                box-sizing: border-box;
+                text-align: center;
+            }
+            .bg-red-500 {
+                background-color: #ef4444;
+            }
+            .bg-blue-500 {
+                background-color: #3b82f6;
+            }
+            .bg-green-500 {
+                background-color: #22c55e;
+            }
+            .bg-yellow-500 {
+                background-color: #eab308;
+            }
+            .bg-purple-500 {
+                background-color: #8b5cf6;
+            }
+            .bg-pink-500 {
+                background-color: #ec4899;
+            }
+            .bg-indigo-500 {
+                background-color: #6366f1;
+            }
+            .bg-teal-500 {
+                background-color: #14b8a6;
+            }
+
+            /* Pager Demo Item Styles */
+            .demo-pager-item {
+                background-color: #e0e7ff;
+                color: #3730a3;
+                padding: 20px;
+                margin-bottom: 10px;
+                border-radius: 8px;
+                border: 1px solid #c7d2fe;
+                text-align: center;
+                font-size: 1rem;
+            }
+
+            /* Modal Content Demo Styles */
+            #modalContentDemo {
+                background-color: white;
+                padding: 30px;
+                border-radius: 12px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow:
+                    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                text-align: center;
+            }
+            #modalContentDemo h3 {
+                font-size: 1.5rem;
+                color: #111827;
+                margin-top: 0;
+                margin-bottom: 15px;
+            }
+            #modalContentDemo p {
+                font-size: 1rem;
+                color: #4b5563;
+                margin-bottom: 25px;
+                line-height: 1.6;
+            }
+            #modalContentDemo button {
+                background-color: #4f46e5;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            #modalContentDemo button:hover {
+                background-color: #4338ca;
+            }
+
+            /* Controls Section Styles */
+            .controls-section {
+                margin-top: 25px;
+                padding: 20px;
+                background-color: #e9ebee;
+                border-radius: 8px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px; /* Gap between control items */
+                align-items: stretch; /* Makes items same height if they wrap */
+            }
+            .control-item {
+                /* Wrapper for label + input sets */
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background-color: #ffffff;
+                padding: 10px 15px;
+                border-radius: 6px;
+                box-shadow:
+                    0 1px 3px rgba(0, 0, 0, 0.07),
+                    0 1px 2px rgba(0, 0, 0, 0.04);
+                gap: 10px; /* Gap between label and input */
+                flex-grow: 1;
+                flex-basis: calc(
+                    50% - 6px
+                ); /* Two items per row, accounting for gap */
+                min-height: 44px;
+                box-sizing: border-box;
+            }
+            .controls-section > button {
+                /* Direct button children of controls-section */
+                background-color: #4f46e5;
+                color: white;
+                border: none;
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition:
+                    background-color 0.2s ease,
+                    box-shadow 0.2s ease;
+                padding: 10px 15px;
+                border-radius: 6px;
+                box-shadow:
+                    0 1px 3px rgba(0, 0, 0, 0.07),
+                    0 1px 2px rgba(0, 0, 0, 0.04);
+                flex-grow: 1;
+                flex-basis: calc(50% - 6px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                box-sizing: border-box;
+            }
+            .controls-section > button:hover {
+                background-color: #4338ca;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            .controls-section label {
+                font-weight: 500;
+                color: #374151;
+                white-space: nowrap;
+                font-size: 0.9rem;
+            }
+            .controls-section input[type="checkbox"] {
+                height: 20px;
+                width: 20px;
+                accent-color: #4f46e5;
+                cursor: pointer;
+            }
+            .controls-section input[type="number"],
+            .controls-section input[type="text"] {
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #d1d5db;
+                font-size: 0.9rem;
+                width: 80px;
+                text-align: center;
+                color: #1f2937;
+                box-sizing: border-box;
+            }
+            /* Full width for single item or button */
+            .control-item.full-width,
+            .controls-section > button.full-width {
+                flex-basis: 100%;
+            }
+
+            @media (max-width: 640px) {
+                .control-item,
+                .controls-section > button {
+                    flex-basis: 100%; /* Stack controls on smaller screens */
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Frenzy UI Components Demo</h1>
+
+        <!-- Frenzy Carousel Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Carousel (<code>fz-carousel</code>)</h2>
+            <fz-carousel
+                id="demoCarousel"
+                loop
+                slides-per-view="1"
+                slide-gap="15px"
+                centered-slides
+                autoplay
+                autoplay-delay="3500"
+            >
+                <div class="demo-slide bg-red-500" style="width: 300px">
+                    <span>Slide 1 (300px)</span>
+                </div>
+                <div class="demo-slide bg-blue-500" style="width: 200px">
+                    <span>Slide 2 (200px)</span>
+                </div>
+                <div class="demo-slide bg-green-500" style="width: 400px">
+                    <span>Slide 3 (400px)</span>
+                </div>
+                <img
+                    src="https://placehold.co/250x280/f97316/white?text=Img+4"
+                    style="
+                        width: 250px !important;
+                        height: 280px;
+                        object-fit: cover;
+                        border-radius: 8px;
+                    "
+                    alt="Placeholder Image 4"
+                />
+            </fz-carousel>
+            <div class="controls-section" id="carouselControls">
+                <div class="control-item">
+                    <input type="checkbox" id="cLoop" checked />
+                    <label for="cLoop">Loop</label>
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cCentered" checked />
+                    <label for="cCentered">Centered Slides</label>
+                </div>
+                <div class="control-item">
+                    <label for="cSpv">Slides/View (Hint)</label>
+                    <input type="number" id="cSpv" value="1" min="1" max="5" />
+                </div>
+                <div class="control-item">
+                    <label for="cSlideGap">Slide Gap</label>
+                    <input type="text" id="cSlideGap" value="15px" />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cAutoplay" checked />
+                    <label for="cAutoplay">Autoplay</label>
+                </div>
+                <div class="control-item">
+                    <label for="cAutoplayDelay">Delay (ms)</label>
+                    <input
+                        type="number"
+                        id="cAutoplayDelay"
+                        value="3500"
+                        min="500"
+                        step="100"
+                    />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cHideArrows" />
+                    <label for="cHideArrows">Hide Arrows</label>
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cHideDots" />
+                    <label for="cHideDots">Hide Dots</label>
+                </div>
+                <button id="cAddSlide">Add Slide</button>
+                <button id="cRemoveSlide">Remove Last Slide</button>
+            </div>
+        </div>
+
+        <!-- Frenzy Modal Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Modal (<code>fz-modal</code>)</h2>
+            <button
+                id="openModalBtn"
+                class="controls-section > button"
+                style="margin: 0 auto; display: block; width: max-content"
+            >
+                Open Demo Modal
+            </button>
+            <fz-modal id="demoModal">
+                <div id="modalContentDemo">
+                    <h3>Hello from Frenzy Modal!</h3>
+                    <p>
+                        This content is slotted into the modal. You can close
+                        this modal by pressing the 'Escape' key, clicking the
+                        backdrop, or using the close button (X) on larger
+                        screens.
+                    </p>
+                    <button id="closeModalInsideBtn">Close From Inside</button>
+                </div>
+            </fz-modal>
+            <div
+                class="controls-section"
+                id="modalControls"
+                style="justify-content: center"
+            >
+                <p
+                    style="
+                        font-size: 0.9rem;
+                        color: #4b5563;
+                        text-align: center;
+                    "
+                >
+                    Modal is controlled by its 'open' attribute/property and
+                    internal events.
+                </p>
+            </div>
+        </div>
+
+        <!-- Frenzy Pager Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Pager (<code>fz-pager</code>)</h2>
+            <fz-pager id="demoPager" items-per-page="3">
+                <div class="demo-pager-item">Item 1</div>
+                <div class="demo-pager-item">Item 2</div>
+                <div class="demo-pager-item">Item 3</div>
+                <div class="demo-pager-item">Item 4</div>
+                <div class="demo-pager-item">Item 5</div>
+                <div class="demo-pager-item">Item 6</div>
+                <div class="demo-pager-item">Item 7</div>
+            </fz-pager>
+            <div class="controls-section" id="pagerControls">
+                <div class="control-item full-width">
+                    <label for="pItemsPerPage">Items Per Page</label>
+                    <input
+                        type="number"
+                        id="pItemsPerPage"
+                        value="3"
+                        min="1"
+                        max="10"
+                    />
+                </div>
+                <button id="pAddItem" class="full-width">Add Item</button>
+                <button id="pRemoveItem" class="full-width">
+                    Remove Last Item
+                </button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // --- Frenzy Carousel Logic ---
+                const demoCarousel = document.getElementById("demoCarousel");
+                const cLoop = document.getElementById("cLoop");
+                const cCentered = document.getElementById("cCentered");
+                const cSpv = document.getElementById("cSpv");
+                const cSlideGap = document.getElementById("cSlideGap");
+                const cAutoplay = document.getElementById("cAutoplay");
+                const cAutoplayDelay =
+                    document.getElementById("cAutoplayDelay");
+                const cHideArrows = document.getElementById("cHideArrows");
+                const cHideDots = document.getElementById("cHideDots");
+                const cAddSlide = document.getElementById("cAddSlide");
+                const cRemoveSlide = document.getElementById("cRemoveSlide");
+
+                cLoop.addEventListener("change", (e) =>
+                    demoCarousel.toggleAttribute("loop", e.target.checked),
+                );
+                cCentered.addEventListener("change", (e) =>
+                    demoCarousel.toggleAttribute(
+                        "centered-slides",
+                        e.target.checked,
+                    ),
+                );
+                cSpv.addEventListener("input", (e) =>
+                    demoCarousel.setAttribute(
+                        "slides-per-view",
+                        e.target.value,
+                    ),
+                );
+                cSlideGap.addEventListener("input", (e) =>
+                    demoCarousel.setAttribute("slide-gap", e.target.value),
+                );
+                cAutoplay.addEventListener("change", (e) =>
+                    demoCarousel.toggleAttribute("autoplay", e.target.checked),
+                );
+                cAutoplayDelay.addEventListener("input", (e) =>
+                    demoCarousel.setAttribute("autoplay-delay", e.target.value),
+                );
+                cHideArrows.addEventListener("change", (e) =>
+                    demoCarousel.toggleAttribute(
+                        "hide-arrows",
+                        e.target.checked,
+                    ),
+                );
+                cHideDots.addEventListener("change", (e) =>
+                    demoCarousel.toggleAttribute("hide-dots", e.target.checked),
+                );
+
+                let carouselSlideCounter = demoCarousel.children.length;
+                const carouselSlideColors = [
+                    "bg-pink-500",
+                    "bg-indigo-500",
+                    "bg-teal-500",
+                    "bg-purple-500",
+                    "bg-yellow-500",
+                ];
+                const carouselDynamicWidths = [220, 290, 160, 350, 250];
+
+                cAddSlide.addEventListener("click", () => {
+                    const newSlide = document.createElement("div");
+                    const colorClass =
+                        carouselSlideColors[
+                            carouselSlideCounter % carouselSlideColors.length
+                        ];
+                    const slideWidth =
+                        carouselDynamicWidths[
+                            carouselSlideCounter % carouselDynamicWidths.length
+                        ];
+                    newSlide.classList.add("demo-slide", colorClass);
+                    newSlide.style.width = `${slideWidth}px`;
+                    newSlide.innerHTML = `<span>New ${carouselSlideCounter + 1} (${slideWidth}px)</span>`;
+                    demoCarousel.appendChild(newSlide);
+                    carouselSlideCounter++;
+                });
+
+                cRemoveSlide.addEventListener("click", () => {
+                    const lastSlide = demoCarousel.querySelector(
+                        ":scope > .demo-slide:last-child, :scope > img:last-child",
+                    );
+                    if (lastSlide) {
+                        demoCarousel.removeChild(lastSlide);
+                        if (carouselSlideCounter > 0) carouselSlideCounter--;
+                    }
+                });
+
+                // --- Frenzy Modal Logic ---
+                const demoModal = document.getElementById("demoModal");
+                const openModalBtn = document.getElementById("openModalBtn");
+                const closeModalInsideBtn = document.getElementById(
+                    "closeModalInsideBtn",
+                );
+
+                if (openModalBtn)
+                    openModalBtn.addEventListener("click", () =>
+                        demoModal.open(),
+                    );
+                if (closeModalInsideBtn)
+                    closeModalInsideBtn.addEventListener("click", () =>
+                        demoModal.close(),
+                    );
+
+                // --- Frenzy Pager Logic ---
+                const demoPager = document.getElementById("demoPager");
+                const pItemsPerPage = document.getElementById("pItemsPerPage");
+                const pAddItem = document.getElementById("pAddItem");
+                const pRemoveItem = document.getElementById("pRemoveItem");
+                let pagerItemCounter = demoPager.children.length;
+
+                pItemsPerPage.addEventListener("input", (e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (val > 0) {
+                        demoPager.setAttribute("items-per-page", val);
+                    }
+                });
+
+                pAddItem.addEventListener("click", () => {
+                    pagerItemCounter++;
+                    const newItem = document.createElement("div");
+                    newItem.classList.add("demo-pager-item");
+                    newItem.textContent = `Added Item ${pagerItemCounter}`;
+                    demoPager.appendChild(newItem);
+                });
+
+                pRemoveItem.addEventListener("click", () => {
+                    const lastItem = demoPager.querySelector(
+                        ":scope > .demo-pager-item:last-child",
+                    );
+                    if (lastItem) {
+                        demoPager.removeChild(lastItem);
+                        // Don't decrement pagerItemCounter here to ensure new items always have unique numbers
+                        // or manage it carefully if items are meant to be re-numbered.
+                        // For simplicity, we just remove.
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

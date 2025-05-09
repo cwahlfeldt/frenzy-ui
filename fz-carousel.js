@@ -1,24 +1,25 @@
 // frenzy-carousel.js (Embedded with Simplified Slide Gap)
 class FrenzyCarousel extends HTMLElement {
+  #currentIndex = 0;
+  #slides = [];
+  #slideTrack = null;
+  #container = null;
+  #prevButton = null;
+  #nextButton = null;
+  #dotsContainer = null;
+  #autoplayInterval = null;
+  #isDragging = false;
+  #startX = 0;
+  #initialTrackOffset = 0;
+  #draggedDistance = 0;
+  #pointerId = null;
+  #debouncedResize;
+  #slotElement = null; // Store reference to the slot element
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.debouncedResize = this._debounce(this._onResize.bind(this), 250);
-    this._currentIndex = 0;
-    this._slides = [];
-    this._slideTrack = null;
-    this._container = null;
-    this._prevButton = null;
-    this._nextButton = null;
-    this._dotsContainer = null;
-    this._autoplayInterval = null;
-    this._isDragging = false;
-    this._startX = 0;
-    this._initialTrackOffset = 0;
-    this._draggedDistance = 0;
-    this._pointerId = null;
-    this._onPointerMoveHandler = this._onPointerMove.bind(this);
-    this._onPointerUpHandler = this._onPointerUp.bind(this);
+    this.#debouncedResize = this.#debounce(this.#onResize, 250);
   }
 
   static get observedAttributes() {
@@ -64,25 +65,40 @@ class FrenzyCarousel extends HTMLElement {
   }
 
   connectedCallback() {
-    this._render();
-    this._initializeSlides();
-    this._attachEventListeners();
-    this._updateControlsVisibility();
+    this.#render();
+    this.#slotElement = this.shadowRoot.querySelector("slot");
+
+    if (this.#slotElement) {
+      this.#slotElement.addEventListener(
+        "slotchange",
+        this.#onSlotChangeHandler,
+      );
+    }
+    this.#onSlotChangeHandler(); // Process initial slides
+
+    this.#attachEventListeners();
+    this.#updateControlsVisibility(); // Call after slides are initialized for correct dot visibility
     if (this.autoplay) {
-      this._startAutoplay();
+      this.#startAutoplay();
     }
   }
 
   disconnectedCallback() {
-    this._removeEventListeners();
-    this._stopAutoplay();
-    if (this._isDragging) {
-      window.removeEventListener("pointermove", this._onPointerMoveHandler);
-      window.removeEventListener("pointerup", this._onPointerUpHandler);
-      window.removeEventListener("pointercancel", this._onPointerUpHandler);
-      if (this._pointerId !== null && this._slideTrack) {
+    this.#removeEventListeners();
+    if (this.#slotElement) {
+      this.#slotElement.removeEventListener(
+        "slotchange",
+        this.#onSlotChangeHandler,
+      );
+    }
+    this.#stopAutoplay();
+    if (this.#isDragging) {
+      window.removeEventListener("pointermove", this.#onPointerMove);
+      window.removeEventListener("pointerup", this.#onPointerUp);
+      window.removeEventListener("pointercancel", this.#onPointerUp);
+      if (this.#pointerId !== null && this.#slideTrack) {
         try {
-          this._slideTrack.releasePointerCapture(this._pointerId);
+          this.#slideTrack.releasePointerCapture(this.#pointerId);
         } catch (e) {
           /* ignore */
         }
@@ -93,470 +109,589 @@ class FrenzyCarousel extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
 
+    // If critical DOM elements aren't ready yet (e.g., initial attribute setting before connectedCallback fully runs)
+    // and the attribute affects slide layout/initialization, defer.
+    // connectedCallback will handle the initial setup.
+    if (
+      !this.#slideTrack &&
+      (name === "loop" ||
+        name === "centered-slides" ||
+        name === "slides-per-view" ||
+        name === "slide-gap")
+    ) {
+      return;
+    }
+
     if (name === "hide-arrows" || name === "hide-dots") {
-      this._updateControlsVisibility();
+      this.#updateControlsVisibility();
     } else if (name === "autoplay") {
-      if (this.autoplay) this._startAutoplay();
-      else this._stopAutoplay();
+      if (this.autoplay) this.#startAutoplay();
+      else this.#stopAutoplay();
     } else if (name === "autoplay-delay" && this.autoplay) {
-      this._stopAutoplay();
-      this._startAutoplay();
+      this.#stopAutoplay();
+      this.#startAutoplay();
     } else {
       // For loop, centered-slides, slides-per-view, slide-gap
       // These attributes require recalculating slide positions and view.
-      this._initializeSlides();
+      this.#onSlotChangeHandler();
     }
   }
 
-  // _parseCssUnitToPx method removed as it's no longer needed.
+  #onSlotChangeHandler = () => {
+    if (!this.#slotElement) {
+      // This might happen if called by attributeChangedCallback before slotElement is set in connectedCallback
+      // However, the guard in attributeChangedCallback should prevent this for attributes affecting slides.
+      // If it still happens, it means an attribute like hide-dots/hide-arrows called it before connectedCallback finished.
+      // In that case, we can defer to connectedCallback's own call to #onSlotChangeHandler.
+      return;
+    }
 
-  _render() {
-    this.shadowRoot.innerHTML = `
-                    <style>
-                        :host {
-                            display: block; position: relative; width: 100%;
-                            overflow: hidden; font-family: 'Inter', sans-serif;
-                            user-select: none;
-                        }
-                        .carousel-container {
-                            position: relative; width: 100%; height: max-content; /* Allow height to be determined by content */
-                            overflow: hidden;
-                            touch-action: pan-y;
-                        }
-                        .slide-track {
-                            display: flex;
-                            height: max-content; /* Allow height to be determined by content */
-                            transition: transform 0.5s ease-in-out;
-                            will-change: transform;
-                            /* The 'gap' property will be set dynamically via JS from the 'slide-gap' attribute */
-                        }
-                        .slide-track.dragging {
-                            transition: none !important;
-                        }
-                        ::slotted(*) {
-                            flex-shrink: 0;
-                            width: auto; /* Slides define their own width */
-                            min-width: 50px; /* A sensible minimum */
-                            height: 100%; /* Take full height of the track, which is max-content */
-                            box-sizing: border-box;
-                            display: flex; align-items: center; justify-content: center;
-                            border-radius: 8px;
-                        }
-                        ::slotted(img) {
-                            max-width: none; /* Allow image to dictate its own size if not constrained by slide wrapper */
-                            width: 100%; /* If img is the direct slide, it fills its allocated space */
-                            height: 100%;
-                            object-fit: cover; display: block; border-radius: 8px;
-                        }
-                        .nav-button {
-                            position: absolute; top: 50%; transform: translateY(-50%);
-                            background-color: rgba(0, 0, 0, 0.5); color: white; border: none;
-                            padding: 0; cursor: pointer; z-index: 10; border-radius: 50%;
-                            width: 40px; height: 40px; font-size: 18px;
-                            display: flex; align-items: center; justify-content: center;
-                            transition: background-color 0.3s ease, opacity 0.3s ease, visibility 0s linear 0s;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                        }
-                        .nav-button.hidden { visibility: hidden; opacity: 0; }
-                        .nav-button:hover { background-color: rgba(0, 0, 0, 0.8); }
-                        .nav-button:disabled { opacity: 0.3; cursor: not-allowed; }
-                        .prev { left: 15px; }
-                        .next { right: 15px; }
-                        .dots-container {
-                            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-                            display: flex; gap: 8px; z-index: 10;
-                            transition: opacity 0.3s ease, visibility 0s linear 0s;
-                        }
-                        .dots-container.hidden { visibility: hidden; opacity: 0; }
-                        .dot {
-                            width: 10px; height: 10px; border-radius: 50%;
-                            background-color: rgba(255, 255, 255, 0.5);
-                            border: 1px solid rgba(0, 0, 0, 0.2);
-                            cursor: pointer; transition: background-color 0.3s ease, transform 0.3s ease;
-                        }
-                        .dot.active { background-color: rgba(255, 255, 255, 1); transform: scale(1.2); }
-                    </style>
-                    <div class="carousel-container" part="container">
-                        <div class="slide-track" part="track"> <slot></slot> </div>
-                        <button class="nav-button prev" part="prev-button" aria-label="Previous slide">&#10094;</button>
-                        <button class="nav-button next" part="next-button" aria-label="Next slide">&#10095;</button>
-                        <div class="dots-container" part="dots-container"></div>
-                    </div>
-                `;
-    this._slideTrack = this.shadowRoot.querySelector(".slide-track");
-    this._container = this.shadowRoot.querySelector(".carousel-container");
-    this._prevButton = this.shadowRoot.querySelector(".prev");
-    this._nextButton = this.shadowRoot.querySelector(".next");
-    this._dotsContainer = this.shadowRoot.querySelector(".dots-container");
+    this.#slides = this.#slotElement
+      .assignedNodes({ flatten: true })
+      .filter((node) => node.nodeType === Node.ELEMENT_NODE);
+
+    this.#slides.forEach((s) => {
+      if (window.getComputedStyle(s).display === "none")
+        s.style.display = "flex";
+    });
+
+    const oldCurrentIndex = this.#currentIndex;
+    this.#currentIndex =
+      this.#slides.length > 0
+        ? Math.max(0, Math.min(this.#currentIndex, this.#slides.length - 1))
+        : 0;
+
+    // If current index changed due to slides being removed, update view
+    // Otherwise, createDots and updateView will handle current state.
+    const requiresViewUpdateForIndexChange =
+      oldCurrentIndex !== this.#currentIndex && this.#slides.length > 0;
+
+    if (!this.hideDots) {
+      this.#createDots(); // This will also call #updateDots
+    } else if (this.#dotsContainer) {
+      this.#dotsContainer.innerHTML = "";
+      this.#dotsContainer.classList.add("hidden");
+    }
+
+    this.#updateView();
+
+    // Ensure nav buttons are updated after potential slide changes
+    this.#updateNavButtons();
+  };
+
+  #render() {
+    this.shadowRoot.innerHTML = /**/ `
+      <style>
+        :host {
+          display: block;
+          position: relative;
+          width: 100%;
+          overflow: hidden;
+          font-family: "Inter", sans-serif;
+          user-select: none;
+        }
+        .carousel-container {
+          position: relative;
+          width: 100%;
+          height: max-content; /* Allow height to be determined by content */
+          overflow: hidden;
+          touch-action: pan-y;
+        }
+        .slide-track {
+          display: flex;
+          height: max-content; /* Allow height to be determined by content */
+          transition: transform 0.5s ease-in-out;
+          will-change: transform;
+          /* The 'gap' property will be set dynamically via JS from the 'slide-gap' attribute */
+        }
+        .slide-track.dragging {
+          transition: none !important;
+        }
+        ::slotted(*) {
+          flex-shrink: 0;
+          width: auto; /* Slides define their own width */
+          min-width: 50px; /* A sensible minimum */
+          height: 100%; /* Take full height of the track, which is max-content */
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+        }
+        ::slotted(img) {
+          max-width: none; /* Allow image to dictate its own size if not constrained by slide wrapper */
+          width: 100%; /* If img is the direct slide, it fills its allocated space */
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          border-radius: 8px;
+        }
+        .nav-button {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background-color: rgba(0, 0, 0, 0.5);
+          color: white;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          z-index: 10;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          font-size: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition:
+            background-color 0.3s ease,
+            opacity 0.3s ease,
+            visibility 0s linear 0s;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .nav-button.hidden {
+          visibility: hidden;
+          opacity: 0;
+        }
+        .nav-button:hover {
+          background-color: rgba(0, 0, 0, 0.8);
+        }
+        .nav-button:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+        .prev {
+          left: 15px;
+        }
+        .next {
+          right: 15px;
+        }
+        .dots-container {
+          position: absolute;
+          bottom: 15px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          z-index: 10;
+          transition:
+            opacity 0.3s ease,
+            visibility 0s linear 0s;
+        }
+        .dots-container.hidden {
+          visibility: hidden;
+          opacity: 0;
+        }
+        .dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background-color: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(0, 0, 0, 0.2);
+          cursor: pointer;
+          transition:
+            background-color 0.3s ease,
+            transform 0.3s ease;
+        }
+        .dot.active {
+          background-color: rgba(255, 255, 255, 1);
+          transform: scale(1.2);
+        }
+      </style>
+      <div class="carousel-container" part="container">
+        <div class="slide-track" part="track"><slot></slot></div>
+        <button
+          class="nav-button prev"
+          part="prev-button"
+          aria-label="Previous slide"
+        >
+          &#10094;
+        </button>
+        <button
+          class="nav-button next"
+          part="next-button"
+          aria-label="Next slide"
+        >
+          &#10095;
+        </button>
+        <div class="dots-container" part="dots-container"></div>
+      </div>
+    `;
+    this.#slideTrack = this.shadowRoot.querySelector(".slide-track");
+    this.#container = this.shadowRoot.querySelector(".carousel-container");
+    this.#prevButton = this.shadowRoot.querySelector(".prev");
+    this.#nextButton = this.shadowRoot.querySelector(".next");
+    this.#dotsContainer = this.shadowRoot.querySelector(".dots-container");
   }
 
-  _updateControlsVisibility() {
-    if (this._prevButton && this._nextButton) {
+  #updateControlsVisibility() {
+    if (this.#prevButton && this.#nextButton) {
       const shouldHideArrows = this.hideArrows;
-      this._prevButton.classList.toggle("hidden", shouldHideArrows);
-      this._nextButton.classList.toggle("hidden", shouldHideArrows);
+      this.#prevButton.classList.toggle("hidden", shouldHideArrows);
+      this.#nextButton.classList.toggle("hidden", shouldHideArrows);
     }
-    if (this._dotsContainer) {
-      this._dotsContainer.classList.toggle("hidden", this.hideDots);
+    if (this.#dotsContainer) {
+      this.#dotsContainer.classList.toggle("hidden", this.hideDots);
       if (this.hideDots) {
-        this._dotsContainer.innerHTML = "";
+        this.#dotsContainer.innerHTML = "";
       } else {
-        this._createDots();
+        // #onSlotChangeHandler will call #createDots if not hiding,
+        // which in turn calls #updateDots.
+        // However, if hideDots changes from true to false, we need to explicitly create them.
+        this.#createDots();
       }
     }
+    this.#updateNavButtons(); // Update button states as well
   }
 
-  _initializeSlides() {
-    const slot = this.shadowRoot.querySelector("slot");
-    const updateSlides = () => {
-      this._slides = slot
-        .assignedNodes({ flatten: true })
-        .filter((node) => node.nodeType === Node.ELEMENT_NODE);
-      this._slides.forEach((s) => {
-        // Ensure slides are visible for offsetWidth/offsetLeft calculations
-        if (window.getComputedStyle(s).display === "none")
-          s.style.display = "flex";
-      });
-      this._currentIndex =
-        this._slides.length > 0
-          ? Math.max(0, Math.min(this._currentIndex, this._slides.length - 1))
-          : 0;
-
-      if (!this.hideDots) {
-        this._createDots();
-      } else if (this._dotsContainer) {
-        this._dotsContainer.innerHTML = "";
-        this._dotsContainer.classList.add("hidden");
-      }
-      this._updateView(); // This will also apply the gap
-    };
-    slot.removeEventListener("slotchange", updateSlides);
-    slot.addEventListener("slotchange", updateSlides);
-    updateSlides();
+  #attachEventListeners() {
+    if (this.#prevButton)
+      this.#prevButton.addEventListener("click", this.prev.bind(this));
+    if (this.#nextButton)
+      this.#nextButton.addEventListener("click", this.next.bind(this));
+    window.addEventListener("resize", this.#debouncedResize);
+    if (this.#slideTrack)
+      this.#slideTrack.addEventListener("pointerdown", this.#onPointerDown);
   }
 
-  _attachEventListeners() {
-    if (this._prevButton)
-      this._prevButton.addEventListener("click", this.prev.bind(this));
-    if (this._nextButton)
-      this._nextButton.addEventListener("click", this.next.bind(this));
-    window.addEventListener("resize", this.debouncedResize);
-    if (this._slideTrack)
-      this._slideTrack.addEventListener(
-        "pointerdown",
-        this._onPointerDown.bind(this),
-      );
+  #removeEventListeners() {
+    if (this.#prevButton)
+      this.#prevButton.removeEventListener("click", this.prev.bind(this));
+    if (this.#nextButton)
+      this.#nextButton.removeEventListener("click", this.next.bind(this));
+    window.removeEventListener("resize", this.#debouncedResize);
+    if (this.#slideTrack)
+      this.#slideTrack.removeEventListener("pointerdown", this.#onPointerDown);
   }
 
-  _removeEventListeners() {
-    if (this._prevButton)
-      this._prevButton.removeEventListener("click", this.prev.bind(this));
-    if (this._nextButton)
-      this._nextButton.removeEventListener("click", this.next.bind(this));
-    window.removeEventListener("resize", this.debouncedResize);
-    if (this._slideTrack)
-      this._slideTrack.removeEventListener(
-        "pointerdown",
-        this._onPointerDown.bind(this),
-      );
-  }
-
-  _getSlideOffset(targetIndex) {
-    // offsetLeft of a slide is relative to its offsetParent, which should be the slide-track.
-    // This already accounts for preceding slides and the gap applied to the slide-track.
-    if (this._slides[targetIndex]) {
-      return this._slides[targetIndex].offsetLeft;
+  #getSlideOffset(targetIndex) {
+    if (this.#slides[targetIndex]) {
+      return this.#slides[targetIndex].offsetLeft;
     }
     return 0;
   }
 
-  _getTotalContentWidth() {
-    // scrollWidth of the slide-track includes all slides and gaps.
-    return this._slideTrack ? this._slideTrack.scrollWidth : 0;
+  #getTotalContentWidth() {
+    return this.#slideTrack ? this.#slideTrack.scrollWidth : 0;
   }
 
-  _onPointerDown(event) {
+  #onPointerDown = (event) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    if (!this.loop && this._slides.length > 0 && this._container) {
-      const totalContentWidth = this._getTotalContentWidth();
-      const containerWidth = this._container.offsetWidth;
+    if (!this.loop && this.#slides.length > 0 && this.#container) {
+      const totalContentWidth = this.#getTotalContentWidth();
+      const containerWidth = this.#container.offsetWidth;
       if (totalContentWidth <= containerWidth + 2) {
+        // +2 for potential subpixel issues
         return;
       }
     }
-    if (this._slides.length <= 1 && !this.loop) return;
+    if (this.#slides.length <= 1 && !this.loop) return; // No dragging if not enough slides and not looping
 
-    this._isDragging = true;
-    this._pointerId = event.pointerId;
-    this._startX = event.clientX;
+    this.#isDragging = true;
+    this.#pointerId = event.pointerId;
+    this.#startX = event.clientX;
     const currentTransform = window.getComputedStyle(
-      this._slideTrack,
+      this.#slideTrack,
     ).transform;
-    this._initialTrackOffset =
+    this.#initialTrackOffset =
       currentTransform && currentTransform !== "none"
         ? new DOMMatrix(currentTransform).m41
         : 0;
-    this._slideTrack.classList.add("dragging");
-    this._slideTrack.setPointerCapture(this._pointerId);
-    window.addEventListener("pointermove", this._onPointerMoveHandler);
-    window.addEventListener("pointerup", this._onPointerUpHandler);
-    window.addEventListener("pointercancel", this._onPointerUpHandler);
-    this._stopAutoplay();
-  }
+    this.#slideTrack.classList.add("dragging");
+    this.#slideTrack.setPointerCapture(this.#pointerId);
+    window.addEventListener("pointermove", this.#onPointerMove);
+    window.addEventListener("pointerup", this.#onPointerUp);
+    window.addEventListener("pointercancel", this.#onPointerUp);
+    this.#stopAutoplay();
+  };
 
-  _onPointerMove(event) {
-    if (!this._isDragging || event.pointerId !== this._pointerId) return;
+  #onPointerMove = (event) => {
+    if (!this.#isDragging || event.pointerId !== this.#pointerId) return;
     const currentX = event.clientX;
-    this._draggedDistance = currentX - this._startX;
-    const newTrackX = this._initialTrackOffset + this._draggedDistance;
-    this._slideTrack.style.transform = `translateX(${newTrackX}px)`;
-  }
+    this.#draggedDistance = currentX - this.#startX;
+    const newTrackX = this.#initialTrackOffset + this.#draggedDistance;
+    this.#slideTrack.style.transform = `translateX(${newTrackX}px)`;
+  };
 
-  _onPointerUp(event) {
-    if (!this._isDragging || event.pointerId !== this._pointerId) return;
-    this._slideTrack.classList.remove("dragging");
-    try {
-      this._slideTrack.releasePointerCapture(this._pointerId);
-    } catch (e) {
-      /* ignore */
+  #onPointerUp = (event) => {
+    if (
+      !this.#isDragging ||
+      (event &&
+        event.pointerId !== this.#pointerId &&
+        typeof event.pointerId !== "undefined")
+    )
+      return;
+
+    if (this.#slideTrack) {
+      // Ensure slideTrack exists
+      this.#slideTrack.classList.remove("dragging");
+      if (this.#pointerId !== null) {
+        try {
+          this.#slideTrack.releasePointerCapture(this.#pointerId);
+        } catch (e) {
+          /* ignore */
+        }
+      }
     }
-    window.removeEventListener("pointermove", this._onPointerMoveHandler);
-    window.removeEventListener("pointerup", this._onPointerUpHandler);
-    window.removeEventListener("pointercancel", this._onPointerUpHandler);
-    this._isDragging = false;
-    this._pointerId = null;
-    const dragThreshold = this._container
-      ? this._container.offsetWidth / 7
+
+    window.removeEventListener("pointermove", this.#onPointerMove);
+    window.removeEventListener("pointerup", this.#onPointerUp);
+    window.removeEventListener("pointercancel", this.#onPointerUp);
+
+    this.#isDragging = false;
+    this.#pointerId = null;
+
+    const dragThreshold = this.#container
+      ? this.#container.offsetWidth / 7 // A fraction of the container width
       : 50; // Fallback threshold
-    if (Math.abs(this._draggedDistance) > dragThreshold) {
-      if (this._draggedDistance < 0) this.next();
+
+    if (Math.abs(this.#draggedDistance) > dragThreshold) {
+      if (this.#draggedDistance < 0) this.next();
       else this.prev();
     } else {
-      this._updateView();
+      this.#updateView(); // Snap back if not dragged enough
     }
-    this._draggedDistance = 0;
-    this._resetAutoplay();
-  }
+    this.#draggedDistance = 0;
+    this.#resetAutoplay();
+  };
 
-  _onResize() {
-    this._updateView();
-  }
+  #onResize = () => {
+    this.#updateView();
+  };
 
-  _updateView() {
-    if (!this._slideTrack || !this._container) return;
+  #updateView() {
+    if (!this.#slideTrack || !this.#container) return;
 
-    // Apply slide gap to the track
-    this._slideTrack.style.gap = this.slideGap || "0px";
+    this.#slideTrack.style.gap = this.slideGap || "0px";
 
-    if (this._slides.length === 0) {
-      this._slideTrack.style.transform = "translateX(0px)";
-      this._updateNavButtons();
-      if (!this.hideDots) this._updateDots();
+    if (this.#slides.length === 0) {
+      this.#slideTrack.style.transform = "translateX(0px)";
+      this.#updateNavButtons();
+      if (!this.hideDots) this.#updateDots();
       return;
     }
 
-    let targetOffset = this._getSlideOffset(this._currentIndex);
+    let targetOffset = this.#getSlideOffset(this.#currentIndex);
     let centeringAdjustment = 0;
-    if (this.centeredSlides && this._slides[this._currentIndex]) {
-      const containerWidth = this._container.offsetWidth;
-      const currentSlideWidth = this._slides[this._currentIndex].offsetWidth;
+    if (this.centeredSlides && this.#slides[this.#currentIndex]) {
+      const containerWidth = this.#container.offsetWidth;
+      const currentSlideWidth = this.#slides[this.#currentIndex].offsetWidth;
       centeringAdjustment = (containerWidth - currentSlideWidth) / 2;
     }
     const finalTranslateX = -targetOffset + centeringAdjustment;
-    this._slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
-    this._updateNavButtons();
-    if (!this.hideDots) this._updateDots();
+    this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
+
+    this.#updateNavButtons();
+    if (!this.hideDots) this.#updateDots();
   }
 
-  _updateNavButtons() {
-    if (this.hideArrows || !this._prevButton || !this._nextButton) {
-      if (this._prevButton) this._prevButton.classList.add("hidden");
-      if (this._nextButton) this._nextButton.classList.add("hidden");
-      return;
-    }
-    this._prevButton.classList.remove("hidden");
-    this._nextButton.classList.remove("hidden");
+  #updateNavButtons() {
+    if (!this.#prevButton || !this.#nextButton) return; // Buttons might not be rendered yet
 
-    const numSlides = this._slides.length;
+    const hide = this.hideArrows;
+    this.#prevButton.classList.toggle("hidden", hide);
+    this.#nextButton.classList.toggle("hidden", hide);
+    if (hide) return;
+
+    const numSlides = this.#slides.length;
     if (numSlides === 0) {
-      this._prevButton.disabled = true;
-      this._nextButton.disabled = true;
+      this.#prevButton.disabled = true;
+      this.#nextButton.disabled = true;
       return;
     }
     if (this.loop) {
+      // Disable buttons if not enough slides to loop meaningfully
       const disableLoopButtons = numSlides <= 1;
-      this._prevButton.disabled = disableLoopButtons;
-      this._nextButton.disabled = disableLoopButtons;
+      // Or, if slidesPerView is high, disable if all slides are visible
+      // For now, simple check:
+      this.#prevButton.disabled = disableLoopButtons;
+      this.#nextButton.disabled = disableLoopButtons;
     } else {
-      this._prevButton.disabled = this._currentIndex === 0;
+      this.#prevButton.disabled = this.#currentIndex === 0;
+
       let isAtEnd = false;
-      if (this._currentIndex >= numSlides - 1) {
-        isAtEnd = true;
-      } else if (this._container && this._slideTrack && numSlides > 0) {
-        const totalContentWidth = this._getTotalContentWidth();
-        const containerWidth = this._container.offsetWidth;
-        const currentTrackTransform = window.getComputedStyle(
-          this._slideTrack,
-        ).transform;
-        let currentTrackTranslateX =
-          currentTrackTransform && currentTrackTransform !== "none"
-            ? new DOMMatrix(currentTrackTransform).m41
-            : 0;
+      if (this.#currentIndex >= numSlides - 1) {
+        isAtEnd = true; // Definitely at the end if on the last slide index
+      } else if (this.#container && this.#slideTrack && numSlides > 0) {
+        // Check if the right edge of the content is visible
+        const totalContentWidth = this.#getTotalContentWidth();
+        const containerWidth = this.#container.offsetWidth;
+
+        // Get current translation from #updateView's calculation
+        let currentTrackTranslateX = 0;
+        const transformStyle = this.#slideTrack.style.transform;
+        if (transformStyle && transformStyle.includes("translateX")) {
+          currentTrackTranslateX = parseFloat(
+            transformStyle.replace(/translateX\(|\px\)/g, ""),
+          );
+        }
+
+        // If (current offset + container width) is close to or greater than total content width
         if (-currentTrackTranslateX + containerWidth >= totalContentWidth - 2) {
+          // -2 for subpixel tolerance
           isAtEnd = true;
         }
       }
-      this._nextButton.disabled = isAtEnd;
+      this.#nextButton.disabled = isAtEnd;
     }
   }
 
-  _createDots() {
-    if (this.hideDots || !this._dotsContainer) {
-      if (this._dotsContainer) this._dotsContainer.innerHTML = "";
+  #createDots() {
+    if (this.hideDots || !this.#dotsContainer) {
+      if (this.#dotsContainer) this.#dotsContainer.innerHTML = "";
       return;
     }
-    this._dotsContainer.classList.remove("hidden");
-    this._dotsContainer.innerHTML = "";
-    const numSlides = this._slides.length;
+    this.#dotsContainer.classList.remove("hidden");
+    this.#dotsContainer.innerHTML = "";
+
+    const numSlides = this.#slides.length;
     let shouldHideDotsLogically =
       numSlides === 0 || (!this.loop && numSlides <= 1);
-    if (!shouldHideDotsLogically && !this.loop && this._container) {
-      const totalContentWidth = this._getTotalContentWidth();
-      if (totalContentWidth <= this._container.offsetWidth + 2) {
+
+    if (!shouldHideDotsLogically && !this.loop && this.#container) {
+      const totalContentWidth = this.#getTotalContentWidth();
+      if (totalContentWidth <= this.#container.offsetWidth + 2) {
+        // +2 for tolerance
         shouldHideDotsLogically = true;
       }
     }
+
     if (shouldHideDotsLogically) {
-      this._dotsContainer.style.display = "none";
+      this.#dotsContainer.style.display = "none";
       return;
     }
 
-    this._dotsContainer.style.display = "flex";
+    this.#dotsContainer.style.display = "flex";
     for (let i = 0; i < numSlides; i++) {
       const dot = document.createElement("button");
       dot.classList.add("dot");
       dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
       dot.addEventListener("click", () => this.goTo(i));
-      this._dotsContainer.appendChild(dot);
+      this.#dotsContainer.appendChild(dot);
     }
-    this._updateDots();
+    this.#updateDots();
   }
 
-  _updateDots() {
-    if (this.hideDots || !this._dotsContainer || this._slides.length === 0) {
-      if (this._dotsContainer) {
-        this._dotsContainer.style.display = this.hideDots
-          ? "none"
-          : this._slides.length === 0
-            ? "none"
-            : "flex";
-        if (this.hideDots) this._dotsContainer.innerHTML = "";
+  #updateDots() {
+    if (this.hideDots || !this.#dotsContainer || this.#slides.length === 0) {
+      if (this.#dotsContainer) {
+        this.#dotsContainer.style.display =
+          this.hideDots || this.#slides.length === 0 ? "none" : "flex";
+        if (this.hideDots) this.#dotsContainer.innerHTML = "";
       }
       return;
     }
-    const allDots = this._dotsContainer.querySelectorAll(".dot");
-    if (allDots.length === 0 && this._slides.length > 0 && !this.hideDots) {
-      this._createDots();
+
+    const allDots = this.#dotsContainer.querySelectorAll(".dot");
+    if (allDots.length === 0 && this.#slides.length > 0 && !this.hideDots) {
+      // This case implies dots should be there but aren't; #createDots should have handled it.
+      // But as a fallback, or if hideDots was toggled.
+      this.#createDots();
       return;
     }
-    const numSlides = this._slides.length;
+
+    const numSlides = this.#slides.length;
     let hideDotsLogic = numSlides === 0 || (!this.loop && numSlides <= 1);
-    if (!hideDotsLogic && !this.loop && this._container) {
-      const totalContentWidth = this._getTotalContentWidth();
-      if (totalContentWidth <= this._container.offsetWidth + 2)
+    if (!hideDotsLogic && !this.loop && this.#container) {
+      const totalContentWidth = this.#getTotalContentWidth();
+      if (totalContentWidth <= this.#container.offsetWidth + 2)
         hideDotsLogic = true;
     }
-    this._dotsContainer.style.display =
+    this.#dotsContainer.style.display =
       this.hideDots || hideDotsLogic ? "none" : "flex";
+
     allDots.forEach((dot, index) =>
-      dot.classList.toggle("active", index === this._currentIndex),
+      dot.classList.toggle("active", index === this.#currentIndex),
     );
   }
 
   next() {
-    const numSlides = this._slides.length;
+    const numSlides = this.#slides.length;
     if (numSlides === 0) return;
 
     if (!this.loop) {
-      const totalContentWidth = this._getTotalContentWidth();
-      const containerWidth = this._container ? this._container.offsetWidth : 0;
-      const currentTrackTransform = window.getComputedStyle(
-        this._slideTrack,
-      ).transform;
-      let currentTrackTranslateX =
-        currentTrackTransform && currentTrackTransform !== "none"
-          ? new DOMMatrix(currentTrackTransform).m41
-          : 0;
+      // Check if already at the effective end based on visibility
+      const totalContentWidth = this.#getTotalContentWidth();
+      const containerWidth = this.#container ? this.#container.offsetWidth : 0;
+      let currentTrackTranslateX = 0;
+      const transformStyle = this.#slideTrack.style.transform;
+      if (transformStyle && transformStyle.includes("translateX")) {
+        currentTrackTranslateX = parseFloat(
+          transformStyle.replace(/translateX\(|\px\)/g, ""),
+        );
+      }
 
-      // If the rightmost edge of content is already visible, don't advance
-      if (
-        -currentTrackTranslateX + containerWidth >= totalContentWidth - 2 &&
-        this._currentIndex === numSlides - 1
-      ) {
-        this._updateNavButtons();
+      if (-currentTrackTranslateX + containerWidth >= totalContentWidth - 2) {
+        // -2 for tolerance
+        // Already at the end, don't advance further
+        this.#updateNavButtons(); // Ensure button state is correct
         return;
       }
     }
 
     if (this.loop) {
-      this._currentIndex = (this._currentIndex + 1) % numSlides;
-    } else if (this._currentIndex < numSlides - 1) {
-      this._currentIndex++;
+      this.#currentIndex = (this.#currentIndex + 1) % numSlides;
+    } else if (this.#currentIndex < numSlides - 1) {
+      this.#currentIndex++;
     } else {
-      this._updateNavButtons();
+      // Already at the last slide index and not looping
+      this.#updateNavButtons();
       return;
     }
-    this._updateView();
-    this._resetAutoplay();
+    this.#updateView();
+    this.#resetAutoplay();
   }
 
   prev() {
-    const numSlides = this._slides.length;
+    const numSlides = this.#slides.length;
     if (numSlides === 0) return;
     if (this.loop) {
-      this._currentIndex = (this._currentIndex - 1 + numSlides) % numSlides;
-    } else if (this._currentIndex > 0) {
-      this._currentIndex--;
+      this.#currentIndex = (this.#currentIndex - 1 + numSlides) % numSlides;
+    } else if (this.#currentIndex > 0) {
+      this.#currentIndex--;
     } else {
-      this._updateNavButtons();
+      // Already at the first slide and not looping
+      this.#updateNavButtons();
       return;
     }
-    this._updateView();
-    this._resetAutoplay();
+    this.#updateView();
+    this.#resetAutoplay();
   }
 
   goTo(index) {
-    const numSlides = this._slides.length;
+    const numSlides = this.#slides.length;
     if (numSlides === 0 || index < 0 || index >= numSlides) return;
-    this._currentIndex = index;
-    this._updateView();
-    this._resetAutoplay();
+    if (index === this.#currentIndex) return; // No change
+    this.#currentIndex = index;
+    this.#updateView();
+    this.#resetAutoplay();
   }
 
-  _startAutoplay() {
-    if (!this.autoplay || this._slides.length <= 1) return;
-    if (!this.loop && this._container) {
-      const totalContentWidth = this._getTotalContentWidth();
-      if (totalContentWidth <= this._container.offsetWidth + 2) return;
+  #startAutoplay() {
+    if (!this.autoplay || this.#slides.length <= 1) return;
+    if (!this.loop && this.#container) {
+      // Check if content is scrollable for non-looping autoplay
+      const totalContentWidth = this.#getTotalContentWidth();
+      if (totalContentWidth <= this.#container.offsetWidth + 2) return;
     }
-    this._stopAutoplay();
-    this._autoplayInterval = setInterval(() => this.next(), this.autoplayDelay);
+    this.#stopAutoplay();
+    this.#autoplayInterval = setInterval(() => this.next(), this.autoplayDelay);
   }
 
-  _stopAutoplay() {
-    if (this._autoplayInterval) {
-      clearInterval(this._autoplayInterval);
-      this._autoplayInterval = null;
+  #stopAutoplay() {
+    if (this.#autoplayInterval) {
+      clearInterval(this.#autoplayInterval);
+      this.#autoplayInterval = null;
     }
   }
-  _resetAutoplay() {
-    if (this.autoplay && !this._isDragging) {
-      this._stopAutoplay();
-      this._startAutoplay();
+  #resetAutoplay() {
+    if (this.autoplay && !this.#isDragging) {
+      this.#stopAutoplay();
+      this.#startAutoplay();
     }
   }
 
-  _debounce(func, wait) {
+  #debounce(func, wait) {
     let timeout;
     return (...args) => {
       const later = () => {
@@ -568,4 +703,7 @@ class FrenzyCarousel extends HTMLElement {
     };
   }
 }
+
 customElements.define("fz-carousel", FrenzyCarousel);
+
+export default FrenzyCarousel;

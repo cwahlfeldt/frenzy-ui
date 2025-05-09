@@ -1,0 +1,12 @@
+{
+  "name": "frenzy-ui",
+  "version": "0.1.0",
+  "description": "Vanilla web components for things I and maybe you need.",
+  "license": "MIT",
+  "author": "cwahlfeldt",
+  "type": "module",
+  "main": "frenzy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

@@ -12,7 +12,7 @@ class FrenzyPager extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.#itemsPerPage = parseInt(
       this.getAttribute("items-per-page") || this.#itemsPerPage,
-      10
+      10,
     );
   }
 
@@ -23,7 +23,7 @@ class FrenzyPager extends HTMLElement {
   connectedCallback() {
     this.#itemsPerPage = parseInt(
       this.getAttribute("items-per-page") || this.#itemsPerPage,
-      10
+      10,
     );
 
     this.#slot = document.createElement("slot");
@@ -39,7 +39,7 @@ class FrenzyPager extends HTMLElement {
     this.shadowRoot.append(
       this.#styleElement,
       this.#slot,
-      this.#paginationContainer
+      this.#paginationContainer,
     );
 
     this.#applyStyles();
@@ -75,7 +75,7 @@ class FrenzyPager extends HTMLElement {
       }
     } else {
       console.warn(
-        `SurfacePager: Invalid value for items-per-page: ${value}. Must be a positive integer.`
+        `SurfacePager: Invalid value for items-per-page: ${value}. Must be a positive integer.`,
       );
     }
   }
@@ -117,7 +117,7 @@ class FrenzyPager extends HTMLElement {
         },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -135,14 +135,14 @@ class FrenzyPager extends HTMLElement {
       if (this.#paginationContainer.children.length === 0 || wasHidden) {
         while (this.#paginationContainer.firstChild) {
           this.#paginationContainer.removeChild(
-            this.#paginationContainer.firstChild
+            this.#paginationContainer.firstChild,
           );
         }
         const prevButton = this.#createButton(
           "Previous",
           this.#currentPage === 1,
           "button button-prev",
-          this.#goToPrevPage
+          this.#goToPrevPage,
         );
         const pageInfo = document.createElement("span");
         pageInfo.id = "page-info";
@@ -153,7 +153,7 @@ class FrenzyPager extends HTMLElement {
           "Next",
           this.#currentPage === totalPages,
           "button button-next",
-          this.#goToNextPage
+          this.#goToNextPage,
         );
         this.#paginationContainer.append(prevButton, pageInfo, nextButton);
       }
@@ -173,7 +173,7 @@ class FrenzyPager extends HTMLElement {
     } else {
       while (this.#paginationContainer.firstChild) {
         this.#paginationContainer.removeChild(
-          this.#paginationContainer.firstChild
+          this.#paginationContainer.firstChild,
         );
       }
     }
@@ -233,82 +233,87 @@ class FrenzyPager extends HTMLElement {
   #applyStyles() {
     if (!this.#styleElement) return;
     this.#styleElement.textContent = /*css*/ `
-          :host {
-              display: block;
-              position: relative;
-              box-sizing: border-box;
-              padding-bottom: 0;
-              transition: padding-bottom 0.2s ease-out; /* Smooth transition for padding */
-          }
+      :host {
+        display: block;
+        position: relative;
+        box-sizing: border-box;
+        padding-bottom: 0;
+        transition: padding-bottom 0.2s ease-out; /* Smooth transition for padding */
+      }
 
-          [hidden] {
-              display: none !important;
-          }
+      [hidden] {
+        display: none !important;
+      }
 
-          ::slotted(*) {
-               box-sizing: border-box;
-          }
+      ::slotted(*) {
+        box-sizing: border-box;
+      }
 
-          /* Style the pagination controls container */
+      /* Style the pagination controls container */
 
-          #pagination-controls {
-              position: absolute;
-              bottom: -1rem; /* Position below the host's bottom edge */
-              left: 50%;
-              transform: translateX(-50%);
-              width: max-content; /* Ensure width fits content */
-              max-width: 90%; /* Prevent overflow on small screens */
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              flex-wrap: nowrap; /* Prevent wrapping */
-              gap: 0.5rem;
-              padding: 0.5rem 1rem;
-              z-index: 10;
-          }
+      #pagination-controls {
+        position: absolute;
+        bottom: -1rem; /* Position below the host's bottom edge */
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content; /* Ensure width fits content */
+        max-width: 90%; /* Prevent overflow on small screens */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap; /* Prevent wrapping */
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        z-index: 10;
+      }
 
-          .button {
-              padding: 0.5rem 1rem;
-              border: 1px solid #d1d5db;
-              background-color: #ffffff;
-              color: #374151;
-              border-radius: 0.375rem;
-              cursor: pointer;
-              font: inherit;
-              font-size: 0.875rem;
-              transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-              flex-shrink: 0;
-              user-select: none;
-              -webkit-tap-highlight-color: transparent;
-          }
+      .button {
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        background-color: #ffffff;
+        color: #374151;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.875rem;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          opacity 0.2s ease;
+        flex-shrink: 0;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
 
-          .button:not(:disabled):hover,
-          .button:not(:disabled):focus-visible {
-              background-color: #f3f4f6;
-              border-color: #9ca3af;
-              outline: 2px solid transparent;
-              outline-offset: 2px;
-          }
+      .button:not(:disabled):hover,
+      .button:not(:disabled):focus-visible {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
 
-           .button:not(:disabled):active {
-               background-color: #e5e7eb;
-           }
+      .button:not(:disabled):active {
+        background-color: #e5e7eb;
+      }
 
-          .button:disabled {
-              cursor: not-allowed;
-              opacity: 0.6;
-          }
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
 
-          #page-info {
-              margin-inline: 0.5rem;
-              font-size: 0.875rem;
-              color: #4b5563;
-              white-space: nowrap;
-              flex-shrink: 0;
-              user-select: none;
-          }
-      `;
+      #page-info {
+        margin-inline: 0.5rem;
+        font-size: 0.875rem;
+        color: #4b5563;
+        white-space: nowrap;
+        flex-shrink: 0;
+        user-select: none;
+      }
+    `;
   }
 }
 
-customElements.define("fz-pager", SurfacePager);
+customElements.define("fz-pager", FrenzyPager);
+
+export default FrenzyPager;
