@@ -155,4 +155,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
   customElements.define("fz-modal", FrenzyModal);
 });
 
+const modals = Array.from(document.querySelectorAll("fz-modal"));
+if (modals && modals.length > 0) {
+  modals.forEach((modal) => {
+    modal.style.display = "";
+  });
+}
+
 export default FrenzyModal;

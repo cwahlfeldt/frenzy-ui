@@ -9,9 +9,7 @@
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
             rel="stylesheet"
         />
-        <script type="module" src="/fz-carousel.js"></script>
-        <script defer type="module" src="/fz-modal.js"></script>
-        <script type="module" src="/fz-pager.js"></script>
+        <script blocking="render" type="module" src="/frenzy.js"></script>
 
         <style>
             body {
@@ -89,6 +87,66 @@
                 background-color: #14b8a6;
             }
 
+            /* Color Picker Demo Style */
+            .color-picker-target {
+                width: 100%;
+                height: 150px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                color: inherit; /* Will be managed by contrast color */
+                transition: background-color 0.3s ease;
+                margin-bottom: 20px; /* Space before controls */
+            }
+            /* Edit Image Demo Style */
+            #demoEditImage fz-edit-image {
+                width: 200px;
+                height: 200px;
+                margin: 0 auto 20px auto; /* Center and space */
+                border: 2px dashed #cbd5e1;
+                border-radius: 8px;
+                display: block; /* For centering with margin auto */
+                --fz-editimage-border-radius: 6px;
+                --fz-editimage-icon-size: 48px;
+            }
+            #demoEditImage img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            /* Edit Text Demo Style */
+            #demoEditTextContainer {
+                border: 1px solid #e5e7eb;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            #demoEditTextContainer fz-edit-text {
+                display: block; /* So it takes up width for border */
+            }
+            #demoEditTextContainer h3 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin: 0; /* Reset margin for slotted element */
+                padding: 5px; /* Some internal padding */
+            }
+            /* Animate Demo Style */
+            .animate-target {
+                width: 150px;
+                height: 100px;
+                background-color: #60a5fa; /* Tailwind blue-400 */
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                margin: 20px auto;
+                font-weight: bold;
+            }
+
             /* Pager Demo Item Styles */
             .demo-pager-item {
                 background-color: #e0e7ff;
@@ -144,34 +202,31 @@
             .controls-section {
                 margin-top: 25px;
                 padding: 20px;
-                background-color: #e9ebee;
+                background-color: #f9fafb; /* Lighter gray */
                 border-radius: 8px;
                 display: flex;
                 flex-wrap: wrap;
-                gap: 12px; /* Gap between control items */
-                align-items: stretch; /* Makes items same height if they wrap */
+                gap: 12px;
+                align-items: stretch;
+                border: 1px solid #e5e7eb;
             }
             .control-item {
-                /* Wrapper for label + input sets */
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 background-color: #ffffff;
                 padding: 10px 15px;
                 border-radius: 6px;
-                box-shadow:
-                    0 1px 3px rgba(0, 0, 0, 0.07),
-                    0 1px 2px rgba(0, 0, 0, 0.04);
-                gap: 10px; /* Gap between label and input */
+                border: 1px solid #e5e7eb;
+                gap: 10px;
                 flex-grow: 1;
-                flex-basis: calc(
-                    50% - 6px
-                ); /* Two items per row, accounting for gap */
+                flex-basis: calc(50% - 6px);
                 min-height: 44px;
                 box-sizing: border-box;
             }
-            .controls-section > button {
-                /* Direct button children of controls-section */
+            .controls-section > button,
+            .controls-section > .button-like {
+                /* Added .button-like */
                 background-color: #4f46e5;
                 color: white;
                 border: none;
@@ -194,7 +249,8 @@
                 min-height: 44px;
                 box-sizing: border-box;
             }
-            .controls-section > button:hover {
+            .controls-section > button:hover,
+            .controls-section > .button-like:hover {
                 background-color: #4338ca;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             }
@@ -211,25 +267,34 @@
                 cursor: pointer;
             }
             .controls-section input[type="number"],
-            .controls-section input[type="text"] {
+            .controls-section input[type="text"],
+            .controls-section input[type="color"], /* Added color type */
+            .controls-section textarea, /* Added textarea */
+            .controls-section select {
+                /* Added select */
                 padding: 8px;
                 border-radius: 4px;
                 border: 1px solid #d1d5db;
                 font-size: 0.9rem;
-                width: 80px;
-                text-align: center;
+                width: auto; /* auto width for flexibility */
+                min-width: 80px; /* min width for smaller inputs */
                 color: #1f2937;
                 box-sizing: border-box;
+                flex-grow: 1; /* Allow text/textarea to grow */
             }
-            /* Full width for single item or button */
+            .controls-section textarea {
+                min-height: 60px;
+            }
             .control-item.full-width,
-            .controls-section > button.full-width {
+            .controls-section > button.full-width,
+            .controls-section > .button-like.full-width {
                 flex-basis: 100%;
             }
 
             @media (max-width: 640px) {
                 .control-item,
-                .controls-section > button {
+                .controls-section > button,
+                .controls-section > .button-like {
                     flex-basis: 100%; /* Stack controls on smaller screens */
                 }
             }
@@ -272,28 +337,34 @@
             </fz-carousel>
             <div class="controls-section" id="carouselControls">
                 <div class="control-item">
-                    <input type="checkbox" id="cLoop" checked />
-                    <label for="cLoop">Loop</label>
+                    <input type="checkbox" id="cLoop" checked /><label
+                        for="cLoop"
+                        >Loop</label
+                    >
                 </div>
                 <div class="control-item">
-                    <input type="checkbox" id="cCentered" checked />
-                    <label for="cCentered">Centered Slides</label>
+                    <input type="checkbox" id="cCentered" checked /><label
+                        for="cCentered"
+                        >Centered Slides</label
+                    >
                 </div>
                 <div class="control-item">
-                    <label for="cSpv">Slides/View (Hint)</label>
-                    <input type="number" id="cSpv" value="1" min="1" max="5" />
+                    <label for="cSpv">Slides/View</label
+                    ><input type="number" id="cSpv" value="1" min="1" max="5" />
                 </div>
                 <div class="control-item">
-                    <label for="cSlideGap">Slide Gap</label>
-                    <input type="text" id="cSlideGap" value="15px" />
+                    <label for="cSlideGap">Slide Gap</label
+                    ><input type="text" id="cSlideGap" value="15px" />
                 </div>
                 <div class="control-item">
-                    <input type="checkbox" id="cAutoplay" checked />
-                    <label for="cAutoplay">Autoplay</label>
+                    <input type="checkbox" id="cAutoplay" checked /><label
+                        for="cAutoplay"
+                        >Autoplay</label
+                    >
                 </div>
                 <div class="control-item">
-                    <label for="cAutoplayDelay">Delay (ms)</label>
-                    <input
+                    <label for="cAutoplayDelay">Delay (ms)</label
+                    ><input
                         type="number"
                         id="cAutoplayDelay"
                         value="3500"
@@ -302,15 +373,279 @@
                     />
                 </div>
                 <div class="control-item">
-                    <input type="checkbox" id="cHideArrows" />
-                    <label for="cHideArrows">Hide Arrows</label>
+                    <input type="checkbox" id="cHideArrows" /><label
+                        for="cHideArrows"
+                        >Hide Arrows</label
+                    >
                 </div>
                 <div class="control-item">
-                    <input type="checkbox" id="cHideDots" />
-                    <label for="cHideDots">Hide Dots</label>
+                    <input type="checkbox" id="cHideDots" /><label
+                        for="cHideDots"
+                        >Hide Dots</label
+                    >
                 </div>
                 <button id="cAddSlide">Add Slide</button>
                 <button id="cRemoveSlide">Remove Last Slide</button>
+            </div>
+        </div>
+
+        <!-- Frenzy Color Picker Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Color Picker (<code>fz-color-picker</code>)</h2>
+            <fz-color-picker id="demoColorPicker" color="#bae6fd" persist>
+                <div
+                    class="color-picker-target"
+                    style="
+                        color: var(
+                            --fz-color-picker-contrast-demoColorPicker,
+                            black
+                        );
+                    "
+                >
+                    Background changes! (Text color uses
+                    --fz-color-picker-contrast-demoColorPicker)
+                </div>
+            </fz-color-picker>
+            <div class="controls-section" id="colorPickerControls">
+                <div class="control-item">
+                    <label for="cpId">ID</label
+                    ><input type="text" id="cpId" value="demoColorPicker" />
+                </div>
+                <div class="control-item">
+                    <label for="cpColor">Color</label
+                    ><input type="text" id="cpColor" value="#bae6fd" />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cpDisabled" /><label
+                        for="cpDisabled"
+                        >Disabled</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="cpPersist" checked /><label
+                        for="cpPersist"
+                        >Persist</label
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Frenzy Edit Image Demo -->
+        <div class="component-demo-container" id="demoEditImage">
+            <h2>Frenzy Edit Image (<code>fz-edit-image</code>)</h2>
+            <fz-edit-image
+                id="myEditableImage"
+                persist
+                storage-key="demoUserAvatar"
+                src="https://placehold.co/300x300/a5b4fc/4338ca?text=Edit+Me!"
+            >
+                <img
+                    src="https://placehold.co/300x300/cccccc/999999?text=Default"
+                    alt="User Avatar"
+                />
+            </fz-edit-image>
+            <div class="controls-section" id="editImageControls">
+                <div class="control-item full-width">
+                    <label for="eiSrc">Src URL</label
+                    ><input
+                        type="text"
+                        id="eiSrc"
+                        value="https://placehold.co/300x300/a5b4fc/4338ca?text=Edit+Me!"
+                    />
+                </div>
+                <div class="control-item">
+                    <label for="eiAlt">Alt Text</label
+                    ><input type="text" id="eiAlt" value="User Avatar" />
+                </div>
+                <div class="control-item">
+                    <label for="eiStorageKey">Storage Key</label
+                    ><input
+                        type="text"
+                        id="eiStorageKey"
+                        value="demoUserAvatar"
+                    />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="eiReadonly" /><label
+                        for="eiReadonly"
+                        >Read-only</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="eiDisabled" /><label
+                        for="eiDisabled"
+                        >Disabled</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="eiPreview" /><label
+                        for="eiPreview"
+                        >Preview</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="eiPersist" checked /><label
+                        for="eiPersist"
+                        >Persist</label
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Frenzy Edit Text Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Edit Text (<code>fz-edit-text</code>)</h2>
+            <div id="demoEditTextContainer">
+                <fz-edit-text id="myEditableText" persist toolbar auto-color>
+                    <h3
+                        style="
+                            color: var(
+                                --fz-color-picker-contrast-textDemoColorPicker,
+                                black
+                            );
+                            font-family: &quot;Poppins&quot;, sans-serif;
+                            font-weight: 700;
+                        "
+                    >
+                        Edit This Rich Text!
+                    </h3>
+                </fz-edit-text>
+            </div>
+            <fz-color-picker id="textDemoColorPicker" color="#e0f2fe" persist>
+                <div
+                    class="color-picker-target p-2 text-xs"
+                    style="
+                        height: auto;
+                        color: var(
+                            --fz-color-picker-contrast-textDemoColorPicker,
+                            black
+                        );
+                    "
+                >
+                    Background for <code>fz-edit-text</code> demo (<code
+                        >auto-color</code
+                    >
+                    reads its contrast variable)
+                </div>
+            </fz-color-picker>
+            <div class="controls-section" id="editTextControls">
+                <div class="control-item full-width">
+                    <label for="etValue">Value (HTML)</label
+                    ><textarea id="etValue">Edit This Rich Text!</textarea>
+                </div>
+                <div class="control-item">
+                    <label for="etId">ID</label
+                    ><input type="text" id="etId" value="myEditableText" />
+                </div>
+                <div class="control-item">
+                    <label for="etPlaceholder">Placeholder</label
+                    ><input
+                        type="text"
+                        id="etPlaceholder"
+                        value="Enter text..."
+                    />
+                </div>
+                <div class="control-item">
+                    <label for="etMaxlength">Max Length</label
+                    ><input type="number" id="etMaxlength" value="100" />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etReadonly" /><label
+                        for="etReadonly"
+                        >Read-only</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etDisabled" /><label
+                        for="etDisabled"
+                        >Disabled</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etHighlight" /><label
+                        for="etHighlight"
+                        >Highlight</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etPersist" checked /><label
+                        for="etPersist"
+                        >Persist</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etToolbar" checked /><label
+                        for="etToolbar"
+                        >Toolbar</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="etAutoColor" checked /><label
+                        for="etAutoColor"
+                        >Auto-Color</label
+                    >
+                </div>
+                <button id="etReset" class="button-like">
+                    Reset Component
+                </button>
+            </div>
+        </div>
+
+        <!-- Frenzy Animate Demo -->
+        <div class="component-demo-container">
+            <h2>Frenzy Animate (<code>fz-animate</code>)</h2>
+            <fz-animate
+                id="demoAnimate"
+                animation-props='{"translateX": 250, "rotate": "1turn", "backgroundColor": "#f87171", "scale": 1.2 }'
+                duration="2000"
+                easing="easeInOutQuad"
+                loop
+                direction="alternate"
+            >
+                <div class="animate-target">Animate Me!</div>
+            </fz-animate>
+            <div class="controls-section" id="animateControls">
+                <div class="control-item full-width">
+                    <label for="animProps">Animation Props (JSON)</label>
+                    <textarea id="animProps">
+{"translateX": 250, "rotate": "1turn", "backgroundColor": "#f87171", "scale": 1.2 }</textarea
+                    >
+                </div>
+                <div class="control-item">
+                    <label for="animDuration">Duration</label
+                    ><input type="number" id="animDuration" value="2000" />
+                </div>
+                <div class="control-item">
+                    <label for="animEasing">Easing</label
+                    ><input type="text" id="animEasing" value="easeInOutQuad" />
+                </div>
+                <div class="control-item">
+                    <label for="animDelay">Delay</label
+                    ><input type="number" id="animDelay" value="0" />
+                </div>
+                <div class="control-item">
+                    <label for="animLoop">Loop</label
+                    ><input type="text" id="animLoop" value="true" />
+                </div>
+                <div class="control-item">
+                    <label for="animDirection">Direction</label
+                    ><input type="text" id="animDirection" value="alternate" />
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="animAutoplay" checked /><label
+                        for="animAutoplay"
+                        >Autoplay</label
+                    >
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="animTrigger" checked /><label
+                        for="animTrigger"
+                        >Trigger on Change</label
+                    >
+                </div>
+                <button id="animPlay" class="button-like">
+                    Play Animation
+                </button>
             </div>
         </div>
 
@@ -368,8 +703,8 @@
             </fz-pager>
             <div class="controls-section" id="pagerControls">
                 <div class="control-item full-width">
-                    <label for="pItemsPerPage">Items Per Page</label>
-                    <input
+                    <label for="pItemsPerPage">Items Per Page</label
+                    ><input
                         type="number"
                         id="pItemsPerPage"
                         value="3"
@@ -443,7 +778,6 @@
                     "bg-yellow-500",
                 ];
                 const carouselDynamicWidths = [220, 290, 160, 350, 250];
-
                 cAddSlide.addEventListener("click", () => {
                     const newSlide = document.createElement("div");
                     const colorClass =
@@ -460,7 +794,6 @@
                     demoCarousel.appendChild(newSlide);
                     carouselSlideCounter++;
                 });
-
                 cRemoveSlide.addEventListener("click", () => {
                     const lastSlide = demoCarousel.querySelector(
                         ":scope > .demo-slide:last-child, :scope > img:last-child",
@@ -471,13 +804,266 @@
                     }
                 });
 
+                // --- Frenzy Color Picker Logic ---
+                const demoColorPicker =
+                    document.getElementById("demoColorPicker");
+                const cpId = document.getElementById("cpId");
+                const cpColor = document.getElementById("cpColor");
+                const cpDisabled = document.getElementById("cpDisabled");
+                const cpPersist = document.getElementById("cpPersist");
+                const colorPickerTargetDiv = demoColorPicker.querySelector(
+                    ".color-picker-target",
+                );
+
+                cpId.addEventListener(
+                    "input",
+                    (e) => (demoColorPicker.id = e.target.value),
+                );
+                cpColor.addEventListener(
+                    "input",
+                    (e) => (demoColorPicker.color = e.target.value),
+                );
+                cpDisabled.addEventListener(
+                    "change",
+                    (e) => (demoColorPicker.disabled = e.target.checked),
+                );
+                cpPersist.addEventListener(
+                    "change",
+                    (e) => (demoColorPicker.persist = e.target.checked),
+                );
+                // Update target text color when fz-color-picker's contrast variable changes for its ID
+                const observer = new MutationObserver((mutationsList) => {
+                    for (const mutation of mutationsList) {
+                        if (
+                            mutation.type === "attributes" &&
+                            mutation.attributeName === "style"
+                        ) {
+                            const contrastColor = getComputedStyle(
+                                document.documentElement,
+                            )
+                                .getPropertyValue(
+                                    `--fz-color-picker-contrast-${demoColorPicker.id}`,
+                                )
+                                .trim();
+                            if (colorPickerTargetDiv && contrastColor) {
+                                colorPickerTargetDiv.style.color =
+                                    contrastColor;
+                            }
+                        }
+                    }
+                });
+                observer.observe(document.documentElement, {
+                    attributes: true,
+                });
+
+                // --- Frenzy Edit Image Logic ---
+                const myEditableImage =
+                    document.getElementById("myEditableImage");
+                const eiSrc = document.getElementById("eiSrc");
+                const eiAlt = document.getElementById("eiAlt");
+                const eiStorageKey = document.getElementById("eiStorageKey");
+                const eiReadonly = document.getElementById("eiReadonly");
+                const eiDisabled = document.getElementById("eiDisabled");
+                const eiPreview = document.getElementById("eiPreview");
+                const eiPersist = document.getElementById("eiPersist");
+
+                eiSrc.addEventListener(
+                    "input",
+                    (e) => (myEditableImage.src = e.target.value),
+                );
+                eiAlt.addEventListener(
+                    "input",
+                    (e) => (myEditableImage.alt = e.target.value),
+                );
+                eiStorageKey.addEventListener(
+                    "input",
+                    (e) => (myEditableImage.storageKey = e.target.value),
+                );
+                eiReadonly.addEventListener(
+                    "change",
+                    (e) => (myEditableImage.readOnly = e.target.checked),
+                );
+                eiDisabled.addEventListener(
+                    "change",
+                    (e) => (myEditableImage.disabled = e.target.checked),
+                );
+                eiPreview.addEventListener(
+                    "change",
+                    (e) => (myEditableImage.preview = e.target.checked),
+                );
+                eiPersist.addEventListener(
+                    "change",
+                    (e) => (myEditableImage.persist = e.target.checked),
+                );
+
+                // --- Frenzy Edit Text Logic ---
+                const myEditableText =
+                    document.getElementById("myEditableText");
+                const etValue = document.getElementById("etValue");
+                const etId = document.getElementById("etId");
+                const etPlaceholder = document.getElementById("etPlaceholder");
+                const etMaxlength = document.getElementById("etMaxlength");
+                const etReadonly = document.getElementById("etReadonly");
+                const etDisabled = document.getElementById("etDisabled");
+                const etHighlight = document.getElementById("etHighlight");
+                const etPersist = document.getElementById("etPersist");
+                const etToolbar = document.getElementById("etToolbar");
+                const etAutoColor = document.getElementById("etAutoColor");
+                const etReset = document.getElementById("etReset");
+                const textDemoColorPicker = document.getElementById(
+                    "textDemoColorPicker",
+                ); // Color picker for fz-edit-text demo
+                const editableTextH3 = myEditableText.querySelector("h3");
+
+                etValue.addEventListener(
+                    "input",
+                    (e) => (myEditableText.value = e.target.value),
+                );
+                myEditableText.addEventListener("input", (e) => {
+                    if (etValue.value !== e.detail.value)
+                        etValue.value = e.detail.value;
+                });
+                etId.addEventListener(
+                    "input",
+                    (e) => (myEditableText.id = e.target.value),
+                );
+                etPlaceholder.addEventListener(
+                    "input",
+                    (e) => (myEditableText.placeholder = e.target.value),
+                );
+                etMaxlength.addEventListener(
+                    "input",
+                    (e) =>
+                        (myEditableText.maxLength = e.target.value
+                            ? parseInt(e.target.value)
+                            : null),
+                );
+                etReadonly.addEventListener(
+                    "change",
+                    (e) => (myEditableText.readOnly = e.target.checked),
+                );
+                etDisabled.addEventListener(
+                    "change",
+                    (e) => (myEditableText.disabled = e.target.checked),
+                );
+                etHighlight.addEventListener(
+                    "change",
+                    (e) => (myEditableText.highlight = e.target.checked),
+                );
+                etPersist.addEventListener(
+                    "change",
+                    (e) => (myEditableText.persist = e.target.checked),
+                );
+                etToolbar.addEventListener(
+                    "change",
+                    (e) => (myEditableText.toolbar = e.target.checked),
+                );
+                etAutoColor.addEventListener(
+                    "change",
+                    (e) => (myEditableText.autoColor = e.target.checked),
+                );
+                etReset.addEventListener("click", () => {
+                    myEditableText.dispatchEvent(new CustomEvent("reset")); // internal reset in component
+                    etValue.value = myEditableText.value; // sync textarea
+                });
+                // Update h3 text color when fz-color-picker for this demo changes its contrast variable
+                const textDemoObserver = new MutationObserver(() => {
+                    const contrastColor = getComputedStyle(
+                        document.documentElement,
+                    )
+                        .getPropertyValue(
+                            `--fz-color-picker-contrast-${textDemoColorPicker.id}`,
+                        )
+                        .trim();
+                    if (editableTextH3 && contrastColor) {
+                        editableTextH3.style.color = contrastColor;
+                    }
+                });
+                textDemoObserver.observe(document.documentElement, {
+                    attributes: true,
+                    attributeFilter: ["style"],
+                });
+                // Initial sync for fz-edit-text value
+                etValue.value = myEditableText.value;
+
+                // --- Frenzy Animate Logic ---
+                const demoAnimate = document.getElementById("demoAnimate");
+                const animProps = document.getElementById("animProps");
+                const animDuration = document.getElementById("animDuration");
+                const animEasing = document.getElementById("animEasing");
+                const animDelay = document.getElementById("animDelay");
+                const animLoop = document.getElementById("animLoop");
+                const animDirection = document.getElementById("animDirection");
+                const animAutoplay = document.getElementById("animAutoplay");
+                const animTrigger = document.getElementById("animTrigger");
+                const animPlay = document.getElementById("animPlay");
+
+                animProps.addEventListener("input", (e) =>
+                    demoAnimate.setAttribute("animation-props", e.target.value),
+                );
+                animDuration.addEventListener("input", (e) =>
+                    demoAnimate.setAttribute("duration", e.target.value),
+                );
+                animEasing.addEventListener("input", (e) =>
+                    demoAnimate.setAttribute("easing", e.target.value),
+                );
+                animDelay.addEventListener("input", (e) =>
+                    demoAnimate.setAttribute("delay", e.target.value),
+                );
+                animLoop.addEventListener("input", (e) => {
+                    const val = e.target.value.toLowerCase();
+                    if (val === "true" || val === "")
+                        demoAnimate.setAttribute("loop", "true");
+                    else if (val === "false")
+                        demoAnimate.removeAttribute("loop");
+                    else demoAnimate.setAttribute("loop", val);
+                });
+                animDirection.addEventListener("input", (e) =>
+                    demoAnimate.setAttribute("direction", e.target.value),
+                );
+                animAutoplay.addEventListener("change", (e) =>
+                    demoAnimate.setAttribute(
+                        "autoplay",
+                        e.target.checked.toString(),
+                    ),
+                );
+                animTrigger.addEventListener("change", (e) =>
+                    demoAnimate.setAttribute(
+                        "trigger-on-attribute-change",
+                        e.target.checked.toString(),
+                    ),
+                );
+                animPlay.addEventListener("click", () => {
+                    // To replay, we might need to remove and re-add the element or use a method if available
+                    // For now, let's assume changing a prop will re-trigger if animTrigger is true
+                    // Or if anime.js instance is exposed on element, call .play()
+                    if (
+                        demoAnimate._animeInstance &&
+                        typeof demoAnimate._animeInstance.play === "function"
+                    ) {
+                        demoAnimate._animeInstance.restart
+                            ? demoAnimate._animeInstance.restart()
+                            : demoAnimate._animeInstance.play();
+                    } else {
+                        // If not, try re-applying props if trigger is on
+                        const currentProps =
+                            demoAnimate.getAttribute("animation-props");
+                        demoAnimate.setAttribute("animation-props", "{}"); // Force change
+                        requestAnimationFrame(() =>
+                            demoAnimate.setAttribute(
+                                "animation-props",
+                                currentProps,
+                            ),
+                        );
+                    }
+                });
+
                 // --- Frenzy Modal Logic ---
                 const demoModal = document.getElementById("demoModal");
                 const openModalBtn = document.getElementById("openModalBtn");
                 const closeModalInsideBtn = document.getElementById(
                     "closeModalInsideBtn",
                 );
-
                 if (openModalBtn)
                     openModalBtn.addEventListener("click", () =>
                         demoModal.open(),
@@ -496,11 +1082,8 @@
 
                 pItemsPerPage.addEventListener("input", (e) => {
                     const val = parseInt(e.target.value, 10);
-                    if (val > 0) {
-                        demoPager.setAttribute("items-per-page", val);
-                    }
+                    if (val > 0) demoPager.setAttribute("items-per-page", val);
                 });
-
                 pAddItem.addEventListener("click", () => {
                     pagerItemCounter++;
                     const newItem = document.createElement("div");
@@ -508,17 +1091,11 @@
                     newItem.textContent = `Added Item ${pagerItemCounter}`;
                     demoPager.appendChild(newItem);
                 });
-
                 pRemoveItem.addEventListener("click", () => {
                     const lastItem = demoPager.querySelector(
                         ":scope > .demo-pager-item:last-child",
                     );
-                    if (lastItem) {
-                        demoPager.removeChild(lastItem);
-                        // Don't decrement pagerItemCounter here to ensure new items always have unique numbers
-                        // or manage it carefully if items are meant to be re-numbered.
-                        // For simplicity, we just remove.
-                    }
+                    if (lastItem) demoPager.removeChild(lastItem);
                 });
             });
         </script>
