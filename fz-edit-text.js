@@ -100,21 +100,21 @@ class FrenzyEditText extends HTMLElement {
   #requestedFontFamilies = new Set();
   #updateToolbarStateTimeout = null;
   #hasFocusWithin = false; // Track focus within component
-  hasWarnedAboutMissingId = false; // Track warning for persist
+  #hasWarnedAboutMissingId = false; // Track warning for persist
 
   // Bound event listeners
-  _boundHandleFocusIn = null;
-  _boundHandleFocusOut = null;
-  _boundHandleSlottedInput = null;
-  _boundHandleSlottedKeydown = null;
-  _boundHandleSlottedMouseUp = null;
-  _boundHandleMutation = null;
-  _boundHandleToolbarMouseDown = null;
-  _boundHandleToolbarColorInput = null;
-  _boundHandleFontChange = null;
-  _boundHandleFontWeightChange = null;
-  _boundHandleReset = null;
-  _boundHandleSelectionChange = null;
+  #boundHandleFocusIn = null;
+  #boundHandleFocusOut = null;
+  #boundHandleSlottedInput = null;
+  #boundHandleSlottedKeydown = null;
+  #boundHandleSlottedMouseUp = null;
+  #boundHandleMutation = null;
+  #boundHandleToolbarMouseDown = null;
+  #boundHandleToolbarColorInput = null;
+  #boundHandleFontChange = null;
+  #boundHandleFontWeightChange = null;
+  #boundHandleReset = null;
+  #boundHandleSelectionChange = null;
 
   // --- Static Properties ---
   static get observedAttributes() {
@@ -391,7 +391,7 @@ class FrenzyEditText extends HTMLElement {
           }
         } else if (!this.hasWarnedAboutMissingId) {
           console.warn("FrenzyEditText: 'persist' attribute requires an 'id'.");
-          this.hasWarnedAboutMissingId = true;
+          this.#hasWarnedAboutMissingId = true;
         }
       }
 
@@ -482,8 +482,7 @@ class FrenzyEditText extends HTMLElement {
         this.#updateEditableState();
         break;
       case "highlight":
-        // No setter needed, just toggle internal state if required by CSS
-        // this.highlight = this.hasAttribute("highlight");
+        // CSS directly uses the attribute, no internal state needed here.
         break;
       case "tabindex":
         this.#updateEditableState(); // Re-apply tabindex logic
@@ -546,11 +545,11 @@ class FrenzyEditText extends HTMLElement {
           e,
         );
       }
-    } else if (!this.hasWarnedAboutMissingId) {
+    } else if (!this.#hasWarnedAboutMissingId) {
       console.warn(
         "FrenzyEditText: 'persist' attribute requires an 'id' to save state.",
       );
-      this.hasWarnedAboutMissingId = true; // Warn only once per instance
+      this.#hasWarnedAboutMissingId = true; // Warn only once per instance
     }
   }
 
@@ -898,7 +897,7 @@ class FrenzyEditText extends HTMLElement {
           title="Reset Formatting and Content"
         >
           <svg
-            xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"
+            xmlns="http://www.w3.org/2000/svg"
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -954,126 +953,126 @@ class FrenzyEditText extends HTMLElement {
 
   #attachEventListeners() {
     // Ensure listeners aren't attached multiple times
-    if (!this.#slottedElement || this._boundHandleFocusIn) return;
+    if (!this.#slottedElement || this.#boundHandleFocusIn) return;
 
     // Create bound versions of handlers
-    this._boundHandleFocusIn = this.#handleFocusIn.bind(this);
-    this._boundHandleFocusOut = this.#handleFocusOut.bind(this);
-    this._boundHandleSlottedInput = this.#handleSlottedInput.bind(this);
-    this._boundHandleSlottedKeydown = this.#handleSlottedKeydown.bind(this);
-    this._boundHandleSlottedMouseUp = this.#handleSlottedMouseUp.bind(this);
-    this._boundHandleToolbarMouseDown = this.#handleToolbarMouseDown.bind(this);
-    this._boundHandleToolbarColorInput =
+    this.#boundHandleFocusIn = this.#handleFocusIn.bind(this);
+    this.#boundHandleFocusOut = this.#handleFocusOut.bind(this);
+    this.#boundHandleSlottedInput = this.#handleSlottedInput.bind(this);
+    this.#boundHandleSlottedKeydown = this.#handleSlottedKeydown.bind(this);
+    this.#boundHandleSlottedMouseUp = this.#handleSlottedMouseUp.bind(this);
+    this.#boundHandleToolbarMouseDown = this.#handleToolbarMouseDown.bind(this);
+    this.#boundHandleToolbarColorInput =
       this.#handleToolbarColorInput.bind(this);
-    this._boundHandleFontChange = this.#handleFontChange.bind(this);
-    this._boundHandleFontWeightChange = this.#handleFontWeightChange.bind(this);
-    this._boundHandleReset = this.#handleReset.bind(this);
-    this._boundHandleSelectionChange = this.#handleSelectionChange.bind(this);
+    this.#boundHandleFontChange = this.#handleFontChange.bind(this);
+    this.#boundHandleFontWeightChange = this.#handleFontWeightChange.bind(this);
+    this.#boundHandleReset = this.#handleReset.bind(this);
+    this.#boundHandleSelectionChange = this.#handleSelectionChange.bind(this);
 
     // Listen on the host element for focus events bubbling up
     // This allows capturing focus even if it lands on the host itself
-    this.addEventListener("focusin", this._boundHandleFocusIn);
-    this.addEventListener("focusout", this._boundHandleFocusOut);
+    this.addEventListener("focusin", this.#boundHandleFocusIn);
+    this.addEventListener("focusout", this.#boundHandleFocusOut);
 
     // Listeners directly on the slotted element for content changes/interactions
     this.#slottedElement.addEventListener(
       "input",
-      this._boundHandleSlottedInput,
+      this.#boundHandleSlottedInput,
     );
     this.#slottedElement.addEventListener(
       "keydown",
-      this._boundHandleSlottedKeydown,
+      this.#boundHandleSlottedKeydown,
     );
     this.#slottedElement.addEventListener(
       "mouseup",
-      this._boundHandleSlottedMouseUp,
+      this.#boundHandleSlottedMouseUp,
     ); // For selection updates
 
     // Listeners within the shadow DOM for toolbar interactions
     this.#toolbarElement?.addEventListener(
       "mousedown",
-      this._boundHandleToolbarMouseDown,
+      this.#boundHandleToolbarMouseDown,
     ); // Use mousedown to prevent blur
     this.#colorInputElement?.addEventListener(
       "input",
-      this._boundHandleToolbarColorInput,
+      this.#boundHandleToolbarColorInput,
     );
     this.#fontSelectElement?.addEventListener(
       "change",
-      this._boundHandleFontChange,
+      this.#boundHandleFontChange,
     );
     this.#fontWeightSliderElement?.addEventListener(
       "input",
-      this._boundHandleFontWeightChange,
+      this.#boundHandleFontWeightChange,
     ); // 'input' for live updates
-    this.#resetButtonElement?.addEventListener("click", this._boundHandleReset); // 'click' is fine for reset
+    this.#resetButtonElement?.addEventListener("click", this.#boundHandleReset); // 'click' is fine for reset
 
     // Listener on the document for selection changes (needed for toolbar state)
     document.addEventListener(
       "selectionchange",
-      this._boundHandleSelectionChange,
+      this.#boundHandleSelectionChange,
     );
   }
 
   #removeEventListeners() {
-    this.removeEventListener("focusin", this._boundHandleFocusIn);
-    this.removeEventListener("focusout", this._boundHandleFocusOut);
+    this.removeEventListener("focusin", this.#boundHandleFocusIn);
+    this.removeEventListener("focusout", this.#boundHandleFocusOut);
     this.#slottedElement?.removeEventListener(
       "input",
-      this._boundHandleSlottedInput,
+      this.#boundHandleSlottedInput,
     );
     this.#slottedElement?.removeEventListener(
       "keydown",
-      this._boundHandleSlottedKeydown,
+      this.#boundHandleSlottedKeydown,
     );
     this.#slottedElement?.removeEventListener(
       "mouseup",
-      this._boundHandleSlottedMouseUp,
+      this.#boundHandleSlottedMouseUp,
     );
     this.#toolbarElement?.removeEventListener(
       "mousedown",
-      this._boundHandleToolbarMouseDown,
+      this.#boundHandleToolbarMouseDown,
     );
     this.#colorInputElement?.removeEventListener(
       "input",
-      this._boundHandleToolbarColorInput,
+      this.#boundHandleToolbarColorInput,
     );
     this.#fontSelectElement?.removeEventListener(
       "change",
-      this._boundHandleFontChange,
+      this.#boundHandleFontChange,
     );
     this.#fontWeightSliderElement?.removeEventListener(
       "input",
-      this._boundHandleFontWeightChange,
+      this.#boundHandleFontWeightChange,
     );
     this.#resetButtonElement?.removeEventListener(
       "click",
-      this._boundHandleReset,
+      this.#boundHandleReset,
     );
     document.removeEventListener(
       "selectionchange",
-      this._boundHandleSelectionChange,
+      this.#boundHandleSelectionChange,
     );
 
     // Clear bound function references
-    this._boundHandleFocusIn = null;
-    this._boundHandleFocusOut = null;
-    this._boundHandleSlottedInput = null;
-    this._boundHandleSlottedKeydown = null;
-    this._boundHandleSlottedMouseUp = null;
-    this._boundHandleToolbarMouseDown = null;
-    this._boundHandleToolbarColorInput = null;
-    this._boundHandleFontChange = null;
-    this._boundHandleFontWeightChange = null;
-    this._boundHandleReset = null;
-    this._boundHandleSelectionChange = null;
+    this.#boundHandleFocusIn = null;
+    this.#boundHandleFocusOut = null;
+    this.#boundHandleSlottedInput = null;
+    this.#boundHandleSlottedKeydown = null;
+    this.#boundHandleSlottedMouseUp = null;
+    this.#boundHandleToolbarMouseDown = null;
+    this.#boundHandleToolbarColorInput = null;
+    this.#boundHandleFontChange = null;
+    this.#boundHandleFontWeightChange = null;
+    this.#boundHandleReset = null;
+    this.#boundHandleSelectionChange = null;
   }
 
   #observeHostMutations() {
     // Observe the host element for removal of the slotted child
     if (!this.#slottedElement || this.#mutationObserver) return;
-    this._boundHandleMutation = this.#handleMutation.bind(this);
-    this.#mutationObserver = new MutationObserver(this._boundHandleMutation);
+    this.#boundHandleMutation = this.#handleMutation.bind(this);
+    this.#mutationObserver = new MutationObserver(this.#boundHandleMutation);
     // Observe direct children list changes on the host (light-DOM)
     this.#mutationObserver.observe(this, { childList: true });
   }

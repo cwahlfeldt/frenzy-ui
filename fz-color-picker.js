@@ -45,7 +45,7 @@
  */
 class FrenzyColorPicker extends HTMLElement {
   // --- Private Class Fields ---
-  #internals;
+  #internals = null;
   #slottedElement = null;
   #colorButton = null;
   #hiddenColorInput = null;
@@ -54,15 +54,15 @@ class FrenzyColorPicker extends HTMLElement {
   #isProgrammaticChange = false;
   #isInitialized = false;
   #mutationObserver = null;
-  _boundHandleButtonClick = null;
-  _boundHandleHiddenInputChange = null;
-  _boundHandleHiddenInputInput = null;
-  _boundHandleMutation = null;
-  _boundHandleHostMouseEnter = null;
-  _boundHandleHostMouseLeave = null;
-  _boundHandleHiddenInputBlur = null;
-  hasWarnedAboutMissingIdOnSave = false;
-  hasWarnedAboutMissingIdForGlobalVar = false;
+  #boundHandleButtonClick = null;
+  #boundHandleHiddenInputChange = null;
+  #boundHandleHiddenInputInput = null;
+  #boundHandleMutation = null;
+  #boundHandleHostMouseEnter = null;
+  #boundHandleHostMouseLeave = null;
+  #boundHandleHiddenInputBlur = null;
+  #hasWarnedAboutMissingIdOnSave = false;
+  #hasWarnedAboutMissingIdForGlobalVar = false;
 
   static get observedAttributes() {
     return ["color", "disabled", "persist", "id"];
@@ -189,11 +189,11 @@ class FrenzyColorPicker extends HTMLElement {
               e,
             );
           }
-        } else if (!this.hasWarnedAboutMissingIdOnSave) {
+        } else if (!this.#hasWarnedAboutMissingIdOnSave) {
           console.warn(
             `FrenzyColorPicker: 'persist' attribute enabled but 'id' is missing. Cannot load from localStorage.`,
           );
-          this.hasWarnedAboutMissingIdOnSave = true;
+          this.#hasWarnedAboutMissingIdOnSave = true;
         }
       }
 
@@ -325,11 +325,11 @@ class FrenzyColorPicker extends HTMLElement {
           e,
         );
       }
-    } else if (this.persist && !this.hasWarnedAboutMissingIdOnSave) {
+    } else if (this.persist && !this.#hasWarnedAboutMissingIdOnSave) {
       console.warn(
         `FrenzyColorPicker: Cannot persist color without an 'id' attribute.`,
       );
-      this.hasWarnedAboutMissingIdOnSave = true;
+      this.#hasWarnedAboutMissingIdOnSave = true;
     }
   }
 
@@ -620,8 +620,8 @@ class FrenzyColorPicker extends HTMLElement {
   #observeMutations() {
     if (!this.#slottedElement || this.#mutationObserver) return;
 
-    this._boundHandleMutation = this.#handleMutation.bind(this);
-    this.#mutationObserver = new MutationObserver(this._boundHandleMutation);
+    this.#boundHandleMutation = this.#handleMutation.bind(this);
+    this.#mutationObserver = new MutationObserver(this.#boundHandleMutation);
     this.#mutationObserver.observe(this, { childList: true });
     console.debug(
       `FrenzyColorPicker (${this.id || "no-id"}): MutationObserver attached.`,
@@ -675,45 +675,45 @@ class FrenzyColorPicker extends HTMLElement {
   }
 
   #attachEventListeners() {
-    if (this._boundHandleButtonClick) return;
+    if (this.#boundHandleButtonClick) return;
 
     // Bind 'this' context
-    this._boundHandleButtonClick = this.#handleButtonClick.bind(this);
-    this._boundHandleHiddenInputChange =
+    this.#boundHandleButtonClick = this.#handleButtonClick.bind(this);
+    this.#boundHandleHiddenInputChange =
       this.#handleHiddenInputChange.bind(this);
-    this._boundHandleHiddenInputInput = this.#handleHiddenInputInput.bind(this);
-    this._boundHandleHostMouseEnter = this.#handleHostMouseEnter.bind(this);
-    this._boundHandleHostMouseLeave = this.#handleHostMouseLeave.bind(this);
-    this._boundHandleHiddenInputBlur = this.#handleHiddenInputBlur.bind(this);
+    this.#boundHandleHiddenInputInput = this.#handleHiddenInputInput.bind(this);
+    this.#boundHandleHostMouseEnter = this.#handleHostMouseEnter.bind(this);
+    this.#boundHandleHostMouseLeave = this.#handleHostMouseLeave.bind(this);
+    this.#boundHandleHiddenInputBlur = this.#handleHiddenInputBlur.bind(this);
 
     // Button and Input listeners
-    this.#colorButton?.addEventListener("click", this._boundHandleButtonClick);
+    this.#colorButton?.addEventListener("click", this.#boundHandleButtonClick);
     this.#hiddenColorInput?.addEventListener(
       "change",
-      this._boundHandleHiddenInputChange,
+      this.#boundHandleHiddenInputChange,
     );
     this.#hiddenColorInput?.addEventListener(
       "input",
-      this._boundHandleHiddenInputInput,
+      this.#boundHandleHiddenInputInput,
     );
     this.#hiddenColorInput?.addEventListener(
       // Add blur listener
       "blur",
-      this._boundHandleHiddenInputBlur,
+      this.#boundHandleHiddenInputBlur,
     );
 
     // Host hover listeners
-    this.addEventListener("mouseenter", this._boundHandleHostMouseEnter);
-    this.addEventListener("mouseleave", this._boundHandleHostMouseLeave);
+    this.addEventListener("mouseenter", this.#boundHandleHostMouseEnter);
+    this.addEventListener("mouseleave", this.#boundHandleHostMouseLeave);
 
     // --- NEW: Add focus/blur listeners to the button itself for keyboard nav ---
     this.#colorButton?.addEventListener(
       "focus",
-      this._boundHandleHostMouseEnter,
+      this.#boundHandleHostMouseEnter,
     ); // Treat focus like mouse enter
     this.#colorButton?.addEventListener(
       "blur",
-      this._boundHandleHostMouseLeave,
+      this.#boundHandleHostMouseLeave,
     ); // Treat blur like mouse leave
     // ---
 
@@ -726,44 +726,44 @@ class FrenzyColorPicker extends HTMLElement {
     // Button and Input listeners
     this.#colorButton?.removeEventListener(
       "click",
-      this._boundHandleButtonClick,
+      this.#boundHandleButtonClick,
     );
     this.#hiddenColorInput?.removeEventListener(
       "change",
-      this._boundHandleHiddenInputChange,
+      this.#boundHandleHiddenInputChange,
     );
     this.#hiddenColorInput?.removeEventListener(
       "input",
-      this._boundHandleHiddenInputInput,
+      this.#boundHandleHiddenInputInput,
     );
     this.#hiddenColorInput?.removeEventListener(
       // Remove blur listener
       "blur",
-      this._boundHandleHiddenInputBlur,
+      this.#boundHandleHiddenInputBlur,
     );
 
     // Host hover listeners
-    this.removeEventListener("mouseenter", this._boundHandleHostMouseEnter);
-    this.removeEventListener("mouseleave", this._boundHandleHostMouseLeave);
+    this.removeEventListener("mouseenter", this.#boundHandleHostMouseEnter);
+    this.removeEventListener("mouseleave", this.#boundHandleHostMouseLeave);
 
     // --- NEW: Remove focus/blur listeners from the button ---
     this.#colorButton?.removeEventListener(
       "focus",
-      this._boundHandleHostMouseEnter,
+      this.#boundHandleHostMouseEnter,
     );
     this.#colorButton?.removeEventListener(
       "blur",
-      this._boundHandleHostMouseLeave,
+      this.#boundHandleHostMouseLeave,
     );
     // ---
 
     // Clear bound handler references
-    this._boundHandleButtonClick = null;
-    this._boundHandleHiddenInputChange = null;
-    this._boundHandleHiddenInputInput = null;
-    this._boundHandleHostMouseEnter = null;
-    this._boundHandleHostMouseLeave = null;
-    this._boundHandleHiddenInputBlur = null;
+    this.#boundHandleButtonClick = null;
+    this.#boundHandleHiddenInputChange = null;
+    this.#boundHandleHiddenInputInput = null;
+    this.#boundHandleHostMouseEnter = null;
+    this.#boundHandleHostMouseLeave = null;
+    this.#boundHandleHiddenInputBlur = null;
 
     console.debug(
       `FrenzyColorPicker (${this.id || "no-id"}): Event listeners removed.`,

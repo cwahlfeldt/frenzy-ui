@@ -61,7 +61,7 @@ class FrenzyEditImage extends HTMLElement {
     super();
     this.#shadowRoot = this.attachShadow({ mode: "open" });
     this.#createStructureAndStyles();
-    this.#addEventListeners(); // Add listeners (container click, file input)
+    this.#addEventListeners();
   }
 
   connectedCallback() {
@@ -176,7 +176,7 @@ class FrenzyEditImage extends HTMLElement {
   // --- Private Helper Methods ---
 
   #upgradeProperty(prop) {
-    if (this.hasOwnProperty(prop)) {
+    if (Object.hasOwn(this, prop)) {
       let value = this[prop];
       delete this[prop];
       this[prop] = value;
@@ -370,7 +370,6 @@ class FrenzyEditImage extends HTMLElement {
   }
 
   #addEventListeners() {
-    // Listen on the CONTAINER now, not the button
     this.#container.addEventListener("click", this.#handleContainerClick);
     this.#fileInput.addEventListener("change", this.#handleFileChange);
     // slotchange listener added in connectedCallback
@@ -388,7 +387,6 @@ class FrenzyEditImage extends HTMLElement {
   };
 
   #findAndInitializeSlottedImage() {
-    // (This method remains largely the same, ensuring 'part="image"' is added)
     const assignedNodes = this.#slot.assignedNodes({ flatten: true });
     const newImageElement = assignedNodes.find(
       (node) => node.nodeName === "IMG",
@@ -462,20 +460,16 @@ class FrenzyEditImage extends HTMLElement {
     if (this.disabled || this.readOnly || this.preview) {
       return; // Do nothing if not editable
     }
-    // Programmatically click the hidden file input
     this.#fileInput.click();
-    // We don't need preventDefault() here usually, unless the container
-    // itself is inside another interactive element we want to stop propagating to.
   };
 
   #handleFileChange = (event) => {
-    // (This method remains the same)
     if (this.disabled || this.readOnly || this.preview) return;
     const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.src = e.target.result;
+        this.src = e.target.result; // This will trigger attributeChangedCallback -> saveToLocalStorage if persist is true
         this.#dispatchInputEvent();
         this.#dispatchChangeEvent();
       };
@@ -487,7 +481,6 @@ class FrenzyEditImage extends HTMLElement {
   };
 
   #updateRendering() {
-    // (This method remains the same)
     if (!this.#imageElement) return;
 
     const componentSrc = this.src;
@@ -518,7 +511,6 @@ class FrenzyEditImage extends HTMLElement {
   }
 
   #updateEditableState() {
-    // Slightly simplified: CSS now handles cursor and overlay visibility based on attributes
     this.toggleAttribute("disabled", this.disabled);
     this.toggleAttribute("readonly", this.readOnly);
     this.toggleAttribute("preview", this.preview);
@@ -526,7 +518,6 @@ class FrenzyEditImage extends HTMLElement {
 
   // --- Event Dispatchers ---
   #dispatchInputEvent() {
-    // (This method remains the same)
     this.dispatchEvent(
       new CustomEvent("input", {
         detail: { src: this.src },
@@ -537,7 +528,6 @@ class FrenzyEditImage extends HTMLElement {
   }
 
   #dispatchChangeEvent() {
-    // (This method remains the same)
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: { src: this.src },
@@ -549,7 +539,6 @@ class FrenzyEditImage extends HTMLElement {
 
   // --- Persistence Methods ---
   #getDefaultStorageKey() {
-    /* (Same as before) */
     if (this.id) return `fz-editimage-${this.id}`;
     try {
       const siblings = document.querySelectorAll(this.localName);
@@ -565,7 +554,6 @@ class FrenzyEditImage extends HTMLElement {
     }
   }
   #saveToLocalStorage() {
-    /* (Same as before) */
     if (!this.persist) return;
     const key = this.storageKey;
     const altKey = `${key}-alt`;
@@ -584,8 +572,7 @@ class FrenzyEditImage extends HTMLElement {
     }
   }
   #loadFromLocalStorage() {
-    /* (Same as before) */
-    if (!this.persist || !this.#isInitialized) return;
+    if (!this.persist || !this.#isInitialized) return; // Guard against running too early
     const key = this.storageKey;
     const altKey = `${key}-alt`;
     try {

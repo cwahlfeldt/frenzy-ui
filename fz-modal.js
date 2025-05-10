@@ -100,7 +100,7 @@ class FrenzyModal extends HTMLElement {
 
   #handleBackdropClick = (event) => {
     // Close if the click is directly on the host element (the backdrop)
-    if (event.target === this.shadowRoot.host) {
+    if (event.target === this) {
       this.close();
     }
   };
@@ -110,7 +110,8 @@ class FrenzyModal extends HTMLElement {
     if (closeButton) {
       closeButton.addEventListener("click", this.close);
     }
-    this.shadowRoot.host.addEventListener("click", this.#handleBackdropClick);
+    // Listen on the host element itself for backdrop clicks
+    this.addEventListener("click", this.#handleBackdropClick);
   }
 
   disconnectedCallback() {
@@ -118,7 +119,7 @@ class FrenzyModal extends HTMLElement {
     if (closeButton) {
       closeButton.removeEventListener("click", this.close);
     }
-    this.shadowRoot.host.removeEventListener(
+    this.removeEventListener(
       "click",
       this.#handleBackdropClick,
     );

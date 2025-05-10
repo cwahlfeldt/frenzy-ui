@@ -75,7 +75,7 @@ class FrenzyPager extends HTMLElement {
       }
     } else {
       console.warn(
-        `SurfacePager: Invalid value for items-per-page: ${value}. Must be a positive integer.`,
+        `FrenzyPager: Invalid value for items-per-page: ${value}. Must be a positive integer.`,
       );
     }
   }
