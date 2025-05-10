@@ -1,7 +1,7 @@
 class FrenzyCarousel extends HTMLElement {
-  #currentIndex = 0; // Index within the combined (clones + originals) slide track
-  #originalSlides = []; // User's original slotted elements
-  #slides = []; // All slides in the track (clones + originals if looping, else just originals)
+  #currentIndex = 0;
+  #originalSlides = [];
+  #slides = [];
   #slideTrack = null;
   #container = null;
   #prevButton = null;
@@ -15,7 +15,7 @@ class FrenzyCarousel extends HTMLElement {
   #pointerId = null;
   #slotElement = null;
   #isResizing = false;
-  #numOriginalSlides = 0; // Cache for original slide count
+  #numOriginalSlides = 0;
 
   #debouncedResize = null;
   #boundPrevClickHandler = null;
@@ -44,9 +44,10 @@ class FrenzyCarousel extends HTMLElement {
   #updateSlideAppearances = null;
   #getCurrentTransformX = null;
   #handleLoopReset = null;
-  #getTotalWidthOfSet = null; // Calculates width of one set of original slides
+  #getTotalWidthOfSet = null;
 
   static MIN_OPACITY = 0.4;
+  static ANIMATION_DURATION = 600; // ms
 
   static get observedAttributes() {
     return [
@@ -65,7 +66,6 @@ class FrenzyCarousel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
 
-    // --- Define all private methods first ---
     this.#debounce = (func, wait) => {
       let timeout;
       return (...args) => {
@@ -105,13 +105,18 @@ class FrenzyCarousel extends HTMLElement {
       if (!this.#slideTrack || this.#slides.length === 0) return;
       this.#isResizing = true;
       this.#slideTrack.classList.add("no-transition");
-      // Rebuild might not be strictly necessary if only container resizes,
-      // but slide widths could be % based. For variable content width, it's safer.
-      this.#rebuildSlideTrack(); // This will re-measure and re-append.
-      this.#updateView(true); // true for no animation, reposition based on new sizes
-      this.#slideTrack.offsetHeight; // Force reflow
-      this.#slideTrack.classList.remove("no-transition");
-      this.#isResizing = false;
+      this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
+      this.#rebuildSlideTrack();
+      this.#updateView(true); // No animation for resize update
+      this.#slideTrack.offsetHeight;
+      requestAnimationFrame(() => {
+        // Ensure classes are removed after styles applied
+        this.#slideTrack.classList.remove("no-transition");
+        this.#slides.forEach((s) =>
+          s.classList.remove("no-opacity-transition"),
+        );
+        this.#isResizing = false;
+      });
     };
 
     this.#render = () => {
@@ -122,26 +127,26 @@ class FrenzyCarousel extends HTMLElement {
           .slide-track {
             display: flex; height: max-content;
             transition-property: transform;
-            transition-duration: 0.6s;
-            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); /* Default elastic */
+            transition-duration: 0s; /* Default: NO transition for transform */
+            transition-timing-function: ease-in-out;
             will-change: transform;
           }
-          .slide-track.dragging, .slide-track.no-transition { transition: none !important; }
-          .fz-slide { /* Our internal wrapper for each slide (original or clone) */
-            flex-shrink: 0; /* Allow slides to take their natural width */
-            /* width: auto; Implicit with flex-shrink: 0 and no explicit width/flex-basis */
-            min-width: 50px; /* A sensible minimum */
-            height: 100%;
-            box-sizing: border-box;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 8px;
-            transition: opacity 0.5s ease-out;
-            opacity: ${FrenzyCarousel.MIN_OPACITY};
-            overflow: hidden; /* Important for content within rounded corners */
+          .slide-track.fz-animated-transition {
+            transition-duration: ${FrenzyCarousel.ANIMATION_DURATION / 1000}s;
           }
+          .slide-track.dragging, .slide-track.no-transition { transition: none !important; }
+          .fz-slide {
+            flex-shrink: 0; min-width: 50px; height: 100%;
+            box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+            transition-property: opacity;
+            transition-duration: 0.5s;
+            transition-timing-function: ease-out;
+            opacity: ${FrenzyCarousel.MIN_OPACITY};
+            overflow: hidden;
+          }
+          .fz-slide.no-opacity-transition { transition-property: none !important; }
           .fz-slide.active-slide { opacity: 1; }
-          /* User's content is cloned into .fz-slide, so it won't be ::slotted directly from the main slot */
-          /* Users should style their content directly. Example if they put an img tag: */
           .fz-slide img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
 
           .nav-button { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(30, 30, 30, 0.6); color: white; border: none; padding: 0; cursor: pointer; z-index: 10; border-radius: 50%; width: 44px; height: 44px; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
@@ -194,28 +199,22 @@ class FrenzyCarousel extends HTMLElement {
         slideWrapper.classList.add("fz-slide");
         const clone = originalNode.cloneNode(true);
         slideWrapper.appendChild(clone);
-        // No explicit width/flex-basis, slides will take their content's width
         return slideWrapper;
       };
 
       this.#slides = [];
       if (this.loop && this.#numOriginalSlides > 0) {
-        // Meaningful loop if there's at least 1 slide
-        // Create 3 sets: [clones1 (originals)], [originalsDOM], [clones2 (originals)]
         this.#originalSlides.forEach((node) =>
           this.#slides.push(createSlideElement(node)),
-        ); // Clones Set 1
+        );
         this.#originalSlides.forEach((node) =>
           this.#slides.push(createSlideElement(node)),
-        ); // Originals DOM Set
+        );
         this.#originalSlides.forEach((node) =>
           this.#slides.push(createSlideElement(node)),
-        ); // Clones Set 2
-
-        // Initial currentIndex points to the first slide of the middle "Originals DOM Set"
+        );
         this.#currentIndex = this.#numOriginalSlides;
       } else {
-        // Not looping
         this.#originalSlides.forEach((node) =>
           this.#slides.push(createSlideElement(node)),
         );
@@ -229,7 +228,7 @@ class FrenzyCarousel extends HTMLElement {
 
     this.#onSlotChangeHandler = () => {
       this.#rebuildSlideTrack();
-      this.#updateView(true); // true for no animation, initial positioning
+      this.#updateView(true);
       this.#resetAutoplay();
     };
 
@@ -272,7 +271,18 @@ class FrenzyCarousel extends HTMLElement {
       }
     };
 
-    this.#handleLoopReset = () => {
+    this.#handleLoopReset = (event) => {
+      if (
+        event &&
+        (event.target !== this.#slideTrack ||
+          event.propertyName !== "transform")
+      )
+        return;
+
+      if (this.#slideTrack.classList.contains("fz-animated-transition")) {
+        this.#slideTrack.classList.remove("fz-animated-transition");
+      }
+
       if (
         !this.loop ||
         this.#isDragging ||
@@ -281,21 +291,29 @@ class FrenzyCarousel extends HTMLElement {
       )
         return;
 
-      // Check if currentIndex is in the cloned suffix set
+      let needsReset = false;
       if (this.#currentIndex >= this.#numOriginalSlides * 2) {
-        this.#slideTrack.classList.add("no-transition");
-        this.#currentIndex -= this.#numOriginalSlides; // Jump to corresponding slide in middle set
-        this.#updateView(true); // true for no animation, reposition
-        this.#slideTrack.offsetHeight; // Force reflow
-        this.#slideTrack.classList.remove("no-transition");
+        this.#currentIndex -= this.#numOriginalSlides;
+        needsReset = true;
+      } else if (this.#currentIndex < this.#numOriginalSlides) {
+        this.#currentIndex += this.#numOriginalSlides;
+        needsReset = true;
       }
-      // Check if currentIndex is in the cloned prefix set
-      else if (this.#currentIndex < this.#numOriginalSlides) {
+
+      if (needsReset) {
         this.#slideTrack.classList.add("no-transition");
-        this.#currentIndex += this.#numOriginalSlides; // Jump to corresponding slide in middle set
-        this.#updateView(true); // true for no animation, reposition
-        this.#slideTrack.offsetHeight; // Force reflow
-        this.#slideTrack.classList.remove("no-transition");
+        this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
+        this.#slideTrack.offsetHeight; // Force reflow before updating view
+
+        this.#updateView(true); // true for noAnimation flag
+
+        requestAnimationFrame(() => {
+          // Schedule class removal for after this frame
+          this.#slideTrack.classList.remove("no-transition");
+          this.#slides.forEach((s) =>
+            s.classList.remove("no-opacity-transition"),
+          );
+        });
       }
     };
 
@@ -315,15 +333,14 @@ class FrenzyCarousel extends HTMLElement {
     this.#onPointerDown = (event) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
       if (this.#slides.length === 0) return;
-
-      // For non-looping, check if content is scrollable (based on original slides width)
       if (!this.loop && this.#numOriginalSlides > 0 && this.#container) {
         const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides);
-        const originalContentWidth = this.#getTotalWidthOfSet(originalDOMSet);
-        if (originalContentWidth <= this.#container.offsetWidth + 2) return;
+        if (
+          this.#getTotalWidthOfSet(originalDOMSet) <=
+          this.#container.offsetWidth + 2
+        )
+          return;
       }
-      // If slidesPerView were used to control visible items, this check would be different
-      // For variable width, this check is simpler: if not looping and only 1 original slide, don't drag.
       if (!this.loop && this.#numOriginalSlides <= 1) return;
 
       this.#isDragging = true;
@@ -353,10 +370,9 @@ class FrenzyCarousel extends HTMLElement {
 
       if (!this.loop && this.#container && this.#numOriginalSlides > 0) {
         const minTranslateX = 0;
-        const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides); // Non-looping uses only one set
+        const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides);
         const trackWidth = this.#getTotalWidthOfSet(originalDOMSet);
         const maxTranslateX = -(trackWidth - this.#container.offsetWidth);
-
         if (newTrackX > minTranslateX)
           newTrackX = minTranslateX + (newTrackX - minTranslateX) * 0.3;
         else if (newTrackX < maxTranslateX && maxTranslateX < 0)
@@ -374,7 +390,8 @@ class FrenzyCarousel extends HTMLElement {
           typeof event.pointerId !== "undefined")
       )
         return;
-      this.#slideTrack.classList.remove("dragging");
+      // No need to remove 'dragging' here if next/prev/goTo will call updateView which manages transition classes
+      // this.#slideTrack.classList.remove("dragging");
       if (this.#pointerId !== null)
         try {
           this.#slideTrack.releasePointerCapture(this.#pointerId);
@@ -391,8 +408,8 @@ class FrenzyCarousel extends HTMLElement {
         if (this.#draggedDistance < 0) this.next();
         else this.prev();
       } else {
-        this.#updateView();
-      }
+        this.#updateView(false, true);
+      } // Snap back with animation
       this.#draggedDistance = 0;
       this.#resetAutoplay();
     };
@@ -419,7 +436,7 @@ class FrenzyCarousel extends HTMLElement {
       });
     };
 
-    this.#updateView = (noAnimation = false) => {
+    this.#updateView = (noAnimation = false, useAnimatedTransition = false) => {
       if (!this.#slideTrack || !this.#container) return;
       if (this.#slides.length === 0) {
         this.#slideTrack.style.transform = "translateX(0px)";
@@ -442,17 +459,37 @@ class FrenzyCarousel extends HTMLElement {
       }
       const finalTranslateX = -targetOffset + centeringAdjustment;
 
+      // Explicitly manage transition classes based on flags
       if (noAnimation) {
         this.#slideTrack.classList.add("no-transition");
-        this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
-        this.#slideTrack.offsetHeight;
-        this.#slideTrack.classList.remove("no-transition");
+        this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
+        this.#slideTrack.classList.remove("fz-animated-transition");
+      } else if (useAnimatedTransition) {
+        this.#slideTrack.classList.add("fz-animated-transition");
+        this.#slideTrack.classList.remove("no-transition"); // Ensure no-transition is off
+        this.#slides.forEach((s) =>
+          s.classList.remove("no-opacity-transition"),
+        ); // Ensure opacity can animate
       } else {
-        this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
+        // Default to no specific animation class (uses CSS default 0s duration)
+        this.#slideTrack.classList.remove(
+          "no-transition",
+          "fz-animated-transition",
+        );
+        this.#slides.forEach((s) =>
+          s.classList.remove("no-opacity-transition"),
+        );
       }
+
+      this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
+      this.#updateSlideAppearances(finalTranslateX); // Update opacities based on new position
+
+      // If noAnimation was true, the 'no-transition' classes are still on.
+      // The caller (e.g., #handleLoopReset or #onResize) is responsible for removing them after a reflow.
+      // If useAnimatedTransition was true, 'fz-animated-transition' is on, and 'transitionend' will clean it up.
+
       this.#updateNavButtons();
       this.#updateDots();
-      this.#updateSlideAppearances(finalTranslateX);
     };
 
     this.#updateNavButtons = () => {
@@ -466,9 +503,6 @@ class FrenzyCarousel extends HTMLElement {
         this.#nextButton.disabled = true;
         return;
       }
-      // For loop, buttons are always enabled if there's more than one original slide
-      // (since the track is effectively infinite).
-      // For non-loop, standard boundary checks.
       if (this.loop && this.#numOriginalSlides > 1) {
         this.#prevButton.disabled = false;
         this.#nextButton.disabled = false;
@@ -484,7 +518,6 @@ class FrenzyCarousel extends HTMLElement {
         this.#nextButton.disabled =
           isAtEnd || this.#currentIndex >= this.#numOriginalSlides - 1;
       } else {
-        // Looping but only 1 original slide, or not looping and 1 slide
         this.#prevButton.disabled = true;
         this.#nextButton.disabled = true;
       }
@@ -509,8 +542,7 @@ class FrenzyCarousel extends HTMLElement {
       let logicallyHide =
         hideAttr ||
         this.#numOriginalSlides === 0 ||
-        this.#numOriginalSlides <= 1; // Hide if 0 or 1 original slide
-
+        this.#numOriginalSlides <= 1;
       if (
         !logicallyHide &&
         !this.loop &&
@@ -518,8 +550,10 @@ class FrenzyCarousel extends HTMLElement {
         this.#numOriginalSlides > 0
       ) {
         const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides);
-        const originalContentWidth = this.#getTotalWidthOfSet(originalDOMSet);
-        if (originalContentWidth <= this.#container.offsetWidth + 2)
+        if (
+          this.#getTotalWidthOfSet(originalDOMSet) <=
+          this.#container.offsetWidth + 2
+        )
           logicallyHide = true;
       }
       this.#dotsContainer.classList.toggle("hidden", logicallyHide);
@@ -527,13 +561,12 @@ class FrenzyCarousel extends HTMLElement {
         if (!hideAttr) this.#dotsContainer.innerHTML = "";
         return;
       }
-
       if (this.#dotsContainer.children.length !== this.#numOriginalSlides)
         this.#createDots();
-
-      const activeDotIndex = this.loop
-        ? this.#currentIndex % this.#numOriginalSlides
-        : this.#currentIndex;
+      const activeDotIndex =
+        this.loop && this.#numOriginalSlides > 0
+          ? this.#currentIndex % this.#numOriginalSlides
+          : this.#currentIndex;
       const allDots = this.#dotsContainer.querySelectorAll(".dot");
       allDots.forEach((dot, index) =>
         dot.classList.toggle("active", index === activeDotIndex),
@@ -541,11 +574,8 @@ class FrenzyCarousel extends HTMLElement {
     };
 
     this.#startAutoplay = () => {
-      // Autoplay makes sense if there's more than one unique slide to show.
-      // For variable width, "slides-per-view" is not used to determine if all are visible.
       if (!this.autoplay || this.#numOriginalSlides <= 1) return;
       if (!this.loop && this.#container && this.#numOriginalSlides > 0) {
-        // Check if scrollable for non-loop
         const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides);
         if (
           this.#getTotalWidthOfSet(originalDOMSet) <=
@@ -553,7 +583,6 @@ class FrenzyCarousel extends HTMLElement {
         )
           return;
       }
-
       this.#stopAutoplay();
       this.#autoplayInterval = setInterval(() => {
         this.next();
@@ -573,11 +602,10 @@ class FrenzyCarousel extends HTMLElement {
       }
     };
 
-    // --- Initialize bound handlers and debounced functions ---
-    this.#debouncedResize = this.#debounce(this.#onResize, 250);
     this.#boundPrevClickHandler = this.prev.bind(this);
     this.#boundNextClickHandler = this.next.bind(this);
     this.#boundTransitionEndHandler = this.#handleLoopReset.bind(this);
+    this.#debouncedResize = this.#debounce(this.#onResize, 250);
   }
 
   get loop() {
@@ -590,7 +618,7 @@ class FrenzyCarousel extends HTMLElement {
     const a = this.getAttribute("slides-per-view"),
       v = parseInt(a, 10);
     return isNaN(v) || v < 1 ? 1 : v;
-  } // Kept for API, but not used for width
+  }
   get autoplay() {
     return this.hasAttribute("autoplay");
   }
@@ -619,7 +647,7 @@ class FrenzyCarousel extends HTMLElement {
     queueMicrotask(() => {
       this.#rebuildSlideTrack();
       this.#updateArrowVisibility();
-      this.#updateView(true); // Initial view, no animation
+      this.#updateView(true);
       if (this.autoplay) this.#startAutoplay();
     });
     this.#attachEventListeners();
@@ -666,7 +694,7 @@ class FrenzyCarousel extends HTMLElement {
         break;
       case "loop":
       case "slides-per-view":
-      case "slide-gap": // slidesPerView might affect buffer logic if we re-introduce it
+      case "slide-gap":
         queueMicrotask(() => {
           this.#rebuildSlideTrack();
           this.#updateView(true);
@@ -674,66 +702,56 @@ class FrenzyCarousel extends HTMLElement {
         });
         break;
       case "centered-slides":
-        queueMicrotask(() => this.#updateView());
+        queueMicrotask(() => this.#updateView(false, true));
         break;
     }
   }
 
   next() {
     if (this.#slides.length === 0) return;
-    // If not looping and already at the end (considering variable widths)
     if (!this.loop && this.#currentIndex >= this.#numOriginalSlides - 1) {
       const containerWidth = this.#container ? this.#container.offsetWidth : 0;
       const originalDOMSet = this.#slides.slice(0, this.#numOriginalSlides);
       const trackWidth = this.#getTotalWidthOfSet(originalDOMSet);
       const currentTX = this.#getCurrentTransformX();
       if (-currentTX + containerWidth >= trackWidth - 2) {
-        this.#updateView(); // Snap to end if overdragged
+        this.#updateView(false, true);
         return;
       }
     }
     this.#currentIndex++;
-    this.#updateView();
+    this.#updateView(false, true);
     this.#resetAutoplay();
   }
 
   prev() {
     if (this.#slides.length === 0) return;
-    // If not looping and already at the beginning
     if (!this.loop && this.#currentIndex <= 0) {
       const currentTX = this.#getCurrentTransformX();
       if (currentTX >= -2) {
-        // At or very near the beginning
-        this.#updateView(); // Snap to start
+        this.#updateView(false, true);
         return;
       }
     }
     this.#currentIndex--;
-    this.#updateView();
+    this.#updateView(false, true);
     this.#resetAutoplay();
   }
 
   goTo(originalSlideIndex) {
-    // originalSlideIndex is 0-based for the user's original slides
     if (
       this.#numOriginalSlides === 0 ||
       originalSlideIndex < 0 ||
       originalSlideIndex >= this.#numOriginalSlides
     )
       return;
-
-    let targetIndexInFullTrack;
-    if (this.loop && this.#numOriginalSlides > 0) {
-      // Target the instance of originalSlideIndex in the "middle" set of slides
-      targetIndexInFullTrack = this.#numOriginalSlides + originalSlideIndex;
-    } else {
-      targetIndexInFullTrack = originalSlideIndex;
-    }
-
+    let targetIndexInFullTrack =
+      this.loop && this.#numOriginalSlides > 0
+        ? this.#numOriginalSlides + originalSlideIndex
+        : originalSlideIndex;
     if (targetIndexInFullTrack === this.#currentIndex) return;
-
     this.#currentIndex = targetIndexInFullTrack;
-    this.#updateView();
+    this.#updateView(false, true);
     this.#resetAutoplay();
   }
 }
