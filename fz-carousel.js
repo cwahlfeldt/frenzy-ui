@@ -16,11 +16,13 @@ class FrenzyCarousel extends HTMLElement {
   #slotElement = null;
   #isResizing = false;
   #numOriginalSlides = 0;
+  #animationFrameId = null; // For JS animation
 
   #debouncedResize = null;
   #boundPrevClickHandler = null;
   #boundNextClickHandler = null;
-  #boundTransitionEndHandler = null;
+  // #boundTransitionEndHandler will not be needed for transform if JS handles it.
+  // It might still be used if we want to react to opacity transitions on slides, but for now, let's simplify.
 
   #onSlotChangeHandler = null;
   #render = null;
@@ -43,8 +45,9 @@ class FrenzyCarousel extends HTMLElement {
   #rebuildSlideTrack = null;
   #updateSlideAppearances = null;
   #getCurrentTransformX = null;
-  #handleLoopReset = null;
+  #performLoopReset = null; // Renamed from handleLoopReset for clarity
   #getTotalWidthOfSet = null;
+  #animateTo = null; // JS animation function
 
   static MIN_OPACITY = 0.4;
   static ANIMATION_DURATION = 600; // ms
@@ -53,7 +56,6 @@ class FrenzyCarousel extends HTMLElement {
     return [
       "loop",
       "centered-slides",
-      "slides-per-view",
       "autoplay",
       "autoplay-delay",
       "hide-arrows",
@@ -101,17 +103,54 @@ class FrenzyCarousel extends HTMLElement {
       }, 0);
     };
 
+    this.#animateTo = (targetX, duration, onComplete) => {
+      if (!this.#slideTrack) {
+        if (onComplete) onComplete();
+        return;
+      }
+      if (this.#animationFrameId) {
+        cancelAnimationFrame(this.#animationFrameId);
+      }
+
+      const startX = this.#getCurrentTransformX();
+      const distance = targetX - startX;
+      let startTime = null;
+
+      const step = (currentTime) => {
+        if (startTime === null) startTime = currentTime;
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+
+        // Ease-out cubic easing function
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        const currentX = startX + distance * easedProgress;
+
+        this.#slideTrack.style.transform = `translateX(${currentX}px)`;
+        this.#updateSlideAppearances(currentX); // Update opacity during animation
+
+        if (progress < 1) {
+          this.#animationFrameId = requestAnimationFrame(step);
+        } else {
+          this.#slideTrack.style.transform = `translateX(${targetX}px)`; // Ensure final position
+          this.#updateSlideAppearances(targetX);
+          this.#animationFrameId = null;
+          if (onComplete) onComplete();
+        }
+      };
+      this.#animationFrameId = requestAnimationFrame(step);
+    };
+
     this.#onResize = () => {
       if (!this.#slideTrack || this.#slides.length === 0) return;
       this.#isResizing = true;
-      this.#slideTrack.classList.add("no-transition");
+      if (this.#animationFrameId) cancelAnimationFrame(this.#animationFrameId); // Stop any ongoing animation
+      this.#slideTrack.classList.add("no-transition"); // Still useful for opacity if needed
       this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
       this.#rebuildSlideTrack();
       this.#updateView(true); // No animation for resize update
       this.#slideTrack.offsetHeight;
       requestAnimationFrame(() => {
-        // Ensure classes are removed after styles applied
-        this.#slideTrack.classList.remove("no-transition");
+        this.#slideTrack.classList.remove("no-transition"); // Might not be needed if transform is pure JS
         this.#slides.forEach((s) =>
           s.classList.remove("no-opacity-transition"),
         );
@@ -126,20 +165,18 @@ class FrenzyCarousel extends HTMLElement {
           .carousel-container { position: relative; width: 100%; height: max-content; overflow: hidden; touch-action: pan-y; }
           .slide-track {
             display: flex; height: max-content;
-            transition-property: transform;
-            transition-duration: 0s; /* Default: NO transition for transform */
-            transition-timing-function: ease-in-out;
-            will-change: transform;
+            /* transform is now handled by JavaScript animation */
+            will-change: transform; /* Still a good hint for the browser */
           }
-          .slide-track.fz-animated-transition {
-            transition-duration: ${FrenzyCarousel.ANIMATION_DURATION / 1000}s;
-          }
-          .slide-track.dragging, .slide-track.no-transition { transition: none !important; }
+          /* No .fz-animated-transition needed for transform */
+          .slide-track.dragging { /* No specific transition override needed if default is 0s */ }
+          .slide-track.no-transition { /* This class can be used by JS if needed for other properties, but transform is JS controlled */ }
+
           .fz-slide {
             flex-shrink: 0; min-width: 50px; height: 100%;
             box-sizing: border-box; display: flex; align-items: center; justify-content: center;
             border-radius: 8px;
-            transition-property: opacity;
+            transition-property: opacity; /* Opacity can still be CSS transitioned */
             transition-duration: 0.5s;
             transition-timing-function: ease-out;
             opacity: ${FrenzyCarousel.MIN_OPACITY};
@@ -240,10 +277,7 @@ class FrenzyCarousel extends HTMLElement {
       window.addEventListener("resize", this.#debouncedResize);
       if (this.#slideTrack) {
         this.#slideTrack.addEventListener("pointerdown", this.#onPointerDown);
-        this.#slideTrack.addEventListener(
-          "transitionend",
-          this.#boundTransitionEndHandler,
-        );
+        // No 'transitionend' for transform needed if JS handles animation and completion.
       }
     };
 
@@ -264,25 +298,12 @@ class FrenzyCarousel extends HTMLElement {
           "pointerdown",
           this.#onPointerDown,
         );
-        this.#slideTrack.removeEventListener(
-          "transitionend",
-          this.#boundTransitionEndHandler,
-        );
+        // No 'transitionend' for transform
       }
     };
 
-    this.#handleLoopReset = (event) => {
-      if (
-        event &&
-        (event.target !== this.#slideTrack ||
-          event.propertyName !== "transform")
-      )
-        return;
-
-      if (this.#slideTrack.classList.contains("fz-animated-transition")) {
-        this.#slideTrack.classList.remove("fz-animated-transition");
-      }
-
+    this.#performLoopReset = () => {
+      // Called after JS animation completes
       if (
         !this.loop ||
         this.#isDragging ||
@@ -293,23 +314,21 @@ class FrenzyCarousel extends HTMLElement {
 
       let needsReset = false;
       if (this.#currentIndex >= this.#numOriginalSlides * 2) {
+        // In suffix clone area
         this.#currentIndex -= this.#numOriginalSlides;
         needsReset = true;
       } else if (this.#currentIndex < this.#numOriginalSlides) {
+        // In prefix clone area
         this.#currentIndex += this.#numOriginalSlides;
         needsReset = true;
       }
 
       if (needsReset) {
-        this.#slideTrack.classList.add("no-transition");
+        // Opacity transition still needs to be disabled for the instant visual jump
         this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
-        this.#slideTrack.offsetHeight; // Force reflow before updating view
-
-        this.#updateView(true); // true for noAnimation flag
-
+        this.#updateView(true); // true for noAnimation flag (sets transform directly)
+        this.#slideTrack.offsetHeight; // Force reflow
         requestAnimationFrame(() => {
-          // Schedule class removal for after this frame
-          this.#slideTrack.classList.remove("no-transition");
           this.#slides.forEach((s) =>
             s.classList.remove("no-opacity-transition"),
           );
@@ -343,12 +362,14 @@ class FrenzyCarousel extends HTMLElement {
       }
       if (!this.loop && this.#numOriginalSlides <= 1) return;
 
+      if (this.#animationFrameId) cancelAnimationFrame(this.#animationFrameId); // Stop any ongoing JS animation
+
       this.#isDragging = true;
       this.#pointerId = event.pointerId;
       this.#startX = event.clientX;
       this.#initialTrackOffset = this.#getCurrentTransformX();
       this.#draggedDistance = 0;
-      this.#slideTrack.classList.add("dragging");
+      // No 'dragging' class needed for transform if JS controls it. Opacity is separate.
       try {
         this.#slideTrack.setPointerCapture(this.#pointerId);
       } catch (e) {
@@ -390,8 +411,6 @@ class FrenzyCarousel extends HTMLElement {
           typeof event.pointerId !== "undefined")
       )
         return;
-      // No need to remove 'dragging' here if next/prev/goTo will call updateView which manages transition classes
-      // this.#slideTrack.classList.remove("dragging");
       if (this.#pointerId !== null)
         try {
           this.#slideTrack.releasePointerCapture(this.#pointerId);
@@ -409,7 +428,7 @@ class FrenzyCarousel extends HTMLElement {
         else this.prev();
       } else {
         this.#updateView(false, true);
-      } // Snap back with animation
+      } // Snap back with JS animation
       this.#draggedDistance = 0;
       this.#resetAutoplay();
     };
@@ -436,7 +455,7 @@ class FrenzyCarousel extends HTMLElement {
       });
     };
 
-    this.#updateView = (noAnimation = false, useAnimatedTransition = false) => {
+    this.#updateView = (noAnimation = false, useJsAnimation = false) => {
       if (!this.#slideTrack || !this.#container) return;
       if (this.#slides.length === 0) {
         this.#slideTrack.style.transform = "translateX(0px)";
@@ -459,35 +478,36 @@ class FrenzyCarousel extends HTMLElement {
       }
       const finalTranslateX = -targetOffset + centeringAdjustment;
 
-      // Explicitly manage transition classes based on flags
+      if (this.#animationFrameId) {
+        // Cancel any ongoing JS animation
+        cancelAnimationFrame(this.#animationFrameId);
+        this.#animationFrameId = null;
+      }
+      // Opacity transitions are CSS based, manage their "no transition" state
       if (noAnimation) {
-        this.#slideTrack.classList.add("no-transition");
         this.#slides.forEach((s) => s.classList.add("no-opacity-transition"));
-        this.#slideTrack.classList.remove("fz-animated-transition");
-      } else if (useAnimatedTransition) {
-        this.#slideTrack.classList.add("fz-animated-transition");
-        this.#slideTrack.classList.remove("no-transition"); // Ensure no-transition is off
-        this.#slides.forEach((s) =>
-          s.classList.remove("no-opacity-transition"),
-        ); // Ensure opacity can animate
       } else {
-        // Default to no specific animation class (uses CSS default 0s duration)
-        this.#slideTrack.classList.remove(
-          "no-transition",
-          "fz-animated-transition",
-        );
         this.#slides.forEach((s) =>
           s.classList.remove("no-opacity-transition"),
         );
       }
 
-      this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
-      this.#updateSlideAppearances(finalTranslateX); // Update opacities based on new position
-
-      // If noAnimation was true, the 'no-transition' classes are still on.
-      // The caller (e.g., #handleLoopReset or #onResize) is responsible for removing them after a reflow.
-      // If useAnimatedTransition was true, 'fz-animated-transition' is on, and 'transitionend' will clean it up.
-
+      if (noAnimation) {
+        this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
+        this.#updateSlideAppearances(finalTranslateX);
+        // Caller (e.g. #performLoopReset) is responsible for removing no-opacity-transition after reflow
+      } else if (useJsAnimation) {
+        this.#animateTo(
+          finalTranslateX,
+          FrenzyCarousel.ANIMATION_DURATION,
+          this.#performLoopReset,
+        );
+      } else {
+        // This case might be for minor snaps or if JS animation is not desired for some updates
+        this.#slideTrack.style.transform = `translateX(${finalTranslateX}px)`;
+        this.#updateSlideAppearances(finalTranslateX);
+        this.#performLoopReset(); // Check for loop reset even if not "animated" by JS
+      }
       this.#updateNavButtons();
       this.#updateDots();
     };
@@ -604,7 +624,7 @@ class FrenzyCarousel extends HTMLElement {
 
     this.#boundPrevClickHandler = this.prev.bind(this);
     this.#boundNextClickHandler = this.next.bind(this);
-    this.#boundTransitionEndHandler = this.#handleLoopReset.bind(this);
+    // No #boundTransitionEndHandler for transform, JS animation handles completion.
     this.#debouncedResize = this.#debounce(this.#onResize, 250);
   }
 
@@ -614,11 +634,7 @@ class FrenzyCarousel extends HTMLElement {
   get centeredSlides() {
     return this.hasAttribute("centered-slides");
   }
-  get slidesPerView() {
-    const a = this.getAttribute("slides-per-view"),
-      v = parseInt(a, 10);
-    return isNaN(v) || v < 1 ? 1 : v;
-  }
+  // slidesPerView getter removed
   get autoplay() {
     return this.hasAttribute("autoplay");
   }
@@ -661,6 +677,7 @@ class FrenzyCarousel extends HTMLElement {
         this.#onSlotChangeHandler,
       );
     this.#stopAutoplay();
+    if (this.#animationFrameId) cancelAnimationFrame(this.#animationFrameId);
     if (this.#isDragging) {
       window.removeEventListener("pointermove", this.#onPointerMove);
       window.removeEventListener("pointerup", this.#onPointerUp);
@@ -693,8 +710,7 @@ class FrenzyCarousel extends HTMLElement {
         if (this.autoplay) this.#resetAutoplay();
         break;
       case "loop":
-      case "slides-per-view":
-      case "slide-gap":
+      case "slide-gap": // slides-per-view removed
         queueMicrotask(() => {
           this.#rebuildSlideTrack();
           this.#updateView(true);
@@ -720,7 +736,7 @@ class FrenzyCarousel extends HTMLElement {
       }
     }
     this.#currentIndex++;
-    this.#updateView(false, true);
+    this.#updateView(false, true); // useJsAnimation = true
     this.#resetAutoplay();
   }
 
@@ -734,7 +750,7 @@ class FrenzyCarousel extends HTMLElement {
       }
     }
     this.#currentIndex--;
-    this.#updateView(false, true);
+    this.#updateView(false, true); // useJsAnimation = true
     this.#resetAutoplay();
   }
 
@@ -751,7 +767,7 @@ class FrenzyCarousel extends HTMLElement {
         : originalSlideIndex;
     if (targetIndexInFullTrack === this.#currentIndex) return;
     this.#currentIndex = targetIndexInFullTrack;
-    this.#updateView(false, true);
+    this.#updateView(false, true); // useJsAnimation = true
     this.#resetAutoplay();
   }
 }
