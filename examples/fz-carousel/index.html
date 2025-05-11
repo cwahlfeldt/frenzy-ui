@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Frenzy Carousel Example</title>
+        <script type="module" src="../../fz-carousel.js"></script>
+        <style>
+            body {
+                font-family: sans-serif;
+                margin: 20px;
+                background-color: #f4f4f4;
+            }
+
+            .carousel-container {
+                max-width: 800px;
+                margin: 50px auto;
+                border: 1px solid #ccc;
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+
+            fz-carousel {
+                width: 100%;
+                /* Height can be controlled by slide content or explicit height on fz-carousel */
+            }
+
+            .slide {
+                min-height: 300px; /* Ensure slides have some height */
+                width: 400px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2em;
+                color: white;
+                background-color: lightgreen;
+                text-align: center;
+                box-sizing: border-box; /* Important for consistent sizing */
+            }
+            .slide2 {
+                background-color: #e74c3c;
+            }
+            .slide3 {
+                background-color: #2ecc71;
+            }
+            .slide4 {
+                background-color: #f1c40f;
+            }
+            .slide5 {
+                background-color: #9b59b6;
+            }
+
+            /* Example of styling for the carousel itself if needed */
+            /* fz-carousel::part(wrapper) { ... } */
+            /* fz-carousel::part(prev-button) { ... } */
+            /* fz-carousel::part(next-button) { ... } */
+            /* fz-carousel::part(dots-container) { ... } */
+            /* fz-carousel::part(dot) { ... } */
+            /* fz-carousel::part(dot-active) { ... } */
+        </style>
+    </head>
+    <body>
+        <div class="carousel-container">
+            <h1>Frenzy Carousel Demo</h1>
+
+            <h2>Basic Carousel</h2>
+            <fz-carousel centered arrows dots gap="10vw">
+                <div class="slide slide1">Slide 1</div>
+                <div class="slide slide2">Slide 2</div>
+                <div class="slide slide3">Slide 3</div>
+            </fz-carousel>
+        </div>
+
+        <div class="carousel-container">
+            <h2>Autoplay Carousel (3 seconds interval)</h2>
+            <fz-carousel arrows dots autoplay autoplay-interval="3000">
+                <div class="slide slide1">Slide A</div>
+                <div class="slide slide2">Slide B</div>
+                <div class="slide slide3">Slide C</div>
+                <div class="slide slide4">Slide D</div>
+            </fz-carousel>
+        </div>
+
+        <div class="carousel-container">
+            <h2>Centered Mode & Custom Gap</h2>
+            <p>
+                Note: Centered mode works best with an odd number of slides
+                visible or careful width calculations.
+            </p>
+            <fz-carousel arrows dots centered slide-gap="20px" speed="500">
+                <div class="slide slide4" style="min-width: 60%">
+                    Item Alpha
+                </div>
+                <div class="slide slide5" style="min-width: 60%">Item Beta</div>
+                <div class="slide slide1" style="min-width: 60%">
+                    Item Gamma
+                </div>
+                <div class="slide slide2" style="min-width: 60%">
+                    Item Delta
+                </div>
+                <div class="slide slide3" style="min-width: 60%">
+                    Item Epsilon
+                </div>
+            </fz-carousel>
+        </div>
+
+        <div class="carousel-container">
+            <h2>No Dragging & Custom Easing</h2>
+            <fz-carousel
+                show-arrows
+                show-dots
+                no-drag
+                easing="ease-in-out"
+                speed="700"
+            >
+                <div class="slide slide3">Content 1</div>
+                <div class="slide slide1">Content 2</div>
+                <div class="slide slide5">Content 3</div>
+            </fz-carousel>
+        </div>
+
+        <div class="carousel-container">
+            <h2>Carousel with many items (tests infinite loop logic)</h2>
+            <fz-carousel show-arrows show-dots speed="250">
+                <div class="slide slide1">S1</div>
+                <div class="slide slide2">S2</div>
+                <div class="slide slide3">S3</div>
+                <div class="slide slide4">S4</div>
+                <div class="slide slide5">S5</div>
+                <div class="slide slide1">S6</div>
+                <div class="slide slide2">S7</div>
+                <div class="slide slide3">S8</div>
+            </fz-carousel>
+        </div>
+    </body>
+</html>

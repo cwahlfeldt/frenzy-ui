@@ -301,7 +301,13 @@
         </style>
     </head>
     <body>
-        <h1>Frenzy UI Components Demo</h1>
+        <header>
+            <h1>Frenzy UI</h1>
+            <div class="links">
+                <a href="/examples/fz-carousel/">Carousel</a>
+                <a href="/examples/fz-animate/">Carousel</a>
+            </div>
+        </header>
 
         <!-- Frenzy Carousel Demo -->
         <div class="component-demo-container">
@@ -722,7 +728,17 @@
         <!-- Frenzy Carousel Demo (New fz-carousel) -->
         <div class="component-demo-container">
             <h2>Frenzy Carousel (New <code>fz-carousel</code>)</h2>
-            <fz-carousel id="newDemoCarousel" arrows dots autoplay autoplay-interval="3000" speed="0.5s" easing="ease-in-out" gap="1rem" style="height: 300px;">
+            <fz-carousel
+                id="newDemoCarousel"
+                arrows
+                dots
+                autoplay
+                autoplay-interval="3000"
+                speed="0.5s"
+                easing="ease-in-out"
+                gap="1rem"
+                style="height: 300px"
+            >
                 <div class="demo-slide bg-red-500">Slide 1</div>
                 <div class="demo-slide bg-blue-500">Slide 2</div>
                 <div class="demo-slide bg-green-500">Slide 3</div>
