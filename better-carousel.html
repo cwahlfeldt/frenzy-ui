@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrenzyCarousel Web Component</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+            overscroll-behavior-x: none; /* Prevent pull-to-refresh during horizontal drag */
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        h2 {
+            margin-top: 30px;
+        }
+
+        fz-carousel {
+            margin-bottom: 40px;
+            max-width: 800px; 
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            min-height: 100px; 
+        }
+
+        .slide-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 250px; 
+            box-sizing: border-box;
+            padding: 20px;
+            text-align: center;
+            border-radius: 4px; 
+            color: #fff; 
+        }
+        .slide-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        .slide-content h3 {
+            margin-top: 10px;
+        }
+         .slide-content p {
+            color: #eee;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .controls div {
+            margin-bottom: 8px;
+        }
+        .controls button, .controls input, .controls select {
+            padding: 8px 12px;
+            margin: 0 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            vertical-align: middle;
+            font-size: 14px;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .controls input, .controls select {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            width: auto; /* Adjust width as needed */
+        }
+        .controls label {
+            margin-left: 10px;
+            margin-right: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>FrenzyCarousel Demo</h1>
+
+    <div class="controls">
+        <div>
+            <label>Carousel 1:</label>
+            <button onclick="toggleAttribute('carousel1', 'centered')">Toggle Centered</button>
+            <button onclick="toggleAttribute('carousel1', 'autoplay')">Toggle Autoplay</button>
+            <button onclick="toggleAttribute('carousel1', 'arrows')">Toggle Arrows</button>
+            <button onclick="toggleAttribute('carousel1', 'dots')">Toggle Dots</button>
+            <button onclick="toggleAttribute('carousel1', 'nodrag')">Toggle NoDrag</button>
+        </div>
+        <div>
+            <label for="gapC1">Gap:</label>
+            <input type="text" id="gapC1Value" value="1rem" onchange="setAttributeValue('carousel1', 'gap', this.value)">
+            <label for="speedC1">Speed:</label>
+            <input type="text" id="speedC1Value" value="0.5s" onchange="setAttributeValue('carousel1', 'speed', this.value)">
+            <label for="easingC1">Easing:</label>
+            <select id="easingC1Value" onchange="setAttributeValue('carousel1', 'easing', this.value)">
+                <option value="ease-in-out">ease-in-out</option>
+                <option value="linear">linear</option>
+                <option value="ease">ease</option>
+                <option value="ease-in">ease-in</option>
+                <option value="ease-out">ease-out</option>
+                <option value="cubic-bezier(0.68, -0.55, 0.27, 1.55)">cubic-bezier (custom)</option>
+            </select>
+        </div>
+    </div>
+
+    <h2>Carousel 1: Mixed Content (Autoplay, Arrows, Dots, Gap: 1rem, Speed: 0.5s)</h2>
+    <fz-carousel id="carousel1" style="height: 270px;" autoplay autoplay-interval="2500" gap="1rem" arrows dots speed="0.5s" easing="ease-in-out">
+        <div class="slide-content" style="width: 300px; background-color: #007bff;"><h3>Slide 1</h3><p>(300px)</p></div>
+        <div class="slide-content" style="width: 450px; background-color: #28a745;"><img src="https://placehold.co/400x200/ffffff/28a745?text=Image+2" alt="S2" onerror="this.alt='Error'; this.src='https://placehold.co/400x200/cccccc/969696?text=Error';"></div>
+        <div class="slide-content" style="width: 250px; background-color: #dc3545;"><h3>Slide 3</h3><p>(250px)</p></div>
+        <div class="slide-content" style="width: 500px; background-color: #ffc107; color: #333;"><img src="https://placehold.co/450x150/333333/ffc107?text=Image+4" alt="S4" onerror="this.alt='Error'; this.src='https://placehold.co/450x150/cccccc/969696?text=Error';"></div>
+        <div class="slide-content" style="width: 350px; background-color: #17a2b8;"><h3>Slide 5</h3><p>(350px)</p></div>
+    </fz-carousel>
+
+    <h2>Carousel 2: Fewer Slides (Centered, Gap: 20px, Arrows, NoDrag)</h2>
+    <fz-carousel id="carousel2" style="height: 320px;" centered gap="20px" arrows nodrag speed="300ms" easing="linear">
+        <img src="https://placehold.co/600x300/6f42c1/ffffff?text=Slide+A" alt="Slide A" style="width:auto; height:300px;" onerror="this.alt='Error'; this.src='https://placehold.co/600x300/cccccc/969696?text=Error';">
+        <img src="https://placehold.co/600x300/fd7e14/ffffff?text=Slide+B" alt="Slide B" style="width:auto; height:300px;" onerror="this.alt='Error'; this.src='https://placehold.co/600x300/cccccc/969696?text=Error';">
+    </fz-carousel>
+    
+    <h2>Carousel 4: Images only (Centered, Autoplay, Dots)</h2>
+    <fz-carousel id="carousel4" style="height: 300px;" centered autoplay dots speed="1s" easing="ease">
+        <img src="https://placehold.co/400x300/77dd77/333?text=Green" alt="G" style="height:100%;width:auto;" onerror="this.alt='Error'; this.src='https://placehold.co/400x300/cccccc/969696?text=Error';">
+        <img src="https://placehold.co/600x300/fdfd96/333?text=Yellow" alt="Y" style="height:100%;width:auto;" onerror="this.alt='Error'; this.src='https://placehold.co/600x300/cccccc/969696?text=Error';">
+        <img src="https://placehold.co/300x300/84b6f4/333?text=Blue" alt="B" style="height:100%;width:auto;" onerror="this.alt='Error'; this.src='https://placehold.co/300x300/cccccc/969696?text=Error';">
+        <img src="https://placehold.co/500x300/fdcae1/333?text=Pink" alt="P" style="height:100%;width:auto;" onerror="this.alt='Error'; this.src='https://placehold.co/500x300/cccccc/969696?text=Error';">
+    </fz-carousel>
+
+    <template id="fz-carousel-template">
+        <style>
+            :host {
+                display: block;
+                position: relative;
+                width: 100%;
+                height: 100%; 
+                /* --fz-transition-duration is no longer used, controlled by 'speed' attribute */
+                --fz-arrow-bg: rgba(0,0,0,0.6);
+                --fz-arrow-color: white;
+                --fz-dot-color: rgba(255,255,255,0.5);
+                --fz-dot-active-color: white;
+                border-radius: inherit; 
+                touch-action: pan-y; /* Allow vertical scroll, prevent browser horizontal actions during drag */
+            }
+
+            slot[name=""] { display: none; }
+
+            .carousel-inner-container {
+                width: 100%; height: 100%; 
+                overflow: hidden; position: relative; 
+                border-radius: inherit;
+                user-select: none; /* Prevent text selection during drag */
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+            }
+
+            .carousel-wrapper {
+                display: flex; height: 100%; 
+                will-change: transform; 
+            }
+
+            .carousel-wrapper > * {
+                flex-shrink: 0; height: 100%; 
+                box-sizing: border-box; position: relative; 
+                display: flex; align-items: center; justify-content: center;
+                overflow: hidden; 
+            }
+
+            .carousel-wrapper > img {
+                width: auto; max-width: none; 
+                object-fit: contain; display: block; 
+            }
+
+            .nav-arrow {
+                position: absolute; top: 50%;
+                transform: translateY(-50%);
+                background-color: var(--fz-arrow-bg); color: var(--fz-arrow-color);
+                border: none; padding: 0; cursor: pointer; z-index: 10; 
+                border-radius: 50%; font-size: 20px;
+                width: 44px; height: 44px;
+                display: flex; align-items: center; justify-content: center;
+                transition: background-color 0.2s ease, opacity 0.3s ease;
+                opacity: 0.8;
+            }
+            .nav-arrow:hover { background-color: rgba(0,0,0,0.8); opacity: 1; }
+            .nav-arrow.prev { left: 15px; }
+            .nav-arrow.next { right: 15px; }
+            .nav-arrow.hidden, .nav-dots.hidden { display: none !important; }
+
+            .nav-dots {
+                position: absolute; bottom: 15px; left: 50%;
+                transform: translateX(-50%);
+                display: flex; gap: 10px; z-index: 10; 
+                padding: 5px; background-color: rgba(0,0,0,0.2);
+                border-radius: 15px;
+            }
+            .dot {
+                width: 12px; height: 12px;
+                background-color: var(--fz-dot-color);
+                border-radius: 50%; cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+            }
+            .dot:hover { transform: scale(1.2); }
+            .dot.active { background-color: var(--fz-dot-active-color); transform: scale(1.1); }
+        </style>
+        
+        <slot style="display: none;"></slot> 
+        
+        <div class="carousel-inner-container">
+            <div class="carousel-wrapper"></div>
+            <button class="nav-arrow prev hidden" aria-label="Previous slide">&#10094;</button>
+            <button class="nav-arrow next hidden" aria-label="Next slide">&#10095;</button>
+            <div class="nav-dots hidden"></div>
+        </div>
+    </template>
+
+    <script>
+    class FrenzyCarousel extends HTMLElement {
+        constructor() {
+            super();
+            this.attachShadow({ mode: 'open' });
+            const template = document.getElementById('fz-carousel-template');
+            if (template) {
+                this.shadowRoot.appendChild(template.content.cloneNode(true));
+            } else {
+                console.error('FrenzyCarousel template not found!');
+                return;
+            }
+
+            // DOM Element References
+            this._slot = this.shadowRoot.querySelector('slot'); 
+            this._innerContainer = this.shadowRoot.querySelector('.carousel-inner-container');
+            this._wrapper = this.shadowRoot.querySelector('.carousel-wrapper');
+            this._prevButton = this.shadowRoot.querySelector('.nav-arrow.prev');
+            this._nextButton = this.shadowRoot.querySelector('.nav-arrow.next');
+            this._dotsContainer = this.shadowRoot.querySelector('.nav-dots');
+
+            // Core State
+            this._originalSlides = [];
+            this._allSlidesInDOM = []; 
+            this._slideOffsets = []; 
+            this._currentOriginalIndex = 0;
+            this._currentDOMIndex = 0;      
+            this._isTransitioning = false;
+            this._offsetToFirstActualSlide = 0; 
+            this._numLeadingCloneSets = 2; 
+            this._numTrailingCloneSets = 2; 
+            this._isActive = false; // Becomes true after first successful setup
+
+            // Attribute-controlled State
+            this._isCenteredMode = false;
+            this._showArrows = false; 
+            this._showDots = false;   
+            this._slideGapValue = "0px"; 
+            this._speedValue = "0.6s"; // Default speed
+            this._easingFunctionValue = "ease-in-out"; // Default easing
+            this._noDrag = false; // Dragging enabled by default
+
+            // Internal Mechanics State
+            this._computedSlideGap = 0; 
+            this._resizeObserver = null;
+            
+            // Autoplay State
+            this._autoplayEnabled = false;
+            this._autoplayIntervalValue = 3000;
+            this._autoplayTimerId = null;
+
+            // Dragging State
+            this._isDragging = false;
+            this._dragStartX = 0;
+            this._dragCurrentX = 0;
+            this._dragStartTime = 0;
+            this._dragInitialWrapperX = 0; // Wrapper's X at drag start
+            this._dragThreshold = 50; // Min pixels to drag to trigger slide change
+        }
+
+        static get observedAttributes() {
+            return ['centered', 'autoplay', 'autoplay-interval', 'gap', 'arrows', 'dots', 'nodrag', 'speed', 'easing'];
+        }
+
+        attributeChangedCallback(name, oldValue, newValue) {
+            if (oldValue === newValue && name !== 'nodrag' && name !== 'autoplay' && name !== 'arrows' && name !== 'dots' && name !== 'centered') return; // Avoid unnecessary updates for string attributes
+
+            let needsUIRefresh = false;
+            let needsAutoplayRestart = false;
+            let needsDragSetupRefresh = false;
+
+            switch (name) {
+                case 'centered':
+                    this._isCenteredMode = this.hasAttribute('centered');
+                    needsUIRefresh = true;
+                    break;
+                case 'autoplay':
+                    this._autoplayEnabled = this.hasAttribute('autoplay');
+                    needsAutoplayRestart = true;
+                    break;
+                case 'autoplay-interval':
+                    const newInterval = parseInt(newValue, 10);
+                    this._autoplayIntervalValue = (!isNaN(newInterval) && newInterval > 0) ? newInterval : 3000;
+                    needsAutoplayRestart = true;
+                    break;
+                case 'gap':
+                    this._slideGapValue = newValue || "0px";
+                    if (this._wrapper) this._wrapper.style.gap = this._slideGapValue;
+                    needsUIRefresh = true;
+                    break;
+                case 'arrows':
+                    this._showArrows = this.hasAttribute('arrows');
+                    if (this._isActive) this._updateNavigationVisibility();
+                    break;
+                case 'dots':
+                    this._showDots = this.hasAttribute('dots');
+                    if (this._isActive) this._updateNavigationVisibility();
+                    break;
+                case 'nodrag':
+                    this._noDrag = this.hasAttribute('nodrag');
+                    // Drag listeners are setup in connectedCallback, no dynamic re-binding needed here
+                    // as the check is done within the handlers.
+                    break;
+                case 'speed':
+                    this._speedValue = typeof newValue === 'string' ? newValue : "0.6s";
+                    // No immediate UI refresh, applied on next transition
+                    break;
+                case 'easing':
+                    this._easingFunctionValue = typeof newValue === 'string' ? newValue : "ease-in-out";
+                    // No immediate UI refresh, applied on next transition
+                    break;
+            }
+
+            if (this._isActive) {
+                if (needsUIRefresh) {
+                     requestAnimationFrame(() => { 
+                        this._calculateSlideWidthsAndOffsets();
+                        this._goToDOMIndex(this._currentDOMIndex, false, true);
+                    });
+                }
+                if (needsAutoplayRestart) {
+                    this._handleAutoplay();
+                }
+            }
+        }
+
+        connectedCallback() {
+            if (!this._slot) return;
+            // Initialize attributes from current state
+            this._isCenteredMode = this.hasAttribute('centered');
+            this._autoplayEnabled = this.hasAttribute('autoplay');
+            this._showArrows = this.hasAttribute('arrows');
+            this._showDots = this.hasAttribute('dots');
+            this._noDrag = this.hasAttribute('nodrag');
+            this._speedValue = this.getAttribute('speed') || "0.6s";
+            this._easingFunctionValue = this.getAttribute('easing') || "ease-in-out";
+
+
+            const intervalAttr = this.getAttribute('autoplay-interval');
+            if (intervalAttr) {
+                const parsedInterval = parseInt(intervalAttr, 10);
+                if (!isNaN(parsedInterval) && parsedInterval > 0) this._autoplayIntervalValue = parsedInterval;
+            }
+            this._slideGapValue = this.getAttribute('gap') || "0px";
+            if (this._wrapper) this._wrapper.style.gap = this._slideGapValue;
+
+            // Event Listeners
+            this._slot.addEventListener('slotchange', this._handleSlotChange.bind(this));
+            this._prevButton.addEventListener('click', this.prevSlide.bind(this));
+            this._nextButton.addEventListener('click', this.nextSlide.bind(this));
+            this._wrapper.addEventListener('transitionend', this._onTransitionEnd.bind(this));
+            
+            // Drag Listeners
+            this._innerContainer.addEventListener('touchstart', this._onTouchStart.bind(this), { passive: true }); // passive:true for better scroll perf if not preventing default initially
+            this._innerContainer.addEventListener('touchmove', this._onTouchMove.bind(this), { passive: false }); // passive:false as we might preventDefault
+            this._innerContainer.addEventListener('touchend', this._onTouchEnd.bind(this));
+            this._innerContainer.addEventListener('touchcancel', this._onTouchEnd.bind(this)); // Treat cancel like end
+
+
+            this._handleSlotChange(); 
+
+            this._resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.target === this || this._allSlidesInDOM.some(slide => slide === entry.target)) {
+                        requestAnimationFrame(() => {
+                            this._calculateSlideWidthsAndOffsets();
+                            this._goToDOMIndex(this._currentDOMIndex, false, true); 
+                        });
+                    }
+                }
+            });
+            this._resizeObserver.observe(this);
+        }
+
+        disconnectedCallback() {
+            if (this._slot) this._slot.removeEventListener('slotchange', this._handleSlotChange.bind(this));
+            this._prevButton.removeEventListener('click', this.prevSlide.bind(this));
+            this._nextButton.removeEventListener('click', this.nextSlide.bind(this));
+            this._wrapper.removeEventListener('transitionend', this._onTransitionEnd.bind(this));
+            
+            this._innerContainer.removeEventListener('touchstart', this._onTouchStart.bind(this));
+            this._innerContainer.removeEventListener('touchmove', this._onTouchMove.bind(this));
+            this._innerContainer.removeEventListener('touchend', this._onTouchEnd.bind(this));
+            this._innerContainer.removeEventListener('touchcancel', this._onTouchEnd.bind(this));
+
+            if (this._resizeObserver) {
+                this._allSlidesInDOM.forEach(slide => this._resizeObserver.unobserve(slide));
+                this._resizeObserver.unobserve(this); 
+                this._resizeObserver.disconnect();
+            }
+            this._wrapper.innerHTML = ''; 
+            this._originalSlides = []; this._allSlidesInDOM = [];
+            this._isActive = false; this._stopAutoplay();
+        }
+
+        _handleSlotChange() {
+            this._originalSlides = this._slot.assignedElements({ flatten: true });
+            this._currentOriginalIndex = 0; 
+            this._setupCarousel();
+        }
+
+        _setupCarousel() {
+            this._isActive = false; this._stopAutoplay(); 
+            if (!this._wrapper || !this._originalSlides) return;
+            this._wrapper.style.gap = this.getAttribute('gap') || "0px";
+
+            if (this._resizeObserver) this._allSlidesInDOM.forEach(slide => this._resizeObserver.unobserve(slide));
+            this._wrapper.innerHTML = ''; this._allSlidesInDOM = [];
+
+            const numOriginalSlides = this._originalSlides.length;
+
+            if (numOriginalSlides === 0) {
+                this._slideOffsets = [0]; this._offsetToFirstActualSlide = 0;
+            } else if (numOriginalSlides === 1) {
+                const clonedSingleSlide = this._originalSlides[0].cloneNode(true);
+                this._allSlidesInDOM = [clonedSingleSlide];
+                this._wrapper.appendChild(clonedSingleSlide);
+                if (this._resizeObserver) this._resizeObserver.observe(clonedSingleSlide);
+                this._offsetToFirstActualSlide = 0;
+            } else {
+                this._offsetToFirstActualSlide = this._numLeadingCloneSets * numOriginalSlides;
+                for (let set = 0; set < this._numLeadingCloneSets; set++) {
+                    for (let i = 0; i < numOriginalSlides; i++) {
+                        const clone = this._originalSlides[i].cloneNode(true);
+                        this._wrapper.appendChild(clone); this._allSlidesInDOM.push(clone);
+                        if (this._resizeObserver) this._resizeObserver.observe(clone);
+                    }
+                }
+                for (let i = 0; i < numOriginalSlides; i++) {
+                    const slideToUse = this._originalSlides[i].cloneNode(true);
+                    this._wrapper.appendChild(slideToUse); this._allSlidesInDOM.push(slideToUse);
+                    if (this._resizeObserver) this._resizeObserver.observe(slideToUse);
+                }
+                for (let set = 0; set < this._numTrailingCloneSets; set++) {
+                    for (let i = 0; i < numOriginalSlides; i++) {
+                        const clone = this._originalSlides[i].cloneNode(true);
+                        this._wrapper.appendChild(clone); this._allSlidesInDOM.push(clone);
+                        if (this._resizeObserver) this._resizeObserver.observe(clone);
+                    }
+                }
+            }
+            
+            this._setupDots(); 
+            this._updateNavigationVisibility(); 
+            
+            requestAnimationFrame(() => {
+                this._calculateSlideWidthsAndOffsets();
+                this._currentOriginalIndex = 0; 
+                this._currentDOMIndex = this._offsetToFirstActualSlide; 
+                if (numOriginalSlides > 0) this._goToDOMIndex(this._currentDOMIndex, false, true); 
+                this._isActive = true;
+                this._handleAutoplay();
+            });
+        }
+
+        _updateNavigationVisibility() {
+            const hasMultipleSlides = this._originalSlides.length > 1;
+            this._prevButton.classList.toggle('hidden', !(this._showArrows && hasMultipleSlides));
+            this._nextButton.classList.toggle('hidden', !(this._showArrows && hasMultipleSlides));
+            this._dotsContainer.classList.toggle('hidden', !(this._showDots && hasMultipleSlides));
+        }
+        
+        _calculateSlideWidthsAndOffsets() {
+            if (!this._wrapper || this._allSlidesInDOM.length === 0) {
+                this._slideOffsets = []; this._computedSlideGap = 0; return;
+            }
+            this._computedSlideGap = parseFloat(window.getComputedStyle(this._wrapper).gap) || 0;
+            this._slideOffsets = []; 
+            let currentOffset = 0;
+            this._allSlidesInDOM.forEach((slide, index) => {
+                this._slideOffsets.push(currentOffset);
+                currentOffset += slide.offsetWidth; 
+                if (index < this._allSlidesInDOM.length - 1) currentOffset += this._computedSlideGap;
+            });
+        }
+
+        _setupDots() {
+            this._dotsContainer.innerHTML = ''; 
+            if (this._originalSlides.length <= 1) return;
+            this._originalSlides.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.classList.add('dot');
+                dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+                dot.addEventListener('click', () => this.goToSlide(index));
+                this._dotsContainer.appendChild(dot);
+            });
+        }
+
+        _updateDots() {
+            if (this._originalSlides.length <= 1 || !this._dotsContainer || !this._showDots) return;
+            const dots = this._dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === this._currentOriginalIndex);
+            });
+        }
+
+        _goToDOMIndex(domIndex, animate = true, forceNoTransition = false) {
+            if (!this._isActive || !this._wrapper || this._allSlidesInDOM.length === 0 || !this._slideOffsets || this._slideOffsets.length === 0) return;
+           
+            if (this._isTransitioning && animate && !forceNoTransition) {
+                const currentTransform = window.getComputedStyle(this._wrapper).transform;
+                this._wrapper.style.transition = 'none';
+                this._wrapper.style.transform = currentTransform;
+                // eslint-disable-next-line no-unused-expressions
+                this._wrapper.offsetHeight; 
+                this._isTransitioning = false; 
+            }
+
+            if (domIndex < 0 || domIndex >= this._slideOffsets.length) {
+                 domIndex = Math.max(0, Math.min(this._offsetToFirstActualSlide + this._currentOriginalIndex, this._slideOffsets.length - 1));
+                 if (domIndex < 0 || domIndex >= this._slideOffsets.length) return; 
+            }
+
+            let targetOffset;
+            const viewportWidth = this._innerContainer.offsetWidth;
+            const currentSlideElement = this._allSlidesInDOM[domIndex];
+            if (!currentSlideElement) return; 
+            const currentSlideWidth = currentSlideElement.offsetWidth;
+
+            if (this._isCenteredMode && this._originalSlides.length > 0) {
+                targetOffset = (viewportWidth / 2) - (this._slideOffsets[domIndex] + (currentSlideWidth / 2));
+            } else {
+                targetOffset = -this._slideOffsets[domIndex];
+            }
+            
+            this._currentDOMIndex = domIndex; 
+            const effectiveTransition = animate && !forceNoTransition && parseFloat(this._speedValue) > 0; // Check if speed implies a duration
+
+            if (effectiveTransition) {
+                this._wrapper.style.transition = `transform ${this._speedValue} ${this._easingFunctionValue}`;
+                this._isTransitioning = true;
+            } else {
+                this._wrapper.style.transition = 'none';
+                this._isTransitioning = false; 
+                if (!forceNoTransition) { 
+                    // eslint-disable-next-line no-unused-expressions
+                    this._wrapper.offsetHeight; 
+                }
+            }
+            this._wrapper.style.transform = `translateX(${targetOffset}px)`;
+            
+            if (!effectiveTransition) this._handlePossibleInfiniteLoopJump(); 
+        }
+        
+        _handlePossibleInfiniteLoopJump() {
+            if (this._isTransitioning && parseFloat(this._speedValue) > 0) return;
+
+            const numOriginal = this._originalSlides.length;
+            if (numOriginal <= 1) { this._updateDots(); return; }
+
+            const currentDOM = this._currentDOMIndex;
+            let jumpNeeded = false;
+            let newOriginalIdx = this._currentOriginalIndex; 
+            let newDOMTargetIdx = this._currentDOMIndex;   
+
+            const startOfOriginalSet = this._offsetToFirstActualSlide; 
+            const startOfTrailingCloneRegion = startOfOriginalSet + numOriginal; 
+
+            if (currentDOM >= startOfTrailingCloneRegion) {
+                newOriginalIdx = (currentDOM - startOfOriginalSet) % numOriginal;
+                newDOMTargetIdx = startOfOriginalSet + newOriginalIdx;
+                jumpNeeded = true;
+            } else if (currentDOM < startOfOriginalSet) {
+                newOriginalIdx = (currentDOM % numOriginal + numOriginal) % numOriginal; 
+                newDOMTargetIdx = startOfOriginalSet + newOriginalIdx;
+                jumpNeeded = true;
+            }
+
+            if (jumpNeeded) {
+                this._wrapper.style.transition = 'none';
+                // eslint-disable-next-line no-unused-expressions
+                this._wrapper.offsetHeight; 
+                
+                let jumpTargetOffset;
+                const viewportWidth = this._innerContainer.offsetWidth;
+                const jumpTargetSlideElement = this._allSlidesInDOM[newDOMTargetIdx];
+                if (!jumpTargetSlideElement) return; 
+                const jumpTargetSlideWidth = jumpTargetSlideElement.offsetWidth;
+
+                if (this._isCenteredMode) {
+                    jumpTargetOffset = (viewportWidth / 2) - (this._slideOffsets[newDOMTargetIdx] + (jumpTargetSlideWidth / 2));
+                } else {
+                    jumpTargetOffset = -this._slideOffsets[newDOMTargetIdx];
+                }
+                this._wrapper.style.transform = `translateX(${jumpTargetOffset}px)`;
+                
+                this._currentDOMIndex = newDOMTargetIdx; 
+                this._currentOriginalIndex = newOriginalIdx; 
+            } else {
+                if (currentDOM >= startOfOriginalSet && currentDOM < startOfTrailingCloneRegion) {
+                    this._currentOriginalIndex = currentDOM - startOfOriginalSet;
+                }
+            }
+            this._updateDots();
+        }
+
+        _onTransitionEnd(event) {
+            if (event.target !== this._wrapper || !this._isTransitioning) return; 
+            this._isTransitioning = false; 
+            this._handlePossibleInfiniteLoopJump(); 
+            if (this._autoplayEnabled && this._originalSlides.length > 1) this._startAutoplay();
+        }
+
+        _startAutoplay() {
+            this._stopAutoplay(); 
+            if (this._autoplayEnabled && this._originalSlides.length > 1 && this._isActive) {
+                this._autoplayTimerId = setTimeout(() => this.nextSlide(true), this._autoplayIntervalValue);
+            }
+        }
+        _stopAutoplay() {
+            if (this._autoplayTimerId) clearTimeout(this._autoplayTimerId);
+            this._autoplayTimerId = null;
+        }
+        _handleAutoplay() {
+            if (this._autoplayEnabled && this._originalSlides.length > 1 && this._isActive) this._startAutoplay();
+            else this._stopAutoplay();
+        }
+        
+        // Dragging Logic
+        _onTouchStart(event) {
+            if (this._noDrag || event.touches.length > 1 || this._originalSlides.length <= 1) return;
+            
+            this._isDragging = true;
+            this._dragStartX = event.touches[0].clientX;
+            this._dragStartTime = Date.now();
+            this._wrapper.style.transition = 'none'; // Remove transition for direct manipulation
+            
+            // Capture the current translateX value if mid-transition or already positioned
+            const currentTransform = window.getComputedStyle(this._wrapper).transform;
+            if (currentTransform && currentTransform !== 'none') {
+                const matrix = new DOMMatrixReadOnly(currentTransform);
+                this._dragInitialWrapperX = matrix.e; // For 2D transforms, 'e' is translateX
+            } else {
+                this._dragInitialWrapperX = 0;
+            }
+            
+            this._stopAutoplay(); // Pause autoplay during drag
+        }
+
+        _onTouchMove(event) {
+            if (!this._isDragging || this._noDrag) return;
+            event.preventDefault(); // Prevent page scroll
+
+            this._dragCurrentX = event.touches[0].clientX;
+            const deltaX = this._dragCurrentX - this._dragStartX;
+            this._wrapper.style.transform = `translateX(${this._dragInitialWrapperX + deltaX}px)`;
+        }
+
+        _onTouchEnd(event) {
+            if (!this._isDragging || this._noDrag) return;
+            this._isDragging = false;
+            
+            const dragDistance = this._dragCurrentX - this._dragStartX;
+            const dragDuration = Date.now() - this._dragStartTime;
+            
+            // Basic velocity check for flick gesture (optional, can be refined)
+            const velocity = Math.abs(dragDistance) / dragDuration;
+
+            if (Math.abs(dragDistance) > this._dragThreshold || (Math.abs(dragDistance) > 10 && velocity > 0.3) ) {
+                if (dragDistance < 0) { // Dragged left
+                    this.nextSlide();
+                } else { // Dragged right
+                    this.prevSlide();
+                }
+            } else {
+                // Snap back to current slide if drag was not enough
+                this._goToDOMIndex(this._currentDOMIndex, true); 
+            }
+            // Restart autoplay if it was enabled and not triggered by autoplay itself
+             if (this._autoplayEnabled && this._originalSlides.length > 1) {
+                this._startAutoplay();
+            }
+        }
+
+
+        // Navigation Methods
+        nextSlide(isAutoplay = false) {
+            if (this._originalSlides.length <= 1 && !this._isTransitioning && !this._isDragging) return;
+            if (!isAutoplay && !this._isDragging) this._stopAutoplay();
+            
+            const newDOMIndex = this._currentDOMIndex + 1;
+            this._currentOriginalIndex = (this._currentOriginalIndex + 1) % this._originalSlides.length;
+            this._goToDOMIndex(newDOMIndex, true); 
+            if (parseFloat(this._speedValue) > 0) this._updateDots(); 
+            
+            if (!isAutoplay && this._autoplayEnabled && parseFloat(this._speedValue) === 0 && this._originalSlides.length > 1) {
+                this._startAutoplay();
+            }
+        }
+
+        prevSlide() { 
+            if (this._originalSlides.length <= 1 && !this._isTransitioning && !this._isDragging) return;
+            this._stopAutoplay();
+            const newDOMIndex = this._currentDOMIndex - 1;
+            this._currentOriginalIndex = (this._currentOriginalIndex - 1 + this._originalSlides.length) % this._originalSlides.length;
+            this._goToDOMIndex(newDOMIndex, true);
+            if (parseFloat(this._speedValue) > 0) this._updateDots();
+            
+            if (this._autoplayEnabled && parseFloat(this._speedValue) === 0 && this._originalSlides.length > 1) {
+                 this._startAutoplay();
+            }
+        }
+
+        goToSlide(originalIndex) { 
+            if (originalIndex < 0 || originalIndex >= this._originalSlides.length || 
+                (originalIndex === this._currentOriginalIndex && !this._isTransitioning && !this._isDragging) ) {
+                return;
+            }
+            this._stopAutoplay();
+            this._currentOriginalIndex = originalIndex;
+            const newDOMIndex = this._offsetToFirstActualSlide + this._currentOriginalIndex;
+            this._goToDOMIndex(newDOMIndex, true);
+            if (parseFloat(this._speedValue) > 0) this._updateDots();
+            
+            if (this._autoplayEnabled && parseFloat(this._speedValue) === 0 && this._originalSlides.length > 1) {
+                 this._startAutoplay();
+            }
+        }
+    }
+
+    customElements.define('fz-carousel', FrenzyCarousel);
+
+    function toggleAttribute(carouselId, attributeName) {
+        const carousel = document.getElementById(carouselId);
+        if (carousel) {
+            if (carousel.hasAttribute(attributeName)) {
+                carousel.removeAttribute(attributeName);
+            } else {
+                carousel.setAttribute(attributeName, '');
+            }
+        }
+    }
+    function setAttributeValue(carouselId, attributeName, value) {
+        const carousel = document.getElementById(carouselId);
+        if (carousel) {
+            carousel.setAttribute(attributeName, value);
+        }
+    }
+    </script>
+
+</body>
+</html>
