@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrenzyNav Demo</title>
+    <style>
+        /* Basic page styles */
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            /* Padding will be managed by the component if fixed */
+            transition: padding-top 0.3s ease-out; /* Smooth transition for body padding */
+        }
+
+        .content {
+            padding: 20px;
+            height: 150vh; /* To test fixed nav scrolling */
+        }
+
+        /* Example of styling fz-nav using CSS Custom Properties */
+        fz-nav {
+            /* Default Theme (can be overridden) */
+            --fz-nav-background: #f8f9fa;
+            --fz-nav-text-color: #343a40;
+            --fz-nav-link-color: #007bff;
+            --fz-nav-link-hover-color: #0056b3;
+            --fz-nav-link-active-background: #e9ecef;
+            --fz-nav-border-color: #dee2e6;
+            --fz-nav-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+            --fz-nav-eyebrow-background: #e9ecef;
+            --fz-nav-eyebrow-text-color: #6c757d;
+
+            --fz-nav-drawer-background: #ffffff;
+            --fz-nav-drawer-text-color: #343a40;
+            --fz-nav-hamburger-color: #343a40;
+            --fz-nav-close-button-color: #343a40;
+
+            /* Example breakpoint override */
+            /* --fz-nav-mobile-breakpoint: 992px; */ /* Uncomment to make it tablet-friendly */
+        }
+
+        /* Dark Theme Example (Add class="dark-theme" to fz-nav) */
+        fz-nav.dark-theme {
+             --fz-nav-background: #343a40;
+             --fz-nav-text-color: #f8f9fa;
+             --fz-nav-link-color: #61dafb; /* Light blue */
+             --fz-nav-link-hover-color: #ffffff;
+             --fz-nav-link-active-background: #495057;
+             --fz-nav-border-color: #495057;
+             --fz-nav-shadow: 0 2px 4px rgba(0,0,0,0.3);
+
+             --fz-nav-eyebrow-background: #212529;
+             --fz-nav-eyebrow-text-color: #adb5bd;
+
+             --fz-nav-drawer-background: #212529;
+             --fz-nav-drawer-text-color: #f8f9fa;
+             --fz-nav-hamburger-color: #f8f9fa;
+             --fz-nav-close-button-color: #f8f9fa;
+         }
+
+
+        /* Styling slotted content (example) */
+        fz-nav [slot="logo"] a {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--fz-nav-link-color); /* Use variable for theme consistency */
+            text-decoration: none;
+        }
+        fz-nav [slot="logo"] a:hover {
+            color: var(--fz-nav-link-hover-color);
+        }
+
+        /* Example of a dropdown structure for the main menu */
+        .main-menu-dropdown-toggle svg {
+            width: 1em;
+            height: 1em;
+            margin-left: 0.25em;
+            vertical-align: middle;
+            fill: currentColor;
+            transition: transform 0.2s ease-in-out;
+        }
+        .main-menu-dropdown-toggle[aria-expanded="true"] svg {
+            transform: rotate(180deg);
+        }
+
+        /* Style for the dropdown content UL itself (lives in light DOM) */
+        .dropdown-content {
+            display: none; /* Controlled by [hidden] attribute via JS */
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: var(--fz-dropdown-background, white); /* Use component var or fallback */
+            border: 1px solid var(--fz-dropdown-border-color, #dee2e6);
+            box-shadow: var(--fz-dropdown-shadow, 0 2px 4px rgba(0,0,0,0.1));
+            padding: var(--fz-dropdown-padding, 0.5rem 0);
+            min-width: 200px;
+            z-index: 1010; /* Ensure dropdown is above nav */
+            list-style: none;
+            margin: 0.125rem 0 0; /* Small gap from toggle */
+            border-radius: 4px;
+        }
+        .dropdown-content[hidden] {
+             display: none !important;
+        }
+        /* Style for links within the dropdown UL */
+        .dropdown-content li a {
+            display: block;
+            padding: var(--fz-dropdown-item-padding, 0.5rem 1rem);
+            color: var(--fz-dropdown-text-color, #333);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .dropdown-content li a:hover {
+            background-color: var(--fz-dropdown-item-hover-background, #f0f0f0);
+            color: var(--fz-nav-link-hover-color, #0056b3); /* Reuse nav hover color */
+        }
+
+        /* Button styles for demo controls */
+        .content button {
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: #eee;
+        }
+        .content button:hover {
+            background-color: #ddd;
+        }
+
+        /* Style for drawer-content example */
+        .drawer-content-info { /* Updated class name */
+            padding: 10px;
+            margin-top: 15px;
+            border-top: 1px solid var(--fz-nav-drawer-border-color, #ccc);
+            font-size: 0.9em;
+            color: var(--fz-nav-drawer-text-color, #555);
+        }
+        .drawer-content-info p { /* Updated class name */
+            margin: 5px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <fz-nav id="myNav" fixed drawer-position="right">
+        <div slot="logo">
+            <a href="#">MyBrand</a>
+        </div>
+
+        <ul slot="eyebrow-menu">
+            <li><a href="#support">Support</a></li>
+            <li><a href="#login">Login</a></li>
+        </ul>
+
+        <ul slot="main-menu">
+            <li><a href="#home">Home</a></li>
+            <li>
+                <a href="#products" class="main-menu-dropdown-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="products-submenu">
+                    Products
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
+                </a>
+                <ul class="dropdown-content" id="products-submenu" hidden>
+                    <li><a href="#product1">Product 1</a></li>
+                    <li><a href="#product2">Super Long Product Name 2</a></li>
+                    <li><a href="#product3">Product 3</a></li>
+                </ul>
+            </li>
+            <li><a href="#services">Services</a></li>
+            <li>
+                <a href="#about" class="main-menu-dropdown-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="about-submenu">
+                    About Us
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
+                </a>
+                <ul class="dropdown-content" id="about-submenu" hidden>
+                    <li><a href="#team">Our Team</a></li>
+                    <li><a href="#company">Company</a></li>
+                </ul>
+            </li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+
+        <div slot="drawer-content" class="drawer-content-info">
+            <p><strong>Account Info (Drawer Content):</strong></p>
+            <p>Welcome, User!</p>
+            <p><a href="#settings">Settings</a></p>
+            <p><a href="#logout">Logout</a></p>
+        </div>
+    </fz-nav>
+
+    <div class="content">
+        <h1>Page Title</h1>
+        <p>This page demonstrates the <code>fz-nav</code> web component.</p>
+        <p>Scroll down to see the fixed navigation in action (if the 'fixed' attribute is set).</p>
+        <p>The body padding is now automatically adjusted by the component when fixed.</p>
+        <p>The drawer logic is simplified again. The hamburger icon appears on mobile OR if the `drawer-content` slot is filled (even on desktop). The desktop menu remains visible unless on mobile. The drawer always shows all available menu content.</p>
+
+        <h2>Component Controls</h2>
+        <button onclick="document.getElementById('myNav').openDrawer()">Open Drawer (JS)</button>
+        <button onclick="document.getElementById('myNav').closeDrawer()">Close Drawer (JS)</button>
+        <button onclick="document.getElementById('myNav').toggleDrawer()">Toggle Drawer (JS)</button>
+
+        <h2>Attribute Controls</h2>
+        <button onclick="toggleFixed()">Toggle 'fixed' Attribute</button>
+        <button onclick="toggleDrawerOpenAttr()">Toggle 'drawer-open' Attribute</button>
+        <button onclick="toggleDrawerPosition()">Toggle 'drawer-position' Attribute</button>
+        <button onclick="changeBreakpoint()">Set Breakpoint to 500px</button>
+        <button onclick="resetBreakpoint()">Reset Breakpoint</button>
+        <button onclick="toggleTheme()">Toggle Theme</button>
+        <button onclick="toggleDrawerContent()">Toggle Drawer Content</button> </div>
+
+    <script>
+        // --- FrenzyNav Web Component Definition ---
+        class FrenzyNav extends HTMLElement {
+          // Private fields
+          #isReady = false;
+          #navContainer = null;
+          #eyebrowSection = null;
+          #mainNavArea = null;
+          #logoWrapper = null;
+          #desktopMenuWrapper = null;
+          #hamburgerButton = null;
+          #drawerPanel = null;
+          #drawerHeader = null;
+          #drawerCloseButton = null;
+          #drawerMainMenuContent = null;
+          #drawerEyebrowMenuContent = null;
+          #drawerContentContainer = null; // RENAMED: Container for drawer-content
+          #drawerOverlay = null;
+
+          #logoSlot = null;
+          #mainMenuSlot = null;
+          #eyebrowMenuSlot = null;
+          #drawerContentSlot = null; // RENAMED: Slot element for drawer-content
+
+          #styleElement = null;
+          #resizeObserver = null;
+          #navHeightObserver = null;
+          #originalBodyPaddingTop = '';
+          #originalBodyOverflow = '';
+          #firstFocusableElement = null;
+          #lastFocusableElement = null;
+
+          // Default attribute values
+          #drawerPosition = 'left';
+          #isFixed = false;
+          #isDrawerOpen = false;
+          #mobileBreakpoint = 768;
+
+          static get observedAttributes() {
+            // Removed 'show-drawer-on-desktop'
+            return ['drawer-position', 'fixed', 'drawer-open', 'mobile-breakpoint'];
+          }
+
+          constructor() {
+            super();
+            this.attachShadow({ mode: 'open' });
+
+            // Initialize from attributes
+            if (this.hasAttribute('drawer-position')) {
+              this.#drawerPosition = this.getAttribute('drawer-position') === 'right' ? 'right' : 'left';
+            }
+            if (this.hasAttribute('fixed')) {
+              this.#isFixed = this.hasAttribute('fixed');
+            }
+            if (this.hasAttribute('drawer-open')) {
+                this.#isDrawerOpen = true;
+            }
+            if (this.hasAttribute('mobile-breakpoint')) {
+                const bp = parseInt(this.getAttribute('mobile-breakpoint'), 10);
+                if (!isNaN(bp) && bp > 0) {
+                    this.#mobileBreakpoint = bp;
+                }
+            }
+          }
+
+          connectedCallback() {
+            console.log('fz-nav connected');
+            this.#originalBodyPaddingTop = document.body.style.paddingTop || '';
+            this.#buildDOM();
+            this.#attachEventListeners();
+            this.#applyStyles();
+
+            requestAnimationFrame(() => {
+              console.log('fz-nav requestAnimationFrame callback');
+              this.#handleMainMenuSlotChange();
+              this.#handleEyebrowMenuSlotChange();
+              this.#handleDrawerContentSlotChange(); // RENAMED handler call
+              this.#updateFixedPosition();
+              this.#updateDrawerPositionClass();
+
+              const hasDrawerOpenAttr = this.hasAttribute('drawer-open');
+              if (this.#isDrawerOpen !== hasDrawerOpenAttr) {
+                 this.#isDrawerOpen = hasDrawerOpenAttr;
+              }
+              if (this.#isDrawerOpen) {
+                 this.#toggleDrawer(true, false);
+              }
+
+              this.#isReady = true;
+              console.log('fz-nav isReady = true');
+
+              this.#updateNavLayout();
+              this.#updateBodyPadding();
+              this.#observeNavHeight();
+            });
+          }
+
+          disconnectedCallback() {
+            console.log('fz-nav disconnected');
+            this.#removeEventListeners();
+            if (this.#isDrawerOpen) {
+                document.body.style.overflow = this.#originalBodyOverflow;
+            }
+            document.body.style.paddingTop = this.#originalBodyPaddingTop;
+
+            if (this.#resizeObserver) {
+              this.#resizeObserver.disconnect();
+            }
+            if (this.#navHeightObserver) {
+                this.#navHeightObserver.disconnect();
+            }
+          }
+
+          attributeChangedCallback(name, oldValue, newValue) {
+            if (!this.#isReady) {
+                 console.log(`fz-nav attributeChanged (${name}) ignored: not ready yet.`);
+                 return;
+            }
+            if (oldValue === newValue) return;
+
+            console.log(`fz-nav attributeChanged: ${name}, oldValue: ${oldValue}, newValue: ${newValue}`);
+
+            switch (name) {
+              case 'drawer-position':
+                this.#drawerPosition = newValue === 'right' ? 'right' : 'left';
+                this.#updateDrawerPositionClass();
+                break;
+              case 'fixed':
+                const wasFixed = this.#isFixed;
+                this.#isFixed = newValue !== null;
+                if (wasFixed !== this.#isFixed) {
+                    this.#updateFixedPosition();
+                }
+                break;
+              case 'drawer-open':
+                const shouldOpen = newValue !== null;
+                if (this.#isDrawerOpen !== shouldOpen) {
+                    this.#toggleDrawer(shouldOpen);
+                }
+                break;
+              case 'mobile-breakpoint':
+                const bp = parseInt(newValue, 10);
+                if (!isNaN(bp) && bp > 0 && this.#mobileBreakpoint !== bp) {
+                    this.#mobileBreakpoint = bp;
+                    this.#updateNavLayout(); // Re-evaluate layout based on new breakpoint
+                }
+                break;
+            }
+          }
+
+          // --- Public methods ---
+          openDrawer() {
+            console.log('fz-nav openDrawer() called');
+            this.#toggleDrawer(true);
+          }
+
+          closeDrawer() {
+            console.log('fz-nav closeDrawer() called');
+            this.#toggleDrawer(false);
+          }
+
+          toggleDrawer() {
+            console.log('fz-nav toggleDrawer() called');
+            this.#toggleDrawer(!this.#isDrawerOpen);
+          }
+
+          // --- DOM Construction ---
+          #buildDOM() {
+            this.shadowRoot.innerHTML = '';
+
+            this.#styleElement = document.createElement('style');
+            this.shadowRoot.appendChild(this.#styleElement);
+
+            this.#navContainer = document.createElement('nav');
+            this.#navContainer.id = 'nav-container';
+            this.#navContainer.setAttribute('part', 'container');
+            this.#navContainer.setAttribute('aria-label', 'Main Navigation');
+
+            // Eyebrow Section
+            this.#eyebrowSection = document.createElement('div');
+            this.#eyebrowSection.id = 'eyebrow-section';
+            this.#eyebrowSection.setAttribute('part', 'eyebrow-section');
+            this.#eyebrowMenuSlot = document.createElement('slot');
+            this.#eyebrowMenuSlot.name = 'eyebrow-menu';
+            this.#eyebrowSection.appendChild(this.#eyebrowMenuSlot);
+            this.#eyebrowSection.hidden = true;
+            this.#navContainer.appendChild(this.#eyebrowSection);
+
+            // Main Navigation Area
+            this.#mainNavArea = document.createElement('div');
+            this.#mainNavArea.id = 'main-nav-area';
+            this.#mainNavArea.setAttribute('part', 'main-nav-area');
+
+            this.#logoWrapper = document.createElement('div');
+            this.#logoWrapper.id = 'logo-wrapper';
+            this.#logoWrapper.setAttribute('part', 'logo-wrapper');
+            this.#logoSlot = document.createElement('slot');
+            this.#logoSlot.name = 'logo';
+            this.#logoWrapper.appendChild(this.#logoSlot);
+            this.#mainNavArea.appendChild(this.#logoWrapper);
+
+            this.#desktopMenuWrapper = document.createElement('div');
+            this.#desktopMenuWrapper.id = 'desktop-menu-wrapper';
+            this.#desktopMenuWrapper.setAttribute('part', 'desktop-menu-wrapper');
+            this.#mainMenuSlot = document.createElement('slot');
+            this.#mainMenuSlot.name = 'main-menu';
+            this.#desktopMenuWrapper.appendChild(this.#mainMenuSlot);
+            this.#mainNavArea.appendChild(this.#desktopMenuWrapper);
+
+            this.#hamburgerButton = document.createElement('button');
+            this.#hamburgerButton.id = 'hamburger-button';
+            this.#hamburgerButton.setAttribute('part', 'hamburger-button');
+            this.#hamburgerButton.setAttribute('aria-label', 'Open menu');
+            this.#hamburgerButton.setAttribute('aria-expanded', 'false');
+            this.#hamburgerButton.setAttribute('aria-controls', 'drawer-panel');
+            this.#hamburgerButton.innerHTML = `
+              <svg part="hamburger-icon" class="hamburger-icon" aria-hidden="true" focusable="false" viewBox="0 0 100 80" width="24" height="24" fill="currentColor">
+                <rect width="100" height="15" rx="8"></rect>
+                <rect y="30" width="100" height="15" rx="8"></rect>
+                <rect y="60" width="100" height="15" rx="8"></rect>
+              </svg>`;
+            this.#hamburgerButton.hidden = true;
+            this.#mainNavArea.appendChild(this.#hamburgerButton);
+            this.#navContainer.appendChild(this.#mainNavArea);
+
+            // Drawer Panel
+            this.#drawerPanel = document.createElement('div');
+            this.#drawerPanel.id = 'drawer-panel';
+            this.#drawerPanel.setAttribute('part', 'drawer-panel');
+            this.#drawerPanel.setAttribute('role', 'dialog');
+            this.#drawerPanel.setAttribute('aria-modal', 'true');
+            this.#drawerPanel.setAttribute('aria-labelledby', 'drawer-title');
+
+            this.#drawerHeader = document.createElement('div');
+            this.#drawerHeader.id = 'drawer-header';
+            this.#drawerHeader.setAttribute('part', 'drawer-header');
+
+            const drawerTitle = document.createElement('h2');
+            drawerTitle.id = 'drawer-title';
+            drawerTitle.part = 'drawer-title';
+            drawerTitle.textContent = 'Navigation Menu';
+            drawerTitle.classList.add('sr-only');
+            this.#drawerHeader.appendChild(drawerTitle);
+
+            this.#drawerCloseButton = document.createElement('button');
+            this.#drawerCloseButton.id = 'drawer-close-button';
+            this.#drawerCloseButton.setAttribute('part', 'drawer-close-button');
+            this.#drawerCloseButton.setAttribute('aria-label', 'Close menu');
+            this.#drawerCloseButton.innerHTML = `
+              <svg part="drawer-close-icon" class="drawer-close-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>`;
+            this.#drawerHeader.appendChild(this.#drawerCloseButton);
+            this.#drawerPanel.appendChild(this.#drawerHeader);
+
+            // Drawer Content Containers (Order determines visual layout)
+            this.#drawerMainMenuContent = document.createElement('div');
+            this.#drawerMainMenuContent.id = 'drawer-main-menu-content';
+            this.#drawerMainMenuContent.setAttribute('part', 'drawer-main-menu-content');
+            this.#drawerPanel.appendChild(this.#drawerMainMenuContent);
+
+            this.#drawerEyebrowMenuContent = document.createElement('div');
+            this.#drawerEyebrowMenuContent.id = 'drawer-eyebrow-menu-content';
+            this.#drawerEyebrowMenuContent.setAttribute('part', 'drawer-eyebrow-menu-content');
+            this.#drawerPanel.appendChild(this.#drawerEyebrowMenuContent);
+
+            // RENAMED: Drawer Content container
+            this.#drawerContentContainer = document.createElement('div');
+            this.#drawerContentContainer.id = 'drawer-content-container'; // RENAMED ID
+            this.#drawerContentContainer.setAttribute('part', 'drawer-content-container'); // RENAMED part
+            this.#drawerContentSlot = document.createElement('slot'); // RENAMED slot variable
+            this.#drawerContentSlot.name = 'drawer-content'; // RENAMED slot name
+            this.#drawerContentContainer.appendChild(this.#drawerContentSlot);
+            this.#drawerPanel.appendChild(this.#drawerContentContainer);
+
+            this.#navContainer.appendChild(this.#drawerPanel);
+
+            // Drawer Overlay
+            this.#drawerOverlay = document.createElement('div');
+            this.#drawerOverlay.id = 'drawer-overlay';
+            this.#drawerOverlay.setAttribute('part', 'drawer-overlay');
+
+            this.#navContainer.appendChild(this.#drawerOverlay);
+
+            this.shadowRoot.appendChild(this.#navContainer);
+            console.log('fz-nav DOM built');
+          }
+
+          // --- Event Handling ---
+          #attachEventListeners() {
+            this.#hamburgerButton.addEventListener('click', this.#handleHamburgerClick);
+            this.#drawerCloseButton.addEventListener('click', this.#handleDrawerCloseClick);
+            this.#drawerOverlay.addEventListener('click', this.#handleDrawerCloseClick);
+
+            this.#mainMenuSlot.addEventListener('slotchange', this.#handleMainMenuSlotChange);
+            this.#eyebrowMenuSlot.addEventListener('slotchange', this.#handleEyebrowMenuSlotChange);
+            this.#drawerContentSlot.addEventListener('slotchange', this.#handleDrawerContentSlotChange); // RENAMED Listener attachment
+
+            this.#drawerPanel.addEventListener('keydown', this.#handleKeydown);
+
+            this.#resizeObserver = new ResizeObserver(this.#handleResize);
+            this.#resizeObserver.observe(this);
+
+            console.log('fz-nav Event listeners attached');
+          }
+
+          #removeEventListeners() {
+            this.#hamburgerButton.removeEventListener('click', this.#handleHamburgerClick);
+            this.#drawerCloseButton.removeEventListener('click', this.#handleDrawerCloseClick);
+            this.#drawerOverlay.removeEventListener('click', this.#handleDrawerCloseClick);
+
+            if (this.#mainMenuSlot) {
+                this.#mainMenuSlot.removeEventListener('slotchange', this.#handleMainMenuSlotChange);
+            }
+            if (this.#eyebrowMenuSlot) {
+                this.#eyebrowMenuSlot.removeEventListener('slotchange', this.#handleEyebrowMenuSlotChange);
+            }
+            if (this.#drawerContentSlot) { // RENAMED: Remove listener
+                this.#drawerContentSlot.removeEventListener('slotchange', this.#handleDrawerContentSlotChange);
+            }
+            if (this.#drawerPanel) {
+                this.#drawerPanel.removeEventListener('keydown', this.#handleKeydown);
+            }
+
+            console.log('fz-nav Event listeners removed');
+          }
+
+          #handleHamburgerClick = () => {
+            console.log('Hamburger clicked');
+            this.#toggleDrawer(true);
+          }
+
+          #handleDrawerCloseClick = () => {
+            console.log('Drawer close clicked');
+            this.#toggleDrawer(false);
+          }
+
+          #handleMainMenuSlotChange = () => {
+            console.log('Main menu slot changed');
+            this.#cloneAndSetupMenuItems(this.#mainMenuSlot, this.#drawerMainMenuContent, 'main-menu-item');
+            this.#setupDropdownsInContainer(this.#desktopMenuWrapper, false);
+            this.#updateNavLayout();
+            this.#updateBodyPadding();
+          }
+
+          #handleEyebrowMenuSlotChange = () => {
+            console.log('Eyebrow menu slot changed');
+            this.#cloneAndSetupMenuItems(this.#eyebrowMenuSlot, this.#drawerEyebrowMenuContent, 'eyebrow-menu-item');
+            this.#setupDropdownsInContainer(this.#eyebrowSection, false);
+            this.#updateNavLayout();
+            this.#updateBodyPadding();
+          }
+
+          // RENAMED: Handler for drawer-content slot change
+          #handleDrawerContentSlotChange = () => {
+            console.log('Drawer-content slot changed');
+            // Content is handled directly via slot, but setup dropdowns inside
+            this.#setupDropdownsInContainer(this.#drawerContentContainer, true);
+            // Update layout because presence of this content affects hamburger visibility
+            this.#updateNavLayout();
+            this.#updateBodyPadding(); // Height might change
+          }
+
+
+          #cloneAndSetupMenuItems(slotElement, targetContainer, itemPartName) {
+            // No changes needed
+            targetContainer.innerHTML = '';
+            const assignedElements = slotElement.assignedElements({ flatten: true });
+
+            assignedElements.forEach(node => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                const clonedNode = node.cloneNode(true);
+                let currentPart = clonedNode.getAttribute('part') || '';
+                clonedNode.setAttribute('part', `${itemPartName} ${currentPart}`.trim());
+                targetContainer.appendChild(clonedNode);
+              }
+            });
+            this.#setupDropdownsInContainer(targetContainer, true);
+          }
+
+          #setupDropdownsInContainer(container, isDrawerContext) {
+            // No changes needed
+            const dropdownToggles = container.querySelectorAll(':scope [aria-haspopup="true"][aria-expanded]');
+
+            dropdownToggles.forEach(toggle => {
+              toggle.removeEventListener('click', this.#handleDropdownToggle);
+              toggle.removeEventListener('keydown', this.#handleDropdownKeydown);
+              toggle.addEventListener('click', this.#handleDropdownToggle);
+              toggle.addEventListener('keydown', this.#handleDropdownKeydown);
+
+              let dropdownMenu = null;
+              const controlsId = toggle.getAttribute('aria-controls');
+              if (controlsId) {
+                const scope = toggle.getRootNode();
+                dropdownMenu = scope.getElementById(controlsId);
+              }
+              if (!dropdownMenu && toggle.nextElementSibling && toggle.nextElementSibling.matches('[role="menu"], .dropdown-content')) {
+                 dropdownMenu = toggle.nextElementSibling;
+              }
+
+              if (dropdownMenu) {
+                dropdownMenu.hidden = toggle.getAttribute('aria-expanded') === 'false';
+                let togglePart = toggle.getAttribute('part') || '';
+                if (!togglePart.includes('dropdown-toggle')) {
+                    toggle.setAttribute('part', `dropdown-toggle ${togglePart}`.trim());
+                }
+                let menuPart = dropdownMenu.getAttribute('part') || '';
+                 if (!menuPart.includes('dropdown-menu')) {
+                    dropdownMenu.setAttribute('part', `dropdown-menu ${menuPart}`.trim());
+                 }
+                 if (!dropdownMenu.getAttribute('role')) {
+                    dropdownMenu.setAttribute('role', 'menu');
+                 }
+                 dropdownMenu.querySelectorAll(':scope > li > a[href], :scope > li > button:not([disabled])').forEach(item => {
+                    if (!item.getAttribute('role')) {
+                        item.setAttribute('role', 'menuitem');
+                    }
+                 });
+              }
+            });
+          }
+
+          #closeDropdown(toggle, dropdownMenu) {
+              // No changes needed
+              toggle.setAttribute('aria-expanded', 'false');
+              if (dropdownMenu) {
+                 dropdownMenu.hidden = true;
+              }
+          }
+
+          #handleDropdownToggle = (event) => {
+            // No changes needed
+            const toggle = event.currentTarget;
+            const isCurrentlyExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            const controlsId = toggle.getAttribute('aria-controls');
+            let dropdownMenu = null;
+
+            if (controlsId) {
+                const scope = toggle.getRootNode();
+                dropdownMenu = scope.getElementById(controlsId);
+            }
+            if (!dropdownMenu && toggle.nextElementSibling && toggle.nextElementSibling.matches('[role="menu"], .dropdown-content')) {
+                 dropdownMenu = toggle.nextElementSibling;
+            }
+
+            if (!dropdownMenu) {
+                console.error("FrenzyNav: Dropdown menu not found for toggle.", toggle);
+                return;
+            }
+
+            const parentContainer = toggle.closest('#desktop-menu-wrapper, #eyebrow-section, #drawer-main-menu-content, #drawer-eyebrow-menu-content, #drawer-content-container'); // Updated container ID
+            if (parentContainer) {
+                parentContainer.querySelectorAll('[aria-haspopup="true"][aria-expanded="true"]').forEach(otherToggle => {
+                    if (otherToggle !== toggle) {
+                        const otherControlsId = otherToggle.getAttribute('aria-controls');
+                        let otherDropdownMenu = null;
+                         if (otherControlsId) {
+                            const otherScope = otherToggle.getRootNode();
+                            otherDropdownMenu = otherScope.getElementById(otherControlsId);
+                        }
+                         if (!otherDropdownMenu && otherToggle.nextElementSibling && otherToggle.nextElementSibling.matches('[role="menu"], .dropdown-content')) {
+                             otherDropdownMenu = otherToggle.nextElementSibling;
+                         }
+                        this.#closeDropdown(otherToggle, otherDropdownMenu);
+                    }
+                });
+            }
+
+            if (isCurrentlyExpanded) {
+                this.#closeDropdown(toggle, dropdownMenu);
+            } else {
+                toggle.setAttribute('aria-expanded', 'true');
+                dropdownMenu.hidden = false;
+            }
+
+            event.stopPropagation();
+            event.preventDefault();
+          }
+
+          #handleDropdownKeydown = (event) => {
+            // No changes needed
+            const toggle = event.currentTarget;
+            const controlsId = toggle.getAttribute('aria-controls');
+            let dropdownMenu = null;
+
+            if (controlsId) {
+                const scope = toggle.getRootNode();
+                dropdownMenu = scope.getElementById(controlsId);
+            }
+             if (!dropdownMenu && toggle.nextElementSibling && toggle.nextElementSibling.matches('[role="menu"], .dropdown-content')) {
+                 dropdownMenu = toggle.nextElementSibling;
+             }
+
+            if (!dropdownMenu) return;
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              this.#handleDropdownToggle(event);
+            } else if (event.key === 'Escape' && isExpanded) {
+                event.preventDefault();
+                this.#closeDropdown(toggle, dropdownMenu);
+                toggle.focus();
+            } else if (event.key === 'ArrowDown' && isExpanded) {
+                event.preventDefault();
+                const firstItem = dropdownMenu.querySelector('[role="menuitem"]');
+                if (firstItem) firstItem.focus();
+            } else if (event.key === 'ArrowUp' && isExpanded) {
+                 event.preventDefault();
+                 const menuItems = dropdownMenu.querySelectorAll('[role="menuitem"]');
+                 if (menuItems.length > 0) menuItems[menuItems.length - 1].focus();
+            } else if (event.key === 'Tab' && isExpanded) {
+                 this.#closeDropdown(toggle, dropdownMenu);
+            }
+
+            if (dropdownMenu.contains(document.activeElement) && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                 event.preventDefault();
+                 const menuItems = Array.from(dropdownMenu.querySelectorAll('[role="menuitem"]'));
+                 const currentIndex = menuItems.indexOf(document.activeElement);
+                 let nextIndex;
+                 if (event.key === 'ArrowDown') {
+                     nextIndex = currentIndex + 1 >= menuItems.length ? 0 : currentIndex + 1;
+                 } else {
+                     nextIndex = currentIndex - 1 < 0 ? menuItems.length - 1 : currentIndex - 1;
+                 }
+                 menuItems[nextIndex].focus();
+            } else if (dropdownMenu.contains(document.activeElement) && event.key === 'Escape') {
+                 event.preventDefault();
+                 this.#closeDropdown(toggle, dropdownMenu);
+                 toggle.focus();
+            } else if (dropdownMenu.contains(document.activeElement) && event.key === 'Tab') {
+                 event.preventDefault();
+                 this.#closeDropdown(toggle, dropdownMenu);
+                 toggle.focus();
+            }
+          }
+
+          #handleResize = () => {
+            this.#updateNavLayout();
+          }
+
+          #handleKeydown = (event) => {
+            // No changes needed
+            if (this.#isDrawerOpen && event.key === 'Escape') {
+              console.log('Escape key pressed in drawer');
+              event.stopPropagation();
+              this.#toggleDrawer(false);
+            } else if (this.#isDrawerOpen && event.key === 'Tab') {
+              this.#trapFocus(event);
+            }
+          }
+
+          // --- State & Style Updates ---
+          #updateNavLayout() {
+            if (!this.#isReady || !this.#mainNavArea) {
+                console.log('fz-nav updateNavLayout skipped: not ready or mainNavArea missing.');
+                return;
+            }
+            console.log('fz-nav updateNavLayout running...');
+
+            const isMobileView = this.offsetWidth < this.#mobileBreakpoint;
+            // Check if drawer-content slot has content
+            const hasDrawerContent = this.#drawerContentSlot?.assignedElements({flatten: true}).length > 0;
+
+            // Hamburger is shown if on mobile OR if drawer-content exists
+            const showHamburger = isMobileView || hasDrawerContent;
+
+            console.log(` - isMobileView: ${isMobileView} (width: ${this.offsetWidth}, breakpoint: ${this.#mobileBreakpoint})`);
+            console.log(` - hasDrawerContent: ${hasDrawerContent}`); // Log new check
+            console.log(` - Calculated showHamburger: ${showHamburger}`);
+
+            // Toggle hamburger visibility
+            this.#hamburgerButton.hidden = !showHamburger;
+
+            // Desktop menu is hidden ONLY if in mobile view
+            this.#desktopMenuWrapper.hidden = isMobileView;
+            console.log(` - Desktop menu hidden: ${isMobileView}`);
+
+            // Add/remove class for potential styling hooks (optional)
+            if (showHamburger) {
+              this.#mainNavArea.classList.add('hamburger-active');
+            } else {
+              this.#mainNavArea.classList.remove('hamburger-active');
+              // Ensure drawer is closed if we switch to desktop view
+              if (this.#isDrawerOpen) {
+                console.log(' - Closing drawer because switching to desktop view');
+                this.#toggleDrawer(false);
+              }
+            }
+
+            // Toggle visibility of eyebrow section based on its own slot content
+            const hasEyebrowContent = this.#eyebrowMenuSlot.assignedElements({flatten: true}).length > 0;
+            this.#eyebrowSection.hidden = !hasEyebrowContent;
+            console.log(` - Eyebrow section hidden: ${!hasEyebrowContent}`);
+
+            console.log('fz-nav updateNavLayout finished.');
+          }
+
+          #toggleDrawer(open, animate = true) {
+            if (this.#isDrawerOpen === open && animate) {
+                console.log(`fz-nav toggleDrawer(${open}) skipped: already in that state.`);
+                return;
+            }
+            console.log(`fz-nav toggleDrawer called: open=${open}, animate=${animate}`);
+            this.#isDrawerOpen = open;
+
+            // REMOVED: Logic for conditionally hiding internal drawer sections
+
+            // --- Body Scroll ---
+            if (open) {
+                this.#originalBodyOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = this.#originalBodyOverflow;
+            }
+
+            // --- Visibility & ARIA ---
+            this.#hamburgerButton.setAttribute('aria-expanded', String(open));
+            if (open) {
+                // Ensure internal content containers are visible (they are by default now)
+                this.#drawerMainMenuContent.hidden = false;
+                this.#drawerEyebrowMenuContent.hidden = false;
+                this.#drawerContentContainer.hidden = false; // Ensure drawer content container is visible
+
+                // Make panel and overlay visible for transition
+                this.#drawerPanel.hidden = false;
+                this.#drawerOverlay.hidden = false;
+                this.setAttribute('drawer-open', '');
+
+                // --- Animation & Focus ---
+                requestAnimationFrame(() => {
+                    this.#drawerPanel.classList.add('open');
+                    this.#drawerOverlay.classList.add('open');
+                    this.#setFocusableElements(); // Recalculate focusable elements
+                    if (this.#firstFocusableElement && animate) {
+                        requestAnimationFrame(() => {
+                           this.#firstFocusableElement.focus();
+                           console.log(' - Focused first element:', this.#firstFocusableElement);
+                        });
+                    }
+                });
+
+            } else {
+                this.removeAttribute('drawer-open');
+                this.#drawerPanel.classList.remove('open');
+                this.#drawerOverlay.classList.remove('open');
+
+                if (animate && this.#hamburgerButton) {
+                    this.#hamburgerButton.focus();
+                    console.log(' - Returned focus to hamburger button');
+                }
+
+                // Hide elements AFTER transition
+                const transitionDurationStyle = getComputedStyle(this.#drawerPanel).getPropertyValue('--fz-nav-drawer-transition-duration').trim() || '0.3s';
+                let transitionDurationMs = 300;
+                if (transitionDurationStyle.endsWith('ms')) {
+                    transitionDurationMs = parseFloat(transitionDurationStyle);
+                } else if (transitionDurationStyle.endsWith('s')) {
+                    transitionDurationMs = parseFloat(transitionDurationStyle) * 1000;
+                }
+
+                console.log(` - Scheduling hide after ${transitionDurationMs}ms`);
+                setTimeout(() => {
+                    if (!this.#isDrawerOpen) {
+                        this.#drawerPanel.hidden = true;
+                        this.#drawerOverlay.hidden = true;
+                        console.log(' - Drawer panel and overlay hidden after transition.');
+                    } else {
+                        console.log(' - Hide cancelled: drawer was reopened.');
+                    }
+                }, transitionDurationMs);
+            }
+
+            // --- Dispatch Event ---
+            console.log(` - Dispatching event: ${open ? 'draweropen' : 'drawerclose'}`);
+            this.dispatchEvent(new CustomEvent(open ? 'draweropen' : 'drawerclose', {
+                bubbles: true,
+                composed: true
+            }));
+          }
+
+
+          #setFocusableElements() {
+            // No changes needed
+            if (!this.#drawerPanel) return;
+            const focusableSelector = 'a[href]:not([disabled]), button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+            const focusableElements = Array.from(this.#drawerPanel.querySelectorAll(focusableSelector))
+                                           .filter(el => el.offsetParent !== null && !el.closest('[hidden]'));
+            this.#firstFocusableElement = this.#drawerCloseButton || focusableElements[0];
+            this.#lastFocusableElement = focusableElements[focusableElements.length - 1] || this.#drawerCloseButton;
+            console.log(' - First focusable:', this.#firstFocusableElement);
+            console.log(' - Last focusable:', this.#lastFocusableElement);
+          }
+
+          #trapFocus(event) {
+            // No changes needed
+            if (!this.#isDrawerOpen || !this.#firstFocusableElement || !this.#lastFocusableElement) return;
+            const isTabPressed = event.key === 'Tab';
+            if (!isTabPressed) return;
+            const activeElement = this.shadowRoot.activeElement || document.activeElement;
+
+            if (event.shiftKey) {
+              if (activeElement === this.#firstFocusableElement) {
+                this.#lastFocusableElement.focus();
+                event.preventDefault();
+                console.log(' - Focus trapped: Shift+Tab wrapped to last element');
+              }
+            } else {
+              if (activeElement === this.#lastFocusableElement) {
+                this.#firstFocusableElement.focus();
+                event.preventDefault();
+                console.log(' - Focus trapped: Tab wrapped to first element');
+              }
+            }
+          }
+
+          #updateFixedPosition() {
+            // No changes needed
+            if (this.#isFixed) {
+              this.setAttribute('fixed', '');
+              this.#observeNavHeight();
+              this.#updateBodyPadding();
+            } else {
+              this.removeAttribute('fixed');
+              this.#unobserveNavHeight();
+              this.#updateBodyPadding();
+            }
+             console.log(`fz-nav Fixed position updated: ${this.#isFixed}`);
+          }
+
+          #updateBodyPadding = () => {
+              // No changes needed
+              if (!this.#isReady) return;
+
+              requestAnimationFrame(() => {
+                  if (this.#isFixed && this.#navContainer) {
+                      const navHeight = this.#navContainer.offsetHeight;
+                      console.log(` - Setting body padding-top: ${navHeight}px`);
+                      document.body.style.paddingTop = `${navHeight}px`;
+                  } else {
+                      console.log(` - Restoring body padding-top: ${this.#originalBodyPaddingTop}`);
+                      document.body.style.paddingTop = this.#originalBodyPaddingTop;
+                  }
+              });
+          }
+
+          #observeNavHeight() {
+              // No changes needed
+              if (!this.#navContainer) return;
+              if (!this.#navHeightObserver) {
+                  this.#navHeightObserver = new ResizeObserver(entries => {
+                      if (this.#isFixed) {
+                          console.log('Nav container height changed, updating body padding.');
+                          this.#updateBodyPadding();
+                      }
+                  });
+              }
+              this.#navHeightObserver.observe(this.#navContainer);
+              console.log('Observing nav container height.');
+          }
+
+          #unobserveNavHeight() {
+              // No changes needed
+              if (this.#navHeightObserver) {
+                  this.#navHeightObserver.disconnect();
+                  console.log('Stopped observing nav container height.');
+              }
+          }
+
+
+          #updateDrawerPositionClass() {
+            // No changes needed
+            if (!this.#drawerPanel) return;
+            this.#drawerPanel.classList.remove('position-left', 'position-right');
+            const positionClass = `position-${this.#drawerPosition}`;
+            this.#drawerPanel.classList.add(positionClass);
+             console.log(`fz-nav Drawer position class updated: ${positionClass}`);
+          }
+
+          // --- Styles ---
+          #applyStyles() {
+            if (!this.#styleElement) return;
+            // Renamed drawer content parts/IDs
+            this.#styleElement.textContent = `
+              :host {
+                display: block;
+                box-sizing: border-box;
+                --fz-nav-slotted-link-color: var(--fz-nav-link-color, #007bff);
+                --fz-nav-slotted-link-hover-color: var(--fz-nav-link-hover-color, #0056b3);
+                --fz-nav-background: #ffffff;
+                --fz-nav-text-color: #212529;
+                --fz-nav-link-color: #007bff;
+                --fz-nav-link-hover-color: #0056b3;
+                --fz-nav-link-active-background: #e9ecef;
+                --fz-nav-border-color: #dee2e6;
+                --fz-nav-eyebrow-background: #f8f9fa;
+                --fz-nav-eyebrow-text-color: #6c757d;
+                --fz-nav-eyebrow-link-color: inherit;
+                --fz-nav-eyebrow-link-hover-color: var(--fz-nav-link-hover-color);
+                --fz-nav-eyebrow-font-size: 0.875em;
+                --fz-nav-eyebrow-padding-block: 0.25rem;
+                --fz-nav-eyebrow-padding-inline: var(--fz-nav-padding-inline, 1rem);
+                --fz-nav-drawer-background: #ffffff;
+                --fz-nav-drawer-text-color: var(--fz-nav-text-color);
+                --fz-nav-drawer-link-color: var(--fz-nav-link-color);
+                --fz-nav-drawer-link-hover-color: var(--fz-nav-link-hover-color);
+                --fz-nav-drawer-link-active-background: var(--fz-nav-link-active-background);
+                --fz-nav-drawer-border-color: var(--fz-nav-border-color);
+                --fz-nav-drawer-width: 280px;
+                --fz-nav-drawer-padding: 1rem;
+                --fz-nav-drawer-shadow: 0 0 15px rgba(0,0,0,0.2);
+                --fz-nav-drawer-transition-duration: 0.3s;
+                --fz-nav-drawer-transition-timing-function: ease-in-out;
+                --fz-nav-drawer-z-index: 1050;
+                --fz-nav-overlay-background: rgba(0,0,0,0.5);
+                --fz-nav-overlay-z-index: 1040;
+                --fz-nav-hamburger-color: var(--fz-nav-text-color);
+                --fz-nav-hamburger-hover-background: rgba(0,0,0,0.05);
+                --fz-nav-close-button-color: var(--fz-nav-drawer-text-color);
+                --fz-nav-close-button-hover-background: rgba(0,0,0,0.1);
+                --fz-nav-padding-block: 0.5rem;
+                --fz-nav-padding-inline: 1rem;
+                --fz-nav-z-index: 1000;
+                --fz-nav-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                --fz-nav-main-min-height: 50px;
+                --fz-nav-logo-max-height: 40px;
+                --fz-nav-menu-gap: 0.5rem;
+                --fz-nav-eyebrow-menu-gap: 1rem;
+                --fz-dropdown-background: var(--fz-nav-background);
+                --fz-dropdown-text-color: var(--fz-nav-text-color);
+                --fz-dropdown-border-color: var(--fz-nav-border-color);
+                --fz-dropdown-item-hover-background: var(--fz-nav-link-active-background);
+                --fz-dropdown-shadow: var(--fz-nav-shadow);
+                --fz-dropdown-padding: 0.5rem 0;
+                --fz-dropdown-item-padding: 0.5rem 1rem;
+                --fz-dropdown-z-index: calc(var(--fz-nav-z-index, 1000) + 10);
+              }
+
+              :host([fixed]) #nav-container {
+                position: fixed; top: 0; left: 0; right: 0;
+                z-index: var(--fz-nav-z-index); box-shadow: var(--fz-nav-shadow);
+              }
+
+              .sr-only {
+                position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+                overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+              }
+
+              #nav-container {
+                background-color: var(--fz-nav-background); color: var(--fz-nav-text-color);
+                transition: height 0.2s ease-out;
+              }
+
+              ::slotted(a) {
+                color: var(--fz-nav-slotted-link-color); text-decoration: none; transition: color 0.2s ease;
+              }
+              ::slotted(a:hover) {
+                color: var(--fz-nav-slotted-link-hover-color); text-decoration: underline;
+              }
+
+              #eyebrow-section {
+                background-color: var(--fz-nav-eyebrow-background); color: var(--fz-nav-eyebrow-text-color);
+                padding: var(--fz-nav-eyebrow-padding-block) var(--fz-nav-eyebrow-padding-inline);
+                font-size: var(--fz-nav-eyebrow-font-size); border-bottom: 1px solid var(--fz-nav-border-color);
+              }
+              #eyebrow-section[hidden] { display: none !important; }
+              ::slotted([slot="eyebrow-menu"] ul) {
+                list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--fz-nav-eyebrow-menu-gap);
+              }
+              ::slotted([slot="eyebrow-menu"] a) { color: var(--fz-nav-eyebrow-link-color); }
+              ::slotted([slot="eyebrow-menu"] a:hover) { color: var(--fz-nav-eyebrow-link-hover-color); }
+
+              #main-nav-area {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: var(--fz-nav-padding-block) var(--fz-nav-padding-inline);
+                min-height: var(--fz-nav-main-min-height);
+              }
+
+              #logo-wrapper {
+                flex-shrink: 0; display: flex; align-items: center; margin-right: 1rem;
+              }
+              ::slotted([slot="logo"] img) { max-height: var(--fz-nav-logo-max-height); display: block; width: auto; }
+               ::slotted([slot="logo"] a), ::slotted([slot="logo"] span) {
+                display: flex; align-items: center; color: inherit; text-decoration: none; font-weight: bold;
+              }
+
+              #desktop-menu-wrapper {
+                flex-grow: 1; display: flex; justify-content: flex-end; align-items: center;
+              }
+              #desktop-menu-wrapper[hidden] { display: none !important; }
+              ::slotted([slot="main-menu"] ul) {
+                list-style: none; padding: 0; margin: 0; display: flex; align-items: center; gap: var(--fz-nav-menu-gap);
+              }
+              ::slotted([slot="main-menu"] > ul > li) { position: relative; }
+              ::slotted([slot="main-menu"] a),
+              ::slotted([slot="main-menu"] button[aria-haspopup]) {
+                display: block; padding: 0.5rem 0.75rem; color: var(--fz-nav-slotted-link-color);
+                text-decoration: none; border-radius: 4px; transition: background-color 0.2s ease, color 0.2s ease;
+                white-space: nowrap; background-color: transparent; border: none; font: inherit; cursor: pointer;
+              }
+              ::slotted([slot="main-menu"] a:hover),
+              ::slotted([slot="main-menu"] button[aria-haspopup]:hover),
+              ::slotted([slot="main-menu"] a:focus-visible),
+              ::slotted([slot="main-menu"] button[aria-haspopup]:focus-visible) {
+                color: var(--fz-nav-slotted-link-hover-color); background-color: var(--fz-nav-link-active-background);
+                outline: none; text-decoration: none;
+              }
+
+              ::slotted([slot="main-menu"] .dropdown-content) { z-index: var(--fz-dropdown-z-index); }
+
+              #hamburger-button {
+                background: none; border: none; padding: 0.5rem; margin: -0.5rem; cursor: pointer;
+                color: var(--fz-nav-hamburger-color); border-radius: 4px; transition: background-color 0.2s ease;
+                display: inline-flex; align-items: center; justify-content: center;
+              }
+              #hamburger-button:hover { background-color: var(--fz-nav-hamburger-hover-background); }
+              #hamburger-button[hidden] { display: none !important; }
+              #hamburger-button .hamburger-icon { display: block; width: 24px; height: 24px; }
+
+              #drawer-overlay {
+                position: fixed; inset: 0; background-color: var(--fz-nav-overlay-background);
+                z-index: var(--fz-nav-overlay-z-index); opacity: 0;
+                visibility: hidden;
+                transition: opacity var(--fz-nav-drawer-transition-duration) var(--fz-nav-drawer-transition-timing-function),
+                            visibility var(--fz-nav-drawer-transition-duration) var(--fz-nav-drawer-transition-timing-function);
+                pointer-events: none;
+              }
+              #drawer-overlay.open {
+                  opacity: 1;
+                  visibility: visible;
+                  pointer-events: auto;
+              }
+
+              #drawer-panel {
+                position: fixed; top: 0; bottom: 0; height: 100%;
+                width: var(--fz-nav-drawer-width); max-width: 85vw;
+                background-color: var(--fz-nav-drawer-background); color: var(--fz-nav-drawer-text-color);
+                z-index: var(--fz-nav-drawer-z-index); box-shadow: var(--fz-nav-drawer-shadow);
+                transition: transform var(--fz-nav-drawer-transition-duration) var(--fz-nav-drawer-transition-timing-function),
+                            visibility var(--fz-nav-drawer-transition-duration) var(--fz-nav-drawer-transition-timing-function);
+                display: flex; flex-direction: column;
+                overflow-y: auto; -webkit-overflow-scrolling: touch;
+                visibility: hidden;
+              }
+              #drawer-panel.position-left {
+                left: 0; transform: translateX(-100%); border-right: 1px solid var(--fz-nav-drawer-border-color);
+              }
+              #drawer-panel.position-right {
+                right: 0; transform: translateX(100%); border-left: 1px solid var(--fz-nav-drawer-border-color);
+              }
+              #drawer-panel.open {
+                  visibility: visible;
+                  transform: translateX(0);
+              }
+
+              #drawer-header {
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 0.75rem var(--fz-nav-drawer-padding);
+                border-bottom: 1px solid var(--fz-nav-drawer-border-color); flex-shrink: 0;
+              }
+
+              #drawer-close-button {
+                background: none; border: none; padding: 0.5rem; margin: -0.5rem; cursor: pointer;
+                color: var(--fz-nav-close-button-color); border-radius: 50%; transition: background-color 0.2s ease;
+                display: flex; align-items: center; justify-content: center;
+              }
+              #drawer-close-button:hover { background-color: var(--fz-nav-close-button-hover-background); }
+              #drawer-close-button .drawer-close-icon { display: block; width: 24px; height: 24px; }
+
+              #drawer-main-menu-content { padding: var(--fz-nav-drawer-padding); flex-grow: 1; }
+
+              #drawer-eyebrow-menu-content {
+                  padding: var(--fz-nav-drawer-padding);
+                  border-top: 1px solid var(--fz-nav-drawer-border-color);
+                  flex-shrink: 0;
+              }
+              #drawer-eyebrow-menu-content:empty { display: none; }
+
+
+               /* RENAMED part and ID */
+               #drawer-content-container {
+                  padding: var(--fz-nav-drawer-padding);
+                  border-top: 1px solid var(--fz-nav-drawer-border-color);
+                  flex-shrink: 0;
+                  margin-top: auto; /* Push to bottom */
+               }
+               #drawer-content-container:empty { display: none; } /* Hide container if slot is empty */
+               /* Adjust eyebrow margin if drawer content pushes it up */
+               #drawer-content-container:not(:empty) + #drawer-eyebrow-menu-content {
+                   margin-top: 0;
+               }
+
+
+              /* Styling for CLONED items in drawer */
+              #drawer-main-menu-content ul,
+              #drawer-eyebrow-menu-content ul,
+              /* Target slotted ULs in drawer-content */
+              #drawer-content-container ::slotted(ul) {
+                list-style: none; padding: 0; margin: 0;
+              }
+              #drawer-main-menu-content li,
+              #drawer-eyebrow-menu-content li,
+              #drawer-content-container ::slotted(li) {
+                margin-bottom: 0.1rem;
+              }
+              /* Styling for CLONED links/buttons & drawer-content links */
+              #drawer-main-menu-content [part~="main-menu-item"] > a,
+              #drawer-main-menu-content [part~="main-menu-item"] > button[aria-haspopup],
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > a,
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > button[aria-haspopup],
+              #drawer-content-container ::slotted(a),
+              #drawer-content-container ::slotted(button) {
+                display: block; padding: 0.75rem 0.5rem; color: var(--fz-nav-drawer-link-color);
+                text-decoration: none; border-radius: 4px; font-size: 1rem;
+                transition: background-color 0.2s ease, color 0.2s ease;
+                background-color: transparent; border: none; width: 100%;
+                text-align: left; font-family: inherit; cursor: pointer;
+              }
+              /* Hover/Focus states for drawer items */
+              #drawer-main-menu-content [part~="main-menu-item"] > a:hover,
+              #drawer-main-menu-content [part~="main-menu-item"] > button[aria-haspopup]:hover,
+              #drawer-main-menu-content [part~="main-menu-item"] > a:focus-visible,
+              #drawer-main-menu-content [part~="main-menu-item"] > button[aria-haspopup]:focus-visible,
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > a:hover,
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > button[aria-haspopup]:hover,
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > a:focus-visible,
+              #drawer-eyebrow-menu-content [part~="eyebrow-menu-item"] > button[aria-haspopup]:focus-visible,
+              #drawer-content-container ::slotted(a:hover),
+              #drawer-content-container ::slotted(button:hover),
+              #drawer-content-container ::slotted(a:focus-visible),
+              #drawer-content-container ::slotted(button:focus-visible) {
+                background-color: var(--fz-nav-drawer-link-active-background);
+                color: var(--fz-nav-drawer-link-hover-color);
+                outline: none; text-decoration: none;
+              }
+
+              /* Drawer Dropdown Styling */
+              #drawer-main-menu-content [part~="dropdown-menu"],
+              #drawer-eyebrow-menu-content [part~="dropdown-menu"],
+              #drawer-content-container [part~="dropdown-menu"] { /* Include drawer-content */
+                position: static; box-shadow: none; border: none;
+                border-top: 1px dashed var(--fz-nav-drawer-border-color);
+                padding: 0.5rem 0 0.5rem 1.5rem; margin: 0.25rem 0 0.5rem;
+                background-color: transparent; min-width: auto; border-radius: 0;
+              }
+               #drawer-main-menu-content [part~="dropdown-menu"][hidden],
+               #drawer-eyebrow-menu-content [part~="dropdown-menu"][hidden],
+               #drawer-content-container [part~="dropdown-menu"][hidden] {
+                  display: none !important;
+               }
+              #drawer-main-menu-content [part~="dropdown-menu"] a,
+              #drawer-eyebrow-menu-content [part~="dropdown-menu"] a,
+              #drawer-content-container [part~="dropdown-menu"] a {
+                  padding: 0.5rem; font-size: 0.9em;
+              }
+            `;
+             console.log('fz-nav Styles applied');
+          }
+        } // --- End of FrenzyNav Class ---
+
+        // --- Define Custom Element ---
+        if (window.customElements && !customElements.get('fz-nav')) {
+            customElements.define('fz-nav', FrenzyNav);
+            console.log('Custom element "fz-nav" defined.');
+        } else if (customElements.get('fz-nav')) {
+             console.log('Custom element "fz-nav" already defined.');
+        } else {
+             console.error('Custom Elements API not supported.');
+        }
+
+
+        // --- Demo Page Interaction Logic ---
+        function toggleFixed() {
+            const nav = document.getElementById('myNav');
+            nav.toggleAttribute('fixed');
+            console.log(`Toggled 'fixed' attribute. Current state: ${nav.hasAttribute('fixed')}`);
+        }
+         function toggleDrawerOpenAttr() {
+            const nav = document.getElementById('myNav');
+            nav.toggleAttribute('drawer-open');
+            console.log(`Toggled 'drawer-open' attribute. Current state: ${nav.hasAttribute('drawer-open')}`);
+        }
+        function toggleDrawerPosition() {
+            const nav = document.getElementById('myNav');
+            const newPosition = nav.getAttribute('drawer-position') === 'right' ? 'left' : 'right';
+            nav.setAttribute('drawer-position', newPosition);
+            console.log(`Set 'drawer-position' to '${newPosition}'`);
+        }
+        function changeBreakpoint() {
+             const nav = document.getElementById('myNav');
+             nav.setAttribute('mobile-breakpoint', '500');
+             console.log("Set 'mobile-breakpoint' to '500'");
+        }
+        function resetBreakpoint() {
+             const nav = document.getElementById('myNav');
+             nav.removeAttribute('mobile-breakpoint');
+             console.log("Removed 'mobile-breakpoint' attribute (resets to default)");
+        }
+        function toggleTheme() {
+             const nav = document.getElementById('myNav');
+             nav.classList.toggle('dark-theme');
+             console.log("Toggled 'dark-theme' class");
+        }
+        // UPDATED: Function to toggle drawer-content for demo
+        const drawerContentExample = `
+            <div slot="drawer-content" class="drawer-content-info">
+                <p><strong>Account Info (Drawer Content):</strong></p>
+                <p>Welcome, User!</p>
+                <p><a href="#settings">Settings</a></p>
+                <p><a href="#logout">Logout</a></p>
+            </div>`;
+        let drawerContentVisible = true; // Track state for demo toggle
+        function toggleDrawerContent() { // Renamed function
+             const nav = document.getElementById('myNav');
+             const existingContent = nav.querySelector('[slot="drawer-content"]'); // Updated selector
+             if (existingContent) {
+                 existingContent.remove();
+                 drawerContentVisible = false;
+                 console.log("Removed drawer-content.");
+             } else {
+                 const tempDiv = document.createElement('div');
+                 tempDiv.innerHTML = drawerContentExample;
+                 nav.appendChild(tempDiv.firstElementChild);
+                 drawerContentVisible = true;
+                 console.log("Added drawer-content.");
+             }
+        }
+
+
+        // Example of listening to custom events from the component
+        const navElement = document.getElementById('myNav');
+        if (navElement) {
+            navElement.addEventListener('draweropen', (e) => {
+                console.log('DEMO PAGE: Drawer opened! Event:', e);
+            });
+            navElement.addEventListener('drawerclose', (e) => {
+                console.log('DEMO PAGE: Drawer closed! Event:', e);
+            });
+        } else {
+            console.error("Could not find fz-nav element with id 'myNav' to attach listeners.");
+        }
+
+    </script>
+
+</body>
+</html>

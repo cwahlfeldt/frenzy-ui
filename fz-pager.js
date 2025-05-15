@@ -7,6 +7,10 @@ class FrenzyPager extends HTMLElement {
   #paginationContainer = null;
   #styleElement = null;
 
+  static get observedAttributes() {
+    return ["items-per-page"];
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: "open" });

@@ -254,7 +254,7 @@ class FrenzyCarousel extends HTMLElement {
         needsAutoplayRestart = true;
         break;
       case "autoplay-interval":
-        this.#autoplayIntervalValue = this._getNumberAttribute(
+        this.#autoplayIntervalValue = this.#getNumberAttribute(
           "autoplay-interval",
           3000,
           1,
@@ -262,7 +262,7 @@ class FrenzyCarousel extends HTMLElement {
         needsAutoplayRestart = true;
         break;
       case "gap":
-        this.#slideGapValue = this._getStringAttribute("gap", "0px");
+        this.#slideGapValue = this.#getStringAttribute("gap", "0px");
         if (this.#wrapper) this.#wrapper.style.gap = this.#slideGapValue;
         needsUIRefresh = true;
         break;
@@ -279,10 +279,10 @@ class FrenzyCarousel extends HTMLElement {
         // The :host([nodrag]) CSS rule will handle touch-action
         break;
       case "speed":
-        this.#speedValue = this._getStringAttribute("speed", "0.6s");
+        this.#speedValue = this.#getStringAttribute("speed", "0.6s");
         break;
       case "easing":
-        this.#easingFunctionValue = this._getStringAttribute(
+        this.#easingFunctionValue = this.#getStringAttribute(
           "easing",
           "ease-in-out",
         );
@@ -344,14 +344,14 @@ class FrenzyCarousel extends HTMLElement {
     this.#noDrag = this.#getBooleanAttribute("nodrag");
     // touch-action is handled by :host CSS
 
-    this.#speedValue = this._getStringAttribute("speed", "0.6s");
-    this.#easingFunctionValue = this._getStringAttribute(
+    this.#speedValue = this.#getStringAttribute("speed", "0.6s");
+    this.#easingFunctionValue = this.#getStringAttribute(
       "easing",
       "ease-in-out",
     );
-    this.#slideGapValue = this._getStringAttribute("gap", "0px");
+    this.#slideGapValue = this.#getStringAttribute("gap", "0px");
     if (this.#wrapper) this.#wrapper.style.gap = this.#slideGapValue;
-    this.#autoplayIntervalValue = this._getNumberAttribute(
+    this.#autoplayIntervalValue = this.#getNumberAttribute(
       "autoplay-interval",
       3000,
       1,
@@ -433,12 +433,12 @@ class FrenzyCarousel extends HTMLElement {
     return this.hasAttribute(name);
   }
 
-  _getStringAttribute(name, defaultValue) {
+  #getStringAttribute(name, defaultValue) {
     const value = this.getAttribute(name);
     return value === null || value.trim() === "" ? defaultValue : value;
   }
 
-  _getNumberAttribute(name, defaultValue, minValue = -Infinity) {
+  #getNumberAttribute(name, defaultValue, minValue = -Infinity) {
     const value = this.getAttribute(name);
     if (value === null) return defaultValue;
     const parsed = parseInt(value, 10);
@@ -807,7 +807,7 @@ class FrenzyCarousel extends HTMLElement {
     }
   };
 
-  _getDragInitialWrapperX() {
+  #getDragInitialWrapperX() {
     const currentTransformStyle = window.getComputedStyle(
       this.#wrapper,
     ).transform;
@@ -826,7 +826,7 @@ class FrenzyCarousel extends HTMLElement {
     return this.#getTargetTransformX(this.#currentDOMIndex);
   }
 
-  _handleDragStart = (clientX) => {
+  #handleDragStart = (clientX) => {
     if (!this.#isActive || this.#noDrag || this.#originalSlides.length <= 1)
       return false;
 
@@ -841,12 +841,12 @@ class FrenzyCarousel extends HTMLElement {
     }
     this.#wrapper.style.transition = "none";
 
-    this.#dragInitialWrapperX = this._getDragInitialWrapperX();
+    this.#dragInitialWrapperX = this.#getDragInitialWrapperX();
     this.#stopAutoplay();
     return true;
   };
 
-  _handleDragMove = (clientX) => {
+  #handleDragMove = (clientX) => {
     if (!this.#isDragging || this.#noDrag) return;
 
     this.#dragCurrentX = clientX;
@@ -854,7 +854,7 @@ class FrenzyCarousel extends HTMLElement {
     this.#wrapper.style.transform = `translateX(${this.#dragInitialWrapperX + deltaX}px)`;
   };
 
-  _handleDragEnd = () => {
+  #handleDragEnd = () => {
     if (!this.#isDragging || this.#noDrag) return;
     this.#isDragging = false;
     this.#innerContainer.classList.remove("dragging");
@@ -882,7 +882,7 @@ class FrenzyCarousel extends HTMLElement {
   #onMouseDown = (event) => {
     if (event.target.closest(".nav-arrow, .dot") || event.button !== 0) return;
 
-    if (this._handleDragStart(event.clientX)) {
+    if (this.#handleDragStart(event.clientX)) {
       event.preventDefault();
       document.addEventListener("mousemove", this.#onDragMouseMove);
       document.addEventListener("mouseup", this.#onDragMouseUp);
@@ -890,11 +890,11 @@ class FrenzyCarousel extends HTMLElement {
   };
 
   #onDragMouseMove = (event) => {
-    this._handleDragMove(event.clientX);
+    this.#handleDragMove(event.clientX);
   };
 
   #onDragMouseUp = () => {
-    this._handleDragEnd();
+    this.#handleDragEnd();
     document.removeEventListener("mousemove", this.#onDragMouseMove);
     document.removeEventListener("mouseup", this.#onDragMouseUp);
   };
@@ -902,17 +902,17 @@ class FrenzyCarousel extends HTMLElement {
   #onTouchStart = (event) => {
     if (event.touches.length > 1 || event.target.closest(".nav-arrow, .dot"))
       return;
-    this._handleDragStart(event.touches[0].clientX);
+    this.#handleDragStart(event.touches[0].clientX);
   };
 
   #onTouchMove = (event) => {
     if (!this.#isDragging || this.#noDrag) return;
     event.preventDefault();
-    this._handleDragMove(event.touches[0].clientX);
+    this.#handleDragMove(event.touches[0].clientX);
   };
 
   #onTouchEnd = () => {
-    this._handleDragEnd();
+    this.#handleDragEnd();
   };
 
   nextSlide = (isAutoplay = false) => {

@@ -5,6 +5,7 @@ import FrenzyEditText from "./fz-edit-text.js";
 import FrenzyModal from "./fz-modal.js";
 import FrenzyPager from "./fz-pager.js";
 import FrenzyAnimate from "./fz-animate.js";
+import FrenzyNavigator from "./fz-navigator.js";
 
 export {
   FrenzyCarousel,
@@ -14,4 +15,5 @@ export {
   FrenzyModal,
   FrenzyPager,
   FrenzyAnimate,
+  FrenzyNavigator
 };
