@@ -6,6 +6,9 @@ class FrenzyCarousel extends HTMLElement {
     // Define the template content directly as a string
     const templateContent = /*html*/ `
       <style>
+        
+        @import url("/wp-content/themes/surfaces/assets/css/theme.util.css");
+
         :host {
           --fz-arrow-bg: rgba(0, 0, 0, 0.6);
           --fz-arrow-color: white;
@@ -50,27 +53,32 @@ class FrenzyCarousel extends HTMLElement {
           will-change: transform;
         }
 
-        .carousel-wrapper > * {
+        .carousel-wrapper > ::slotted(*), /* Style slotted elements directly if they are direct children */
+        .carousel-wrapper > * { /* Fallback for cloned elements not going through slot */
           flex-shrink: 0;
           height: 100% !important;
           max-width: 100% !important;
           box-sizing: border-box;
           position: relative;
           display: flex;
-          align-items: center;
-          justify-content: center;
+          align-items: start;
+          justify-content: start;
           overflow: hidden;
         }
 
-        .carousel-wrapper > * img {
-          pointer-events: none;
-        }
-
+        .carousel-wrapper > ::slotted(img),
         .carousel-wrapper > img {
           width: auto;
           max-width: none;
           object-fit: contain;
           display: block;
+          pointer-events: none; /* Prevent dragging images */
+        }
+        
+        /* Class for the current slide */
+        .fz-current-slide {
+          /* Add any specific styling for the current slide here if needed */
+          /* For example: border: 2px solid blue; */
         }
 
         .nav-arrow {
@@ -141,17 +149,23 @@ class FrenzyCarousel extends HTMLElement {
 
       <div class="carousel-inner-container">
         <div class="carousel-wrapper"></div>
-        <button class="nav-arrow prev hidden" aria-label="Previous slide">
-          &#10094;
+        
+
+        <button class="nav-arrow prev hidden" aria-label="Previous slide" part="nav-button prev-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 44.424 76.168">
+  <path id="angle-up-solid" d="M65.528,129.884a6.355,6.355,0,0,1,8.982,0l31.724,31.725a6.351,6.351,0,0,1-8.982,8.982L70.009,143.347,42.766,170.57a6.351,6.351,0,0,1-8.982-8.982l31.725-31.725Z" transform="translate(-128.025 108.094) rotate(-90)" fill="#fff"/>
+</svg>
         </button>
-        <button class="nav-arrow next hidden" aria-label="Next slide">
-          &#10095;
+        <button class="nav-arrow next hidden" aria-label="Next slide" part="nav-button next-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 44.424 76.168">
+  <path id="angle-up-solid" d="M65.528,129.884a6.355,6.355,0,0,1,8.982,0l31.724,31.725a6.351,6.351,0,0,1-8.982,8.982L70.009,143.347,42.766,170.57a6.351,6.351,0,0,1-8.982-8.982l31.725-31.725Z" transform="translate(172.449 -31.925) rotate(90)" fill="#fff"/>
+</svg>
         </button>
-        <div class="nav-dots hidden"></div>
+                </div>
+        <div class="nav-dots hidden" part="dots-container"></div>
       </div>
     `;
 
-    // Create a template element and set its innerHTML
     const templateElement = document.createElement("template");
     templateElement.innerHTML = templateContent;
     this.shadowRoot.appendChild(templateElement.content.cloneNode(true));
@@ -169,12 +183,12 @@ class FrenzyCarousel extends HTMLElement {
     this._allSlidesInDOM = [];
     this._slideOffsets = [];
     this._currentOriginalIndex = 0;
-    this._currentDOMIndex = 0;
+    this._currentDOMIndex = 0; // Represents the index in _allSlidesInDOM that is currently targeted
     this._isTransitioning = false;
-    this._offsetToFirstActualSlide = 0;
-    this._numLeadingCloneSets = 2;
-    this._numTrailingCloneSets = 2;
-    this._isActive = false;
+    this._offsetToFirstActualSlide = 0; // Index in _allSlidesInDOM where the first "real" (non-clone) slide begins
+    this._numLeadingCloneSets = 2; // Number of full sets of original slides cloned at the beginning
+    this._numTrailingCloneSets = 2; // Number of full sets of original slides cloned at the end
+    this._isActive = false; // Becomes true after setupCarousel is complete
     this._isCenteredMode = false;
     this._showArrows = false;
     this._showDots = false;
@@ -192,7 +206,7 @@ class FrenzyCarousel extends HTMLElement {
     this._dragCurrentX = 0;
     this._dragStartTime = 0;
     this._dragInitialWrapperX = 0;
-    this._dragThreshold = 50;
+    this._dragThreshold = 50; // Min pixels to drag to trigger a slide change
 
     this._boundOnMouseMove = this._onMouseMove.bind(this);
     this._boundOnMouseUp = this._onMouseUp.bind(this);
@@ -213,7 +227,6 @@ class FrenzyCarousel extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    // console.log(`FrenzyCarousel: Attribute changed: ${name}, oldValue: ${oldValue}, newValue: ${newValue}, isActive: ${this._isActive}`);
     if (
       oldValue === newValue &&
       !["nodrag", "autoplay", "arrows", "dots", "centered"].includes(name)
@@ -272,7 +285,7 @@ class FrenzyCarousel extends HTMLElement {
       if (needsUIRefresh) {
         requestAnimationFrame(() => {
           this._calculateSlideWidthsAndOffsets();
-          this._goToDOMIndex(this._currentDOMIndex, false, true);
+          this._goToDOMIndex(this._currentDOMIndex, false, true); // Recalculate position and update classes
         });
       }
       if (needsAutoplayRestart) {
@@ -282,9 +295,7 @@ class FrenzyCarousel extends HTMLElement {
   }
 
   connectedCallback() {
-    // console.log('FrenzyCarousel: connectedCallback entered.');
     if (!this._slot) {
-      // console.error("FrenzyCarousel: Slot not found in connectedCallback.");
       return;
     }
 
@@ -344,7 +355,7 @@ class FrenzyCarousel extends HTMLElement {
       this._onMouseDown.bind(this)
     );
 
-    this._handleSlotChange();
+    this._handleSlotChange(); // Initial setup
 
     this._resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
@@ -354,17 +365,15 @@ class FrenzyCarousel extends HTMLElement {
         ) {
           requestAnimationFrame(() => {
             this._calculateSlideWidthsAndOffsets();
-            this._goToDOMIndex(this._currentDOMIndex, false, true);
+            this._goToDOMIndex(this._currentDOMIndex, false, true); // Recalculate position and update classes
           });
         }
       }
     });
     this._resizeObserver.observe(this);
-    // console.log('FrenzyCarousel: connectedCallback finished.');
   }
 
   disconnectedCallback() {
-    // console.log('FrenzyCarousel: disconnectedCallback entered.');
     if (this._slot)
       this._slot.removeEventListener(
         "slotchange",
@@ -417,42 +426,47 @@ class FrenzyCarousel extends HTMLElement {
     this._allSlidesInDOM = [];
     this._isActive = false;
     this._stopAutoplay();
-    // console.log('FrenzyCarousel: disconnectedCallback finished.');
   }
 
   _handleSlotChange() {
-    // console.log('FrenzyCarousel: _handleSlotChange entered.');
     this._originalSlides = this._slot.assignedElements({
       flatten: true,
     });
-    this._currentOriginalIndex = 0;
+    // Ensure images from new slots are not draggable
+    this._originalSlides.forEach(slide => {
+      slide.querySelectorAll('img').forEach(img => img.draggable = false);
+    });
+    this._currentOriginalIndex = 0; // Reset to the first slide conceptually
     this._setupCarousel();
   }
 
   _setupCarousel() {
-    // console.log('FrenzyCarousel: _setupCarousel entered.');
-    this._isActive = false;
+    this._isActive = false; // Mark as inactive during setup
     this._stopAutoplay();
     if (!this._wrapper || !this._originalSlides) {
-      // console.error("FrenzyCarousel: Wrapper or originalSlides not available in _setupCarousel.");
       return;
     }
     this._wrapper.style.gap = this.getAttribute("gap") || "0px";
 
-    if (this._resizeObserver)
+    // Unobserve previous slides if any
+    if (this._resizeObserver) {
       this._allSlidesInDOM.forEach((slide) =>
         this._resizeObserver.unobserve(slide)
       );
-    this._wrapper.innerHTML = "";
-    this._allSlidesInDOM = [];
+    }
+    this._wrapper.innerHTML = ""; // Clear existing slides
+    this._allSlidesInDOM = []; // Reset the DOM slides array
 
     const numOriginalSlides = this._originalSlides.length;
 
     if (numOriginalSlides === 0) {
       this._slideOffsets = [0];
       this._offsetToFirstActualSlide = 0;
+      this._currentDOMIndex = 0;
     } else if (numOriginalSlides === 1) {
       const clonedSingleSlide = this._originalSlides[0].cloneNode(true);
+      clonedSingleSlide.setAttribute('part', 'slide original-slide-0'); // Set part for single slide
+      clonedSingleSlide.setAttribute('data-fz-original-index', '0');
       clonedSingleSlide
         .querySelectorAll("img")
         .forEach((img) => (img.draggable = false));
@@ -460,36 +474,41 @@ class FrenzyCarousel extends HTMLElement {
       this._wrapper.appendChild(clonedSingleSlide);
       if (this._resizeObserver) this._resizeObserver.observe(clonedSingleSlide);
       this._offsetToFirstActualSlide = 0;
+      this._currentDOMIndex = 0;
     } else {
-      this._offsetToFirstActualSlide =
-        this._numLeadingCloneSets * numOriginalSlides;
-      const processAndAddSlide = (
-        originalSlide,
-        type,
-        originalIndexForActual
-      ) => {
+      // Calculate where the actual (non-cloned for looping) slides start
+      this._offsetToFirstActualSlide = this._numLeadingCloneSets * numOriginalSlides;
+
+      const processAndAddSlide = (originalSlide, type, originalIndexForActual) => {
         const clone = originalSlide.cloneNode(true);
-        clone.querySelectorAll("img").forEach((img) => {
-          img.draggable = false;
-        });
+        let parts = ['slide'];
+        clone.querySelectorAll("img").forEach((img) => { img.draggable = false; });
+
         if (type) clone.setAttribute("data-fz-clone-type", type);
-        if (originalIndexForActual !== undefined)
+        if (originalIndexForActual !== undefined) {
           clone.setAttribute("data-fz-original-index", originalIndexForActual);
+          parts.push(`original-slide-${originalIndexForActual}`);
+        }
+        clone.setAttribute('part', parts.join(' '));
         this._wrapper.appendChild(clone);
         this._allSlidesInDOM.push(clone);
         if (this._resizeObserver) this._resizeObserver.observe(clone);
       };
 
+      // Add leading clones
       for (let set = 0; set < this._numLeadingCloneSets; set++) {
         for (let i = 0; i < numOriginalSlides; i++)
-          processAndAddSlide(this._originalSlides[i], `leading-set-${set}`);
+          processAndAddSlide(this._originalSlides[i], `leading-set-${set}`, i); // Pass original index for clones too
       }
+      // Add original slides
       for (let i = 0; i < numOriginalSlides; i++)
-        processAndAddSlide(this._originalSlides[i], null, i);
+        processAndAddSlide(this._originalSlides[i], null, i); // 'null' type, provide originalIndex
+      // Add trailing clones
       for (let set = 0; set < this._numTrailingCloneSets; set++) {
         for (let i = 0; i < numOriginalSlides; i++)
-          processAndAddSlide(this._originalSlides[i], `trailing-set-${set}`);
+          processAndAddSlide(this._originalSlides[i], `trailing-set-${set}`, i); // Pass original index for clones too
       }
+      this._currentDOMIndex = this._offsetToFirstActualSlide; // Start at the first "real" slide
     }
 
     this._setupDots();
@@ -497,19 +516,53 @@ class FrenzyCarousel extends HTMLElement {
 
     requestAnimationFrame(() => {
       this._calculateSlideWidthsAndOffsets();
-      this._currentOriginalIndex = 0;
-      this._currentDOMIndex = this._offsetToFirstActualSlide;
-      if (numOriginalSlides > 0)
-        this._goToDOMIndex(this._currentDOMIndex, false, true);
-      this._isActive = true;
-      // console.log('FrenzyCarousel: Carousel setup complete. isActive:', this._isActive);
+      // _currentOriginalIndex is already 0
+      // _currentDOMIndex is set above based on numOriginalSlides
+      if (numOriginalSlides > 0) {
+        this._goToDOMIndex(this._currentDOMIndex, false, true); // Go to initial slide without animation, update classes
+      } else {
+        this._updateCurrentSlideClass(); // Handle zero slides case for classes
+      }
+      this._isActive = true; // Carousel is now ready
       this._handleAutoplay();
     });
   }
 
+  /**
+   * Updates the CSS class and 'part' attribute for the current slide.
+   * Adds 'fz-current-slide' class and 'current-slide' part to the active slide.
+   */
+  _updateCurrentSlideClass() {
+    if (!this._allSlidesInDOM || this._allSlidesInDOM.length === 0) {
+      return;
+    }
+    const currentSlideClass = 'fz-current-slide';
+
+    this._allSlidesInDOM.forEach((slide, index) => {
+      const isCurrent = index === this._currentDOMIndex;
+      // data-fz-original-index might not be set on clones if not explicitly copied,
+      // but we still want to manage the 'slide' and 'current-slide' parts.
+      const originalIndex = slide.getAttribute('data-fz-original-index');
+      let parts = ['slide']; // Base part
+
+      // Add original-slide-X part if the original index is known for this DOM element
+      if (originalIndex !== null) {
+        parts.push(`original-slide-${originalIndex}`);
+      }
+
+      if (isCurrent) {
+        slide.classList.add(currentSlideClass);
+        parts.push('current-slide');
+      } else {
+        slide.classList.remove(currentSlideClass);
+      }
+      slide.setAttribute('part', parts.join(' '));
+    });
+  }
+
+
   _updateNavigationVisibility() {
     const hasMultipleSlides = this._originalSlides.length > 1;
-    // console.log(`FrenzyCarousel: Updating nav visibility: showArrows=${this._showArrows}, showDots=${this._showDots}, multipleSlides=${hasMultipleSlides}`);
     if (this._prevButton)
       this._prevButton.classList.toggle(
         "hidden",
@@ -543,19 +596,20 @@ class FrenzyCarousel extends HTMLElement {
       if (index < this._allSlidesInDOM.length - 1)
         currentOffset += this._computedSlideGap;
     });
-    // console.log('FrenzyCarousel: Calculated slide offsets:', this._slideOffsets, 'Computed gap:', this._computedSlideGap);
   }
 
   _setupDots() {
     this._dotsContainer.innerHTML = "";
-    if (this._originalSlides.length <= 1) return;
+    if (this._originalSlides.length <= 1 || !this._showDots) return; // Also check _showDots
     this._originalSlides.forEach((_, index) => {
       const dot = document.createElement("button");
       dot.classList.add("dot");
       dot.setAttribute("aria-label", `Go to slide ${index + 1}`);
+      dot.setAttribute("part", `dot dot-${index}`);
       dot.addEventListener("click", () => this.goToSlide(index));
       this._dotsContainer.appendChild(dot);
     });
+    this._updateDots(); // Initial update
   }
 
   _updateDots() {
@@ -567,46 +621,55 @@ class FrenzyCarousel extends HTMLElement {
       return;
     const dots = this._dotsContainer.querySelectorAll(".dot");
     dots.forEach((dot, index) => {
-      dot.classList.toggle("active", index === this._currentOriginalIndex);
+      const isActive = index === this._currentOriginalIndex;
+      dot.classList.toggle("active", isActive);
+      dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+      // Update part for active dot
+      let parts = ['dot', `dot-${index}`];
+      if (isActive) parts.push('active-dot');
+      dot.setAttribute('part', parts.join(' '));
     });
   }
 
   _goToDOMIndex(domIndex, animate = true, forceNoTransition = false) {
-    // console.log(`FrenzyCarousel: _goToDOMIndex called. domIndex: ${domIndex}, animate: ${animate}, forceNoTransition: ${forceNoTransition}, isActive: ${this._isActive}`);
     if (
-      !this._isActive ||
-      !this._wrapper ||
-      this._allSlidesInDOM.length === 0 ||
-      !this._slideOffsets ||
-      this._slideOffsets.length === 0
-    )
+      !this._isActive && !(animate === false && forceNoTransition === true) // Allow initial setup call
+    ) return;
+
+    if (!this._wrapper || this._allSlidesInDOM.length === 0 || !this._slideOffsets || this._slideOffsets.length === 0) {
+      this._updateCurrentSlideClass(); // Ensure classes are cleared if no slides
       return;
+    }
+
 
     if (this._isTransitioning && animate && !forceNoTransition) {
-      // console.log('FrenzyCarousel: Interrupting existing transition');
       const currentTransform = window.getComputedStyle(this._wrapper).transform;
       this._wrapper.style.transition = "none";
       this._wrapper.style.transform = currentTransform;
       // eslint-disable-next-line no-unused-expressions
-      this._wrapper.offsetHeight;
+      this._wrapper.offsetHeight; // Force reflow
       this._isTransitioning = false;
     }
 
-    if (domIndex < 0 || domIndex >= this._slideOffsets.length) {
-      domIndex = Math.max(
-        0,
-        Math.min(
-          this._offsetToFirstActualSlide + this._currentOriginalIndex,
-          this._slideOffsets.length - 1
-        )
-      );
-      if (domIndex < 0 || domIndex >= this._slideOffsets.length) return;
+    // Ensure domIndex is valid, otherwise, try to correct it based on currentOriginalIndex
+    if (domIndex < 0 || domIndex >= this._allSlidesInDOM.length) {
+      // Fallback to a safe index if the provided domIndex is out of bounds
+      // This might happen if slides are dynamically added/removed and indices are stale
+      domIndex = Math.max(0, Math.min(this._offsetToFirstActualSlide + this._currentOriginalIndex, this._allSlidesInDOM.length - 1));
+      if (domIndex < 0 || domIndex >= this._allSlidesInDOM.length) { // Still invalid after correction
+        this._updateCurrentSlideClass(); // Update classes based on potentially reset _currentDOMIndex
+        return;
+      }
     }
+
 
     let targetOffset;
     const viewportWidth = this._innerContainer.offsetWidth;
     const currentSlideElement = this._allSlidesInDOM[domIndex];
-    if (!currentSlideElement) return;
+    if (!currentSlideElement) {
+      this._updateCurrentSlideClass(); // Update classes if target slide doesn't exist
+      return;
+    }
     const currentSlideWidth = currentSlideElement.offsetWidth;
 
     if (this._isCenteredMode && this._originalSlides.length > 0) {
@@ -617,10 +680,11 @@ class FrenzyCarousel extends HTMLElement {
       targetOffset = -this._slideOffsets[domIndex];
     }
 
-    this._currentDOMIndex = domIndex;
+    this._currentDOMIndex = domIndex; // Update the current DOM index
+    this._updateCurrentSlideClass();   // <<<< UPDATE SLIDE CLASSES HERE >>>>
+
     const effectiveTransition =
       animate && !forceNoTransition && parseFloat(this._speedValue) > 0;
-    // console.log(`FrenzyCarousel: Effective transition: ${effectiveTransition}, Speed: ${this._speedValue}, Easing: ${this._easingFunctionValue}`);
 
     if (effectiveTransition) {
       this._wrapper.style.transition = `transform ${this._speedValue} ${this._easingFunctionValue}`;
@@ -630,53 +694,64 @@ class FrenzyCarousel extends HTMLElement {
       this._isTransitioning = false;
       if (!forceNoTransition) {
         // eslint-disable-next-line no-unused-expressions
-        this._wrapper.offsetHeight;
+        this._wrapper.offsetHeight; // Force reflow if not a forced no-transition (e.g. initial setup)
       }
     }
     this._wrapper.style.transform = `translateX(${targetOffset}px)`;
-    // console.log(`FrenzyCarousel: Transform set to: translateX(${targetOffset}px)`);
 
-    if (!effectiveTransition) this._handlePossibleInfiniteLoopJump();
+    // If not animating (e.g., drag release, initial setup, or speed is 0), handle potential infinite loop jump immediately.
+    if (!effectiveTransition) {
+      this._handlePossibleInfiniteLoopJump(); // This might change _currentDOMIndex and will call _updateCurrentSlideClass again
+    }
   }
 
   _handlePossibleInfiniteLoopJump() {
-    // console.log(`FrenzyCarousel: _handlePossibleInfiniteLoopJump. isTransitioning: ${this._isTransitioning}, speed: ${this._speedValue}`);
-    if (this._isTransitioning && parseFloat(this._speedValue) > 0) return;
+    if (this._isTransitioning && parseFloat(this._speedValue) > 0) return; // Don't jump if an animation is in progress
 
     const numOriginal = this._originalSlides.length;
-    if (numOriginal <= 1) {
+    if (numOriginal <= 1) { // If 0 or 1 slide, no looping logic needed
       this._updateDots();
+      this._updateCurrentSlideClass(); // <<<< UPDATE SLIDE CLASSES HERE >>>>
       return;
     }
 
     const currentDOM = this._currentDOMIndex;
     let jumpNeeded = false;
-    let newOriginalIdx = this._currentOriginalIndex;
-    let newDOMTargetIdx = this._currentDOMIndex;
+    let newOriginalIdx = this._currentOriginalIndex; // Preserve current original index by default
+    let newDOMTargetIdx = this._currentDOMIndex;    // Preserve current DOM index by default
 
-    const startOfOriginalSet = this._offsetToFirstActualSlide;
-    const startOfTrailingCloneRegion = startOfOriginalSet + numOriginal;
+    const startOfOriginalSet = this._offsetToFirstActualSlide; // e.g., 2 * 3 = 6
+    const endOfOriginalSet = startOfOriginalSet + numOriginal - 1; // e.g., 6 + 3 - 1 = 8
+    const totalClonedSlidesPerSide = this._numLeadingCloneSets * numOriginal; // same as _offsetToFirstActualSlide
 
-    if (currentDOM >= startOfTrailingCloneRegion) {
-      newOriginalIdx = (currentDOM - startOfOriginalSet) % numOriginal;
+    // Check if currentDOM is in a leading clone area that needs to jump to the equivalent "actual" slide area
+    // Example: numOriginal = 3, numLeadingCloneSets = 2. Clones: 0-5. Actuals: 6-8.
+    // If currentDOM is 5 (last clone of 2nd leading set), it should map to original index 2 (slide 8 in DOM).
+    if (currentDOM < startOfOriginalSet) {
+      newOriginalIdx = ((startOfOriginalSet - 1 - currentDOM) % numOriginal + numOriginal) % numOriginal; // Calculate original index from end of leading clones
+      newOriginalIdx = numOriginal - 1 - newOriginalIdx; // Correct the index direction
       newDOMTargetIdx = startOfOriginalSet + newOriginalIdx;
       jumpNeeded = true;
-    } else if (currentDOM < startOfOriginalSet) {
-      newOriginalIdx = ((currentDOM % numOriginal) + numOriginal) % numOriginal;
+    }
+    // Check if currentDOM is in a trailing clone area
+    // Example: numOriginal = 3, numTrailingCloneSets = 2. Actuals: 6-8. Trailing clones start at 9.
+    // If currentDOM is 9 (first clone of 1st trailing set), it should map to original index 0 (slide 6 in DOM).
+    else if (currentDOM > endOfOriginalSet) {
+      newOriginalIdx = (currentDOM - startOfOriginalSet) % numOriginal;
       newDOMTargetIdx = startOfOriginalSet + newOriginalIdx;
       jumpNeeded = true;
     }
 
+
     if (jumpNeeded) {
-      // console.log(`FrenzyCarousel: Jump needed. New original index: ${newOriginalIdx}, new DOM index: ${newDOMTargetIdx}`);
-      this._wrapper.style.transition = "none";
+      this._wrapper.style.transition = "none"; // No animation for the jump
       // eslint-disable-next-line no-unused-expressions
-      this._wrapper.offsetHeight;
+      this._wrapper.offsetHeight; // Force reflow
 
       let jumpTargetOffset;
       const viewportWidth = this._innerContainer.offsetWidth;
       const jumpTargetSlideElement = this._allSlidesInDOM[newDOMTargetIdx];
-      if (!jumpTargetSlideElement) return;
+      if (!jumpTargetSlideElement) return; // Should not happen if logic is correct
       const jumpTargetSlideWidth = jumpTargetSlideElement.offsetWidth;
 
       if (this._isCenteredMode) {
@@ -688,38 +763,39 @@ class FrenzyCarousel extends HTMLElement {
       }
       this._wrapper.style.transform = `translateX(${jumpTargetOffset}px)`;
 
-      this._currentDOMIndex = newDOMTargetIdx;
-      this._currentOriginalIndex = newOriginalIdx;
+      this._currentDOMIndex = newDOMTargetIdx;     // Update DOM index after jump
+      this._currentOriginalIndex = newOriginalIdx; // Update original index to match
     } else {
-      if (
-        currentDOM >= startOfOriginalSet &&
-        currentDOM < startOfTrailingCloneRegion
-      ) {
+      // If no jump was needed, ensure _currentOriginalIndex is correctly derived from _currentDOMIndex
+      // This is important if _goToDOMIndex was called with a DOM index directly.
+      if (currentDOM >= startOfOriginalSet && currentDOM <= endOfOriginalSet) {
         this._currentOriginalIndex = currentDOM - startOfOriginalSet;
       }
+      // If currentDOM is somehow outside known ranges and no jump occurred,
+      // this._currentOriginalIndex might be stale. This case should ideally not be reached
+      // if domIndex validation in _goToDOMIndex is robust.
     }
     this._updateDots();
+    this._updateCurrentSlideClass(); // <<<< UPDATE SLIDE CLASSES HERE >>>> (after potential _currentDOMIndex change)
   }
 
   _onTransitionEnd(event) {
-    // console.log('FrenzyCarousel: Transition ended. Target:', event.target, 'isTransitioning:', this._isTransitioning);
     if (event.target !== this._wrapper || !this._isTransitioning) return;
     this._isTransitioning = false;
-    this._handlePossibleInfiniteLoopJump();
+    this._handlePossibleInfiniteLoopJump(); // This will update dots and classes
     if (this._autoplayEnabled && this._originalSlides.length > 1)
-      this._startAutoplay();
+      this._startAutoplay(); // Restart autoplay if it was paused by interaction
   }
 
   _startAutoplay() {
-    this._stopAutoplay();
+    this._stopAutoplay(); // Clear any existing timer
     if (
       this._autoplayEnabled &&
       this._originalSlides.length > 1 &&
       this._isActive
     ) {
-      // console.log(`FrenzyCarousel: Starting autoplay. Interval: ${this._autoplayIntervalValue}`);
       this._autoplayTimerId = setTimeout(
-        () => this.nextSlide(true),
+        () => this.nextSlide(true), // Pass true to indicate it's an autoplay advancement
         this._autoplayIntervalValue
       );
     }
@@ -727,31 +803,32 @@ class FrenzyCarousel extends HTMLElement {
   _stopAutoplay() {
     if (this._autoplayTimerId) clearTimeout(this._autoplayTimerId);
     this._autoplayTimerId = null;
-    // console.log('FrenzyCarousel: Autoplay stopped.');
   }
   _handleAutoplay() {
     if (
       this._autoplayEnabled &&
       this._originalSlides.length > 1 &&
       this._isActive
-    )
+    ) {
       this._startAutoplay();
-    else this._stopAutoplay();
+    } else {
+      this._stopAutoplay();
+    }
   }
 
   // --- Dragging Logic ---
   _onMouseDown(event) {
     if (
-      event.target.classList.contains("nav-arrow") ||
-      event.target.classList.contains("dot") ||
+      event.target.closest(".nav-arrow") ||
+      event.target.closest(".dot") ||
       !this._isActive ||
-      event.button !== 0 ||
+      event.button !== 0 || // Only main (left) button
       this._noDrag ||
       this._originalSlides.length <= 1
     )
       return;
 
-    console.log("fuck");
+    event.preventDefault(); // Prevent text selection or other default actions
 
     try {
       this._isDragging = true;
@@ -760,37 +837,31 @@ class FrenzyCarousel extends HTMLElement {
       this._dragCurrentX = this._dragStartX;
       this._dragStartTime = Date.now();
 
+      // If a transition was in progress, capture current position and stop it
       if (this._isTransitioning) {
+        const currentTransform = window.getComputedStyle(this._wrapper).transform;
+        this._wrapper.style.transition = "none";
+        this._wrapper.style.transform = currentTransform;
+        // eslint-disable-next-line no-unused-expressions
+        this._wrapper.offsetHeight; // Force reflow
         this._isTransitioning = false;
       }
-      this._wrapper.style.transition = "none";
+      this._wrapper.style.transition = "none"; // Ensure no animation during drag
 
-      const currentTransformStyle = window.getComputedStyle(
-        this._wrapper
-      ).transform;
+      const currentTransformStyle = window.getComputedStyle(this._wrapper).transform;
       if (currentTransformStyle && currentTransformStyle !== "none") {
         try {
           const matrix = new DOMMatrixReadOnly(currentTransformStyle);
           this._dragInitialWrapperX = matrix.e;
-        } catch (e) {
-          if (
-            this._slideOffsets &&
-            this._slideOffsets.length > this._currentDOMIndex
-          ) {
+        } catch (e) { // Fallback if DOMMatrixReadOnly is not supported or fails
+          if (this._slideOffsets && this._slideOffsets.length > this._currentDOMIndex) {
             if (this._isCenteredMode) {
               const viewportWidth = this._innerContainer.offsetWidth;
-              const currentSlideElement =
-                this._allSlidesInDOM[this._currentDOMIndex];
-              const currentSlideWidth = currentSlideElement
-                ? currentSlideElement.offsetWidth
-                : 0;
-              this._dragInitialWrapperX =
-                viewportWidth / 2 -
-                (this._slideOffsets[this._currentDOMIndex] +
-                  currentSlideWidth / 2);
+              const currentSlideElement = this._allSlidesInDOM[this._currentDOMIndex];
+              const currentSlideWidth = currentSlideElement ? currentSlideElement.offsetWidth : 0;
+              this._dragInitialWrapperX = viewportWidth / 2 - (this._slideOffsets[this._currentDOMIndex] + currentSlideWidth / 2);
             } else {
-              this._dragInitialWrapperX =
-                -this._slideOffsets[this._currentDOMIndex];
+              this._dragInitialWrapperX = -this._slideOffsets[this._currentDOMIndex];
             }
           } else {
             this._dragInitialWrapperX = 0;
@@ -799,29 +870,24 @@ class FrenzyCarousel extends HTMLElement {
       } else {
         this._dragInitialWrapperX = 0;
       }
-      // console.log('FrenzyCarousel: Mouse Drag Start X:', this._dragStartX, 'Initial Wrapper X:', this._dragInitialWrapperX);
-      this._stopAutoplay();
+      this._stopAutoplay(); // Pause autoplay during drag
 
       document.addEventListener("mousemove", this._boundOnMouseMove);
       document.addEventListener("mouseup", this._boundOnMouseUp);
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onMouseDown:", e);
-      this._isDragging = false;
+      this._isDragging = false; // Reset state on error
       this._innerContainer.classList.remove("dragging");
     }
   }
 
   _onMouseMove(event) {
     if (!this._isDragging || this._noDrag) return;
+    // event.preventDefault(); // Not typically needed for mousemove if mousedown handled it.
     try {
       this._dragCurrentX = event.clientX;
       const deltaX = this._dragCurrentX - this._dragStartX;
-      // console.log('FrenzyCarousel: Mouse Drag Move Delta X:', deltaX, 'New Wrapper X:', this._dragInitialWrapperX + deltaX);
-      this._wrapper.style.transform = `translateX(${
-        this._dragInitialWrapperX + deltaX
-      }px)`;
+      this._wrapper.style.transform = `translateX(${this._dragInitialWrapperX + deltaX}px)`;
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onMouseMove:", e);
       this._isDragging = false;
       this._innerContainer.classList.remove("dragging");
       document.removeEventListener("mousemove", this._boundOnMouseMove);
@@ -829,7 +895,7 @@ class FrenzyCarousel extends HTMLElement {
     }
   }
 
-  _onMouseUp(event) {
+  _onMouseUp() {
     if (!this._isDragging || this._noDrag) return;
     this._isDragging = false;
     this._innerContainer.classList.remove("dragging");
@@ -840,77 +906,74 @@ class FrenzyCarousel extends HTMLElement {
     try {
       const dragDistance = this._dragCurrentX - this._dragStartX;
       const dragDuration = Date.now() - this._dragStartTime;
-      // console.log('FrenzyCarousel: Mouse Drag End. Distance:', dragDistance, 'Duration:', dragDuration);
-
-      const velocity =
-        dragDuration > 0 ? Math.abs(dragDistance) / dragDuration : 0;
+      const velocity = dragDuration > 0 ? Math.abs(dragDistance) / dragDuration : 0;
 
       if (
         Math.abs(dragDistance) > this._dragThreshold ||
-        (Math.abs(dragDistance) > 10 && velocity > 0.25)
+        (Math.abs(dragDistance) > 10 && velocity > 0.25) // Shorter drag if fast
       ) {
         if (dragDistance < 0) this.nextSlide();
         else this.prevSlide();
       } else {
+        // Snap back to the current slide if drag was not enough
         this._goToDOMIndex(this._currentDOMIndex, true);
       }
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onMouseUp:", e);
-      this._goToDOMIndex(this._currentDOMIndex, true);
+      this._goToDOMIndex(this._currentDOMIndex, true); // Fallback on error
     } finally {
-      if (this._autoplayEnabled && this._originalSlides.length > 1)
+      // Restart autoplay only if it was enabled and not a programmatic change
+      if (this._autoplayEnabled && this._originalSlides.length > 1) {
         this._startAutoplay();
+      }
     }
   }
 
   _onTouchStart(event) {
-    // console.log('FrenzyCarousel: Touch Start', { noDrag: this._noDrag, touches: event.touches.length, slides: this._originalSlides.length, isActive: this._isActive });
     if (
       !this._isActive ||
       this._noDrag ||
-      event.touches.length > 1 ||
+      event.touches.length > 1 || // Only single touch
       this._originalSlides.length <= 1
     )
       return;
 
+    // Check if the touch target is a navigation element
+    const target = event.target;
+    if (target.closest('.nav-arrow') || target.closest('.dot')) {
+      return;
+    }
+
     try {
       this._isDragging = true;
+      // No classList.add("dragging") for touch to avoid potential style conflicts if not desired
       this._dragStartX = event.touches[0].clientX;
       this._dragCurrentX = this._dragStartX;
       this._dragStartTime = Date.now();
 
       if (this._isTransitioning) {
+        const currentTransform = window.getComputedStyle(this._wrapper).transform;
+        this._wrapper.style.transition = "none";
+        this._wrapper.style.transform = currentTransform;
+        // eslint-disable-next-line no-unused-expressions
+        this._wrapper.offsetHeight;
         this._isTransitioning = false;
       }
       this._wrapper.style.transition = "none";
 
-      const currentTransformStyle = window.getComputedStyle(
-        this._wrapper
-      ).transform;
+      const currentTransformStyle = window.getComputedStyle(this._wrapper).transform;
       if (currentTransformStyle && currentTransformStyle !== "none") {
         try {
           const matrix = new DOMMatrixReadOnly(currentTransformStyle);
           this._dragInitialWrapperX = matrix.e;
         } catch (e) {
-          // console.warn("FrenzyCarousel: Could not parse existing transform matrix on touch start. Using current slide offset.", e);
-          if (
-            this._slideOffsets &&
-            this._slideOffsets.length > this._currentDOMIndex
-          ) {
+          if (this._slideOffsets && this._slideOffsets.length > this._currentDOMIndex) {
             if (this._isCenteredMode) {
               const viewportWidth = this._innerContainer.offsetWidth;
-              const currentSlideElement =
-                this._allSlidesInDOM[this._currentDOMIndex];
-              const currentSlideWidth = currentSlideElement
-                ? currentSlideElement.offsetWidth
-                : 0;
-              this._dragInitialWrapperX =
-                viewportWidth / 2 -
-                (this._slideOffsets[this._currentDOMIndex] +
-                  currentSlideWidth / 2);
+              const currentSlideElement = this._allSlidesInDOM[this._currentDOMIndex];
+              const currentSlideWidth = currentSlideElement ? currentSlideElement.offsetWidth : 0;
+              this._dragInitialWrapperX = viewportWidth / 2 - (this._slideOffsets[this._currentDOMIndex] + currentSlideWidth / 2);
             } else {
-              this._dragInitialWrapperX =
-                -this._slideOffsets[this._currentDOMIndex];
+              this._dragInitialWrapperX = -this._slideOffsets[this._currentDOMIndex];
             }
           } else {
             this._dragInitialWrapperX = 0;
@@ -919,41 +982,36 @@ class FrenzyCarousel extends HTMLElement {
       } else {
         this._dragInitialWrapperX = 0;
       }
-      // console.log('FrenzyCarousel: Touch Drag Start X:', this._dragStartX, 'Initial Wrapper X:', this._dragInitialWrapperX);
       this._stopAutoplay();
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onTouchStart:", e);
       this._isDragging = false;
     }
   }
 
   _onTouchMove(event) {
     if (!this._isDragging || this._noDrag) return;
-    try {
+    // Only prevent default if we are actually moving, to allow vertical scroll if drag is not significant
+    if (Math.abs(event.touches[0].clientX - this._dragStartX) > 10) { // Threshold for preventing default
       event.preventDefault();
+    }
+
+    try {
       this._dragCurrentX = event.touches[0].clientX;
       const deltaX = this._dragCurrentX - this._dragStartX;
-      // console.log('FrenzyCarousel: Touch Drag Move Delta X:', deltaX, 'New Wrapper X:', this._dragInitialWrapperX + deltaX);
-      this._wrapper.style.transform = `translateX(${
-        this._dragInitialWrapperX + deltaX
-      }px)`;
+      this._wrapper.style.transform = `translateX(${this._dragInitialWrapperX + deltaX}px)`;
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onTouchMove:", e);
       this._isDragging = false;
     }
   }
 
-  _onTouchEnd(event) {
+  _onTouchEnd() {
     if (!this._isDragging || this._noDrag) return;
     this._isDragging = false;
 
     try {
       const dragDistance = this._dragCurrentX - this._dragStartX;
       const dragDuration = Date.now() - this._dragStartTime;
-      // console.log('FrenzyCarousel: Touch Drag End. Distance:', dragDistance, 'Duration:', dragDuration);
-
-      const velocity =
-        dragDuration > 0 ? Math.abs(dragDistance) / dragDuration : 0;
+      const velocity = dragDuration > 0 ? Math.abs(dragDistance) / dragDuration : 0;
 
       if (
         Math.abs(dragDistance) > this._dragThreshold ||
@@ -965,11 +1023,10 @@ class FrenzyCarousel extends HTMLElement {
           this.prevSlide();
         }
       } else {
-        this._goToDOMIndex(this._currentDOMIndex, true);
+        this._goToDOMIndex(this._currentDOMIndex, true); // Snap back
       }
     } catch (e) {
-      // console.error("FrenzyCarousel: Error in _onTouchEnd:", e);
-      this._goToDOMIndex(this._currentDOMIndex, true);
+      this._goToDOMIndex(this._currentDOMIndex, true); // Fallback
     } finally {
       if (this._autoplayEnabled && this._originalSlides.length > 1) {
         this._startAutoplay();
@@ -977,52 +1034,49 @@ class FrenzyCarousel extends HTMLElement {
     }
   }
 
-  // Navigation Methods
+  // --- Public Navigation Methods ---
   nextSlide(isAutoplay = false) {
-    if (
-      this._originalSlides.length <= 1 &&
-      !this._isTransitioning &&
-      !this._isDragging
-    )
-      return;
-    if (!isAutoplay && !this._isDragging) this._stopAutoplay();
+    if (this._originalSlides.length <= 1 || (this._isTransitioning && !isAutoplay) || this._isDragging) return;
+    if (!isAutoplay) this._stopAutoplay(); // Stop user-initiated autoplay restart
 
-    const newDOMIndex = this._currentDOMIndex + 1;
-    this._currentOriginalIndex =
-      (this._currentOriginalIndex + 1) % this._originalSlides.length;
-    this._goToDOMIndex(newDOMIndex, true);
-    if (parseFloat(this._speedValue) > 0) this._updateDots();
+    // Determine the next logical original index
+    const nextOriginalIndex = (this._currentOriginalIndex + 1) % this._originalSlides.length;
 
-    if (
-      !isAutoplay &&
-      this._autoplayEnabled &&
-      parseFloat(this._speedValue) === 0 &&
-      this._originalSlides.length > 1
-    ) {
+    // Determine the target DOM index.
+    // If we are at the "end" of the visible part of a clone set that allows smooth transition to the next actual slide,
+    // we can just increment _currentDOMIndex. Otherwise, we might need a more complex jump if near actual boundaries.
+    let targetDOMIndex = this._currentDOMIndex + 1;
+
+    // If targetDOMIndex goes into the trailing clones too far, _handlePossibleInfiniteLoopJump will correct it.
+    // Or, if we are at the last "actual" slide and next means wrapping to the first "actual" slide via clones.
+
+    this._currentOriginalIndex = nextOriginalIndex; // Update conceptual original index first
+    this._goToDOMIndex(targetDOMIndex, true); // Animate to the next DOM slide
+
+    // _updateDots is called within _handlePossibleInfiniteLoopJump or _goToDOMIndex if no jump
+    // If speed is 0, _goToDOMIndex calls _handlePossibleInfiniteLoopJump which calls _updateDots and _updateCurrentSlideClass
+    // If speed > 0, _onTransitionEnd calls _handlePossibleInfiniteLoopJump which calls _updateDots and _updateCurrentSlideClass
+
+    // If autoplay is advancing and speed is 0, ensure it continues
+    if (isAutoplay && this._autoplayEnabled && parseFloat(this._speedValue) === 0 && this._originalSlides.length > 1) {
+      this._startAutoplay(); // Re-queue for next autoplay tick
+    } else if (!isAutoplay && this._autoplayEnabled && this._originalSlides.length > 1) {
+      // If user navigated, restart autoplay timer from full interval
       this._startAutoplay();
     }
   }
 
   prevSlide() {
-    if (
-      this._originalSlides.length <= 1 &&
-      !this._isTransitioning &&
-      !this._isDragging
-    )
-      return;
+    if (this._originalSlides.length <= 1 || this._isTransitioning || this._isDragging) return;
     this._stopAutoplay();
-    const newDOMIndex = this._currentDOMIndex - 1;
-    this._currentOriginalIndex =
-      (this._currentOriginalIndex - 1 + this._originalSlides.length) %
-      this._originalSlides.length;
-    this._goToDOMIndex(newDOMIndex, true);
-    if (parseFloat(this._speedValue) > 0) this._updateDots();
 
-    if (
-      this._autoplayEnabled &&
-      parseFloat(this._speedValue) === 0 &&
-      this._originalSlides.length > 1
-    ) {
+    const prevOriginalIndex = (this._currentOriginalIndex - 1 + this._originalSlides.length) % this._originalSlides.length;
+    let targetDOMIndex = this._currentDOMIndex - 1;
+
+    this._currentOriginalIndex = prevOriginalIndex;
+    this._goToDOMIndex(targetDOMIndex, true);
+
+    if (this._autoplayEnabled && this._originalSlides.length > 1) {
       this._startAutoplay();
     }
   }
@@ -1031,30 +1085,25 @@ class FrenzyCarousel extends HTMLElement {
     if (
       originalIndex < 0 ||
       originalIndex >= this._originalSlides.length ||
-      (originalIndex === this._currentOriginalIndex &&
-        !this._isTransitioning &&
-        !this._isDragging)
+      (originalIndex === this._currentOriginalIndex && !this._isTransitioning && !this._isDragging)
     ) {
       return;
     }
     this._stopAutoplay();
     this._currentOriginalIndex = originalIndex;
-    const newDOMIndex =
-      this._offsetToFirstActualSlide + this._currentOriginalIndex;
-    this._goToDOMIndex(newDOMIndex, true);
-    if (parseFloat(this._speedValue) > 0) this._updateDots();
+    // Calculate the DOM index that corresponds to the start of the "actual" slide set plus the new originalIndex
+    const newDOMIndex = this._offsetToFirstActualSlide + this._currentOriginalIndex;
 
-    if (
-      this._autoplayEnabled &&
-      parseFloat(this._speedValue) === 0 &&
-      this._originalSlides.length > 1
-    ) {
+    this._goToDOMIndex(newDOMIndex, true);
+
+    if (this._autoplayEnabled && this._originalSlides.length > 1) {
       this._startAutoplay();
     }
   }
 }
 
-if (!customElements.get("fz-color-picker")) {
+// Corrected custom element definition
+if (!customElements.get("fz-carousel")) {
   customElements.define("fz-carousel", FrenzyCarousel);
 }
 
