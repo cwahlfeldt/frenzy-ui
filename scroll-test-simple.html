@@ -151,6 +151,64 @@
         </div>
     </div>
 
+    <!-- Section 8: Threshold-Based Sync -->
+    <div class="section" style="background: #8e44ad;">
+        <div style="width: 80%; text-align: center;">
+            <h2 style="color: white; margin-bottom: 30px;">Threshold Control</h2>
+            <p style="color: white; margin-bottom: 30px;">This syncs until 70% visible, then completes</p>
+            
+            <!-- Syncs with scroll until 70% visible, then animation completes and stays -->
+            <fz-animate 
+                scroll-container="window" 
+                scroll-sync="true"
+                scroll-enter="0.2"
+                scroll-leave="0.7"
+                props='{"rotate": "720deg", "scale": [1, 1.5]}' 
+                duration="3000">
+                <div class="animated-box">Threshold Sync</div>
+            </fz-animate>
+
+            <div style="margin-top: 40px;">
+                <!-- This one syncs only while the element is 50% to 90% visible -->
+                <fz-animate 
+                    scroll-container="window" 
+                    scroll-sync="true"
+                    scroll-enter="0.5"
+                    scroll-leave="0.9"
+                    props='{"translateY": [-30, 30], "opacity": [0.5, 1]}' 
+                    duration="2000">
+                    <div style="background: rgba(255,255,255,0.3); padding: 20px; border-radius: 10px; color: white;">
+                        <strong>Limited Sync Range</strong><br>
+                        Only syncs 50%-90% visible
+                    </div>
+                </fz-animate>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 9: One-Time Complete -->
+    <div class="section" style="background: #c0392b;">
+        <div style="width: 80%; text-align: center;">
+            <h2 style="color: white; margin-bottom: 30px;">One-Time Animation</h2>
+            <p style="color: white; margin-bottom: 30px;">Syncs until complete, then stays finished</p>
+            
+            <!-- This animation syncs until it reaches 100%, then stays completed -->
+            <fz-animate 
+                scroll-container="window" 
+                scroll-sync="true"
+                scroll-enter="0.1"
+                scroll-leave="0.6"
+                props='{"rotate": "360deg", "scale": [0.8, 1.2], "backgroundColor": ["#e74c3c", "#2ecc71"]}' 
+                duration="2000">
+                <div class="animated-box">Complete & Stay</div>
+            </fz-animate>
+
+            <p style="color: white; margin-top: 30px; font-size: 0.9rem;">
+                Once this animation completes at 60% visibility, it stays finished even if you scroll back up!
+            </p>
+        </div>
+    </div>
+
     <script type="module">
         import './fz-animate.js';
 

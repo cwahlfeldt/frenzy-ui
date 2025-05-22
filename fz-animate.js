@@ -275,12 +275,22 @@ class FrenzyAnimate extends HTMLElement {
     const enterAttr = this.getAttribute('scroll-enter');
     if (enterAttr) {
       scrollOptions.enter = enterAttr.includes('%') ? enterAttr : parseFloat(enterAttr);
+    } else {
+      // Default enter threshold for scroll-sync animations
+      if (this.hasAttribute('scroll-sync')) {
+        scrollOptions.enter = 0; // Start syncing immediately when element enters viewport
+      }
     }
 
     // Leave threshold  
     const leaveAttr = this.getAttribute('scroll-leave');
     if (leaveAttr) {
       scrollOptions.leave = leaveAttr.includes('%') ? leaveAttr : parseFloat(leaveAttr);
+    } else {
+      // Default leave threshold for scroll-sync animations
+      if (this.hasAttribute('scroll-sync')) {
+        scrollOptions.leave = 1; // Stop syncing when element fully leaves viewport
+      }
     }
 
     // Boolean options
