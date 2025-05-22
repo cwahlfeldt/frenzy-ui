@@ -5,10 +5,13 @@ class FrenzyPager extends HTMLElement {
   #isReady = false;
   #slot = null;
   #paginationContainer = null;
+  #dotsContainer = null;
+  #leftArrow = null;
+  #rightArrow = null;
   #styleElement = null;
 
   static get observedAttributes() {
-    return ["items-per-page"];
+    return ["items-per-page", "controls", "dots", "arrows"];
   }
 
   constructor() {
@@ -16,18 +19,14 @@ class FrenzyPager extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.#itemsPerPage = parseInt(
       this.getAttribute("items-per-page") || this.#itemsPerPage,
-      10,
+      10
     );
-  }
-
-  static get observedAttributes() {
-    return ["items-per-page"];
   }
 
   connectedCallback() {
     this.#itemsPerPage = parseInt(
       this.getAttribute("items-per-page") || this.#itemsPerPage,
-      10,
+      10
     );
 
     this.#slot = document.createElement("slot");
@@ -37,13 +36,38 @@ class FrenzyPager extends HTMLElement {
     this.#paginationContainer.id = "pagination-controls";
     this.#paginationContainer.part = "controls-container";
 
+    this.#dotsContainer = document.createElement("div");
+    this.#dotsContainer.id = "dots-navigation";
+    this.#dotsContainer.part = "dots-container";
+
+    this.#leftArrow = document.createElement("button");
+    this.#leftArrow.id = "left-arrow";
+    this.#leftArrow.part = "arrow arrow-left";
+    this.#leftArrow.className = "arrow arrow-left";
+    this.#leftArrow.type = "button";
+    this.#leftArrow.innerHTML = "‹";
+    this.#leftArrow.setAttribute("aria-label", "Previous page");
+    this.#leftArrow.addEventListener("click", this.#goToPrevPage);
+
+    this.#rightArrow = document.createElement("button");
+    this.#rightArrow.id = "right-arrow";
+    this.#rightArrow.part = "arrow arrow-right";
+    this.#rightArrow.className = "arrow arrow-right";
+    this.#rightArrow.type = "button";
+    this.#rightArrow.innerHTML = "›";
+    this.#rightArrow.setAttribute("aria-label", "Next page");
+    this.#rightArrow.addEventListener("click", this.#goToNextPage);
+
     this.#styleElement = document.createElement("style");
 
-    // Append style, slot, then pagination controls
+    // Append style, arrows, slot, then navigation elements
     this.shadowRoot.append(
       this.#styleElement,
+      this.#leftArrow,
       this.#slot,
+      this.#rightArrow,
       this.#paginationContainer,
+      this.#dotsContainer
     );
 
     this.#applyStyles();
@@ -55,7 +79,7 @@ class FrenzyPager extends HTMLElement {
         const initialValue = this.getAttribute("items-per-page");
         this.#updateItemsPerPage(initialValue);
       } else {
-        this.#renderPagination();
+        this.#renderNavigationElements();
       }
     });
   }
@@ -65,6 +89,8 @@ class FrenzyPager extends HTMLElement {
 
     if (name === "items-per-page") {
       this.#updateItemsPerPage(newValue);
+    } else if (name === "controls" || name === "dots" || name === "arrows") {
+      this.#renderNavigationElements();
     }
   }
 
@@ -75,11 +101,11 @@ class FrenzyPager extends HTMLElement {
         this.#itemsPerPage = newItemsPerPage;
         this.#currentPage = 1;
         this.#updateItemVisibility();
-        this.#renderPagination();
+        this.#renderNavigationElements();
       }
     } else {
       console.warn(
-        `FrenzyPager: Invalid value for items-per-page: ${value}. Must be a positive integer.`,
+        `FrenzyPager: Invalid value for items-per-page: ${value}. Must be a positive integer.`
       );
     }
   }
@@ -91,15 +117,13 @@ class FrenzyPager extends HTMLElement {
     this.#currentPage = 1;
 
     this.#updateItemVisibility();
-    this.#renderPagination();
-    this.#adjustHostPadding(); // Adjust host padding when items change
+    this.#renderNavigationElements();
+    this.#adjustHostPadding();
   };
 
   #updateItemVisibility() {
     if (!this.#items || this.#items.length === 0) {
-      if (this.#paginationContainer) {
-        this.#paginationContainer.hidden = true;
-      }
+      this.#hideAllNavigation();
       return;
     }
 
@@ -121,71 +145,115 @@ class FrenzyPager extends HTMLElement {
         },
         bubbles: true,
         composed: true,
-      }),
+      })
     );
+  }
+
+  #hideAllNavigation() {
+    if (this.#paginationContainer) this.#paginationContainer.hidden = true;
+    if (this.#dotsContainer) this.#dotsContainer.hidden = true;
+    if (this.#leftArrow) this.#leftArrow.hidden = true;
+    if (this.#rightArrow) this.#rightArrow.hidden = true;
+  }
+
+  #renderNavigationElements() {
+    const totalPages = Math.ceil(this.#items.length / this.#itemsPerPage);
+    const shouldShowNavigation = totalPages > 1;
+
+    // Handle controls attribute
+    if (this.hasAttribute("controls") && shouldShowNavigation) {
+      this.#renderPagination();
+    } else {
+      this.#paginationContainer.hidden = true;
+    }
+
+    // Handle dots attribute
+    if (this.hasAttribute("dots") && shouldShowNavigation) {
+      this.#renderDots();
+    } else {
+      this.#dotsContainer.hidden = true;
+    }
+
+    // Handle arrows attribute
+    if (this.hasAttribute("arrows") && shouldShowNavigation) {
+      this.#renderArrows();
+    } else {
+      this.#leftArrow.hidden = true;
+      this.#rightArrow.hidden = true;
+    }
+
+    // If no navigation is shown, hide all
+    if (!shouldShowNavigation) {
+      this.#hideAllNavigation();
+    }
+
+    this.#adjustHostPadding();
   }
 
   #renderPagination() {
     if (!this.#paginationContainer) return;
 
     const totalPages = Math.ceil(this.#items.length / this.#itemsPerPage);
+    this.#paginationContainer.hidden = false;
 
-    const wasHidden = this.#paginationContainer.hidden;
-    const isHidden = totalPages <= 1;
-    this.#paginationContainer.hidden = isHidden;
-
-    if (totalPages > 1) {
-      // Clear only if needed (avoids unnecessary DOM manipulation)
-      if (this.#paginationContainer.children.length === 0 || wasHidden) {
-        while (this.#paginationContainer.firstChild) {
-          this.#paginationContainer.removeChild(
-            this.#paginationContainer.firstChild,
-          );
-        }
-        const prevButton = this.#createButton(
-          "Previous",
-          this.#currentPage === 1,
-          "button button-prev",
-          this.#goToPrevPage,
-        );
-        const pageInfo = document.createElement("span");
-        pageInfo.id = "page-info";
-        pageInfo.part = "page-info";
-        pageInfo.setAttribute("role", "status");
-        pageInfo.setAttribute("aria-live", "polite");
-        const nextButton = this.#createButton(
-          "Next",
-          this.#currentPage === totalPages,
-          "button button-next",
-          this.#goToNextPage,
-        );
-        this.#paginationContainer.append(prevButton, pageInfo, nextButton);
-      }
-      // Update existing page info text content for efficiency
-      const pageInfoSpan =
-        this.#paginationContainer.querySelector("#page-info");
-      if (pageInfoSpan) {
-        pageInfoSpan.textContent = `Page ${this.#currentPage} of ${totalPages}`;
-      }
-      // Update button disabled states
-      const prevBtn =
-        this.#paginationContainer.querySelector("button:first-child");
-      const nextBtn =
-        this.#paginationContainer.querySelector("button:last-child");
-      if (prevBtn) prevBtn.disabled = this.#currentPage === 1;
-      if (nextBtn) nextBtn.disabled = this.#currentPage === totalPages;
-    } else {
-      while (this.#paginationContainer.firstChild) {
-        this.#paginationContainer.removeChild(
-          this.#paginationContainer.firstChild,
-        );
-      }
+    // Clear and rebuild controls
+    while (this.#paginationContainer.firstChild) {
+      this.#paginationContainer.removeChild(
+        this.#paginationContainer.firstChild
+      );
     }
 
-    // Adjust host padding after render if visibility changed
-    if (wasHidden !== isHidden) {
-      this.#adjustHostPadding();
+    const prevButton = this.#createButton(
+      "Previous",
+      this.#currentPage === 1,
+      "button button-prev",
+      this.#goToPrevPage
+    );
+    const pageInfo = document.createElement("span");
+    pageInfo.id = "page-info";
+    pageInfo.part = "page-info";
+    pageInfo.setAttribute("role", "status");
+    pageInfo.setAttribute("aria-live", "polite");
+    pageInfo.textContent = `Page ${this.#currentPage} of ${totalPages}`;
+    const nextButton = this.#createButton(
+      "Next",
+      this.#currentPage === totalPages,
+      "button button-next",
+      this.#goToNextPage
+    );
+    this.#paginationContainer.append(prevButton, pageInfo, nextButton);
+  }
+
+  #renderDots() {
+    if (!this.#dotsContainer) return;
+
+    const totalPages = Math.ceil(this.#items.length / this.#itemsPerPage);
+    this.#dotsContainer.hidden = false;
+
+    // Clear existing dots
+    while (this.#dotsContainer.firstChild) {
+      this.#dotsContainer.removeChild(this.#dotsContainer.firstChild);
     }
+
+    // Create dots for each page
+    for (let i = 1; i <= totalPages; i++) {
+      const dot = document.createElement("button");
+      dot.className = `dot ${i === this.#currentPage ? "active" : ""}`;
+      dot.part = `dot ${i === this.#currentPage ? "dot-active" : ""}`;
+      dot.type = "button";
+      dot.setAttribute("aria-label", `Go to page ${i}`);
+      dot.addEventListener("click", () => this.#goToPage(i));
+      this.#dotsContainer.appendChild(dot);
+    }
+  }
+
+  #renderArrows() {
+    const totalPages = Math.ceil(this.#items.length / this.#itemsPerPage);
+
+    this.#leftArrow.hidden = false;
+    this.#rightArrow.hidden = false;
+    this.#leftArrow.disabled = this.#currentPage === 1;
+    this.#rightArrow.disabled = this.#currentPage === totalPages;
   }
 
   #createButton(text, disabled, partName, onClickCallback) {
@@ -199,11 +267,24 @@ class FrenzyPager extends HTMLElement {
     return button;
   }
 
+  #goToPage(pageNumber) {
+    const totalPages = Math.ceil(this.#items.length / this.#itemsPerPage);
+    if (
+      pageNumber >= 1 &&
+      pageNumber <= totalPages &&
+      pageNumber !== this.#currentPage
+    ) {
+      this.#currentPage = pageNumber;
+      this.#updateItemVisibility();
+      this.#renderNavigationElements();
+    }
+  }
+
   #goToPrevPage = () => {
     if (this.#currentPage > 1) {
       this.#currentPage--;
       this.#updateItemVisibility();
-      this.#renderPagination();
+      this.#renderNavigationElements();
     }
   };
 
@@ -212,21 +293,24 @@ class FrenzyPager extends HTMLElement {
     if (this.#currentPage < totalPages) {
       this.#currentPage++;
       this.#updateItemVisibility();
-      this.#renderPagination();
+      this.#renderNavigationElements();
     }
   };
 
   #adjustHostPadding = () => {
-    // Add padding to the bottom of the host element to prevent
-    // the absolute positioned controls from overlapping the last
-    // row of slotted content, only when controls are visible.
     requestAnimationFrame(() => {
-      // Ensure calculation happens after render
-      if (this.#paginationContainer && !this.#paginationContainer.hidden) {
-        const controlsHeight = this.#paginationContainer.offsetHeight;
-        // Add some extra space (e.g., 1rem)
-        const paddingValue =
-          controlsHeight > 0 ? `${controlsHeight / 16 + 1.5}rem` : "3rem"; // Convert px to rem and add buffer
+      let maxHeight = 0;
+
+      // Check height of visible navigation elements
+      if (!this.#paginationContainer.hidden) {
+        maxHeight = Math.max(maxHeight, this.#paginationContainer.offsetHeight);
+      }
+      if (!this.#dotsContainer.hidden) {
+        maxHeight = Math.max(maxHeight, this.#dotsContainer.offsetHeight);
+      }
+
+      if (maxHeight > 0) {
+        const paddingValue = `${maxHeight / 16 + 1.5}rem`;
         this.style.paddingBottom = paddingValue;
       } else {
         this.style.paddingBottom = "0";
@@ -242,7 +326,7 @@ class FrenzyPager extends HTMLElement {
         position: relative;
         box-sizing: border-box;
         padding-bottom: 0;
-        transition: padding-bottom 0.2s ease-out; /* Smooth transition for padding */
+        transition: padding-bottom 0.2s ease-out;
       }
 
       [hidden] {
@@ -253,24 +337,89 @@ class FrenzyPager extends HTMLElement {
         box-sizing: border-box;
       }
 
-      /* Style the pagination controls container */
-
+      /* Pagination controls container */
       #pagination-controls {
         position: absolute;
-        bottom: -1rem; /* Position below the host's bottom edge */
+        bottom: -1rem;
         left: 50%;
         transform: translateX(-50%);
-        width: max-content; /* Ensure width fits content */
-        max-width: 90%; /* Prevent overflow on small screens */
+        width: max-content;
+        max-width: 90%;
         display: flex;
         justify-content: center;
         align-items: center;
-        flex-wrap: nowrap; /* Prevent wrapping */
+        flex-wrap: nowrap;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
         z-index: 10;
       }
 
+      /* Dots navigation container */
+      #dots-navigation {
+        position: absolute;
+        bottom: -1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        z-index: 10;
+      }
+
+      /* Left and right arrows */
+      .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid #d1d5db;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #374151;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.5rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          opacity 0.2s ease;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .arrow-left {
+        left: -1rem;
+      }
+
+      .arrow-right {
+        right: -1rem;
+      }
+
+      .arrow:not(:disabled):hover,
+      .arrow:not(:disabled):focus-visible {
+        background-color: rgba(243, 244, 246, 0.95);
+        border-color: #9ca3af;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
+
+      .arrow:not(:disabled):active {
+        background-color: rgba(229, 231, 235, 0.95);
+      }
+
+      .arrow:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      /* Standard button styles */
       .button {
         padding: 0.5rem 1rem;
         border: 1px solid #d1d5db;
@@ -304,6 +453,39 @@ class FrenzyPager extends HTMLElement {
       .button:disabled {
         cursor: not-allowed;
         opacity: 0.6;
+      }
+
+      /* Dot styles */
+      .dot {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        border: 1px solid #d1d5db;
+        background-color: #ffffff;
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          transform 0.2s ease;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .dot:hover,
+      .dot:focus-visible {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
+
+      .dot.active {
+        background-color: #374151;
+        border-color: #374151;
+      }
+
+      .dot:active {
+        transform: scale(0.95);
       }
 
       #page-info {
