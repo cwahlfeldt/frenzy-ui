@@ -34,6 +34,7 @@ async function ensureAnimeJs() {
     .then((module) => {
       if (module && typeof module.animate === 'function' && typeof module.onScroll === 'function') {
         animeLibrary = module;
+        console.log('Anime.js loaded successfully with onScroll support');
         return animeLibrary;
       } else {
         throw new Error('Anime.js module loaded but required functions not found');
@@ -79,12 +80,16 @@ class FrenzyAnimate extends HTMLElement {
   constructor() {
     super();
     this.style.display = 'contents'; // Don't affect layout
+    console.log('FrenzyAnimate constructor called');
   }
 
   async connectedCallback() {
+    console.log('FrenzyAnimate connected to DOM');
     if (!this.#isInitialized) {
+      console.log('Initializing FrenzyAnimate...');
       await this.#initialize();
       this.#isInitialized = true;
+      console.log('FrenzyAnimate initialized');
     }
   }
 
@@ -121,7 +126,10 @@ class FrenzyAnimate extends HTMLElement {
       this.#animationOptions = this.#getAnimationProps();
       
       if (this.#target && this.#animationOptions) {
+        console.log('Target and options ready, creating animation...');
         await this.#animate();
+      } else {
+        console.warn('Missing target or options:', { target: this.#target, options: this.#animationOptions });
       }
     } catch (error) {
       console.error('FrenzyAnimate initialization failed:', error);
@@ -138,7 +146,9 @@ class FrenzyAnimate extends HTMLElement {
     }
     
     // Default: animate the first child element
-    return this.children[0] || null;
+    const target = this.children[0] || null;
+    console.log('Target element:', target);
+    return target;
   }
 
   #getAnimationProps() {
@@ -159,13 +169,13 @@ class FrenzyAnimate extends HTMLElement {
     if (this.hasAttribute('duration')) {
       props.duration = parseInt(this.getAttribute('duration')) || 1000;
     } else if (!props.duration) {
-      props.duration = 1000; // Default duration
+      props.duration = 1000;
     }
 
     if (this.hasAttribute('easing')) {
       props.easing = this.getAttribute('easing') || 'easeOutQuad';
     } else if (!props.easing) {
-      props.easing = 'easeOutQuad'; // Default easing
+      props.easing = 'easeOutQuad';
     }
 
     if (this.hasAttribute('delay')) {
@@ -193,18 +203,23 @@ class FrenzyAnimate extends HTMLElement {
     }
 
     // Autoplay handling - check for scroll-based autoplay first
-    if (this.hasAttribute('scroll-container') || this.hasAttribute('scroll-target')) {
-      // Use onScroll autoplay
+    const isScrollBased = this.hasAttribute('scroll-container') || this.hasAttribute('scroll-target');
+    console.log('Is scroll-based:', isScrollBased);
+    
+    if (isScrollBased) {
       const scrollOptions = this.#getScrollOptions();
-      if (scrollOptions && animeLibrary.onScroll) {
+      console.log('Scroll options:', scrollOptions);
+      
+      if (scrollOptions && animeLibrary && animeLibrary.onScroll) {
         try {
           props.autoplay = animeLibrary.onScroll(scrollOptions);
+          console.log('Created scroll observer successfully');
         } catch (error) {
           console.error('Failed to create scroll observer:', error);
-          // Fallback to regular autoplay
           props.autoplay = false;
         }
       } else {
+        console.warn('No scroll options or onScroll not available');
         props.autoplay = false;
       }
     } else {
@@ -213,34 +228,22 @@ class FrenzyAnimate extends HTMLElement {
       if (autoplay !== null) {
         props.autoplay = autoplay !== 'false';
       } else {
-        props.autoplay = true; // Default to autoplay
+        props.autoplay = true;
       }
+      console.log('Regular autoplay:', props.autoplay);
     }
 
+    console.log('Final animation props:', props);
     return props;
   }
 
   #shouldTriggerOnChange() {
     const trigger = this.getAttribute('trigger');
-    return trigger !== 'manual'; // Default is to trigger on change
+    return trigger !== 'manual';
   }
 
   #getScrollOptions() {
     const scrollOptions = {};
-
-    // Container - can be selector string or element
-    const containerAttr = this.getAttribute('scroll-container');
-    if (containerAttr) {
-      if (containerAttr === 'window') {
-        // For window, we don't set container in the options
-        // Anime.js v4 uses window by default
-      } else {
-        const containerEl = document.querySelector(containerAttr);
-        if (containerEl) {
-          scrollOptions.container = containerEl;
-        }
-      }
-    }
 
     // Target - defaults to the animation target if not specified
     const targetAttr = this.getAttribute('scroll-target');
@@ -255,6 +258,18 @@ class FrenzyAnimate extends HTMLElement {
         scrollOptions.target = target;
       }
     }
+
+    // Container
+    const containerAttr = this.getAttribute('scroll-container');
+    console.log('Container attribute:', containerAttr);
+    
+    if (containerAttr && containerAttr !== 'window') {
+      const containerEl = document.querySelector(containerAttr);
+      if (containerEl) {
+        scrollOptions.container = containerEl;
+      }
+    }
+    // For window, we don't set container (Anime.js uses window by default)
 
     // Enter threshold
     const enterAttr = this.getAttribute('scroll-enter');
@@ -281,11 +296,13 @@ class FrenzyAnimate extends HTMLElement {
       scrollOptions.horizontal = this.getAttribute('scroll-horizontal') !== 'false';
     }
 
+    console.log('Generated scroll options:', scrollOptions);
     return Object.keys(scrollOptions).length > 0 ? scrollOptions : null;
   }
 
   async #animate() {
     if (!animeLibrary) {
+      console.warn('Anime.js not loaded yet');
       return;
     }
 
@@ -294,6 +311,7 @@ class FrenzyAnimate extends HTMLElement {
     const props = this.#animationOptions || this.#getAnimationProps();
 
     if (!target || !props) {
+      console.warn('Missing target or props for animation');
       return;
     }
 
@@ -304,9 +322,11 @@ class FrenzyAnimate extends HTMLElement {
       }
 
       // Create new animation
+      console.log('Creating animation with target:', target, 'props:', props);
       this.#animation = animeLibrary.animate(target, props);
+      console.log('Animation created:', this.#animation);
       
-      this.#clearError(); // Clear any previous errors
+      this.#clearError();
       
     } catch (error) {
       console.error('Animation failed:', error);
@@ -326,7 +346,6 @@ class FrenzyAnimate extends HTMLElement {
   }
 
   #showError(message) {
-    // Simple error display - just log to console and add error class
     console.error('FrenzyAnimate error:', message);
     this.classList.add('fz-animate-error');
     this.setAttribute('data-error', message);
@@ -365,6 +384,8 @@ class FrenzyAnimate extends HTMLElement {
 }
 
 // Register the custom element
+console.log('Registering fz-animate custom element');
 customElements.define('fz-animate', FrenzyAnimate);
+console.log('fz-animate custom element registered');
 
 export default FrenzyAnimate;

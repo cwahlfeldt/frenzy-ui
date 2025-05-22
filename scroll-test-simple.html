@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Scroll Animation Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .section:nth-child(1) { background: #e74c3c; }
+        .section:nth-child(2) { background: #3498db; }
+        .section:nth-child(3) { background: #2ecc71; }
+        .section:nth-child(4) { background: #f39c12; }
+        .section:nth-child(5) { background: #9b59b6; }
+        .section:nth-child(6) { background: #1abc9c; }
+
+        .animated-box {
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid white;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        .debug {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug" id="debug">
+        <div>Scroll Y: <span id="scrollY">0</span></div>
+        <div>Anime.js loaded: <span id="animeLoaded">false</span></div>
+        <div>Components: <span id="componentCount">0</span></div>
+    </div>
+
+    <!-- Section 1: Basic fade in -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            props='{"opacity": [0, 1]}' 
+            duration="1000">
+            <div class="animated-box">Fade In</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 2: Scale up -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            props='{"scale": [0.5, 1]}' 
+            duration="800">
+            <div class="animated-box">Scale Up</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 3: Slide from left -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            props='{"translateX": [-200, 0]}' 
+            duration="1200">
+            <div class="animated-box">Slide Left</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 4: Rotate -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            props='{"rotate": ["0deg", "360deg"]}' 
+            duration="1500">
+            <div class="animated-box">Rotate</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 5: Multiple properties -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            props='{"opacity": [0, 1], "scale": [0.8, 1], "rotate": "-45deg"}' 
+            duration="1000">
+            <div class="animated-box">Multi Props</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 6: Synchronized with scroll -->
+    <div class="section">
+        <fz-animate 
+            scroll-container="window" 
+            scroll-sync="true"
+            props='{"rotate": "360deg"}' 
+            duration="2000">
+            <div class="animated-box">Scroll Sync</div>
+        </fz-animate>
+    </div>
+
+    <!-- Section 7: Progress Bar Sync -->
+    <div class="section" style="background: #34495e;">
+        <div style="width: 80%; text-align: center;">
+            <h2 style="color: white; margin-bottom: 30px;">Scroll Progress</h2>
+            <div style="width: 100%; height: 20px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden; margin-bottom: 20px;">
+                <fz-animate 
+                    scroll-container="window" 
+                    scroll-sync="true"
+                    props='{"width": ["0%", "100%"]}' 
+                    duration="1000">
+                    <div style="height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); width: 0%; border-radius: 10px;"></div>
+                </fz-animate>
+            </div>
+            <fz-animate 
+                scroll-container="window" 
+                scroll-sync="true"
+                props='{"translateX": [-50, 50]}' 
+                duration="1500">
+                <div class="animated-box">Moves with Scroll</div>
+            </fz-animate>
+        </div>
+    </div>
+
+    <script type="module">
+        import './fz-animate.js';
+
+        // Debug information
+        function updateDebug() {
+            document.getElementById('scrollY').textContent = Math.round(window.scrollY);
+            document.getElementById('animeLoaded').textContent = window.anime ? 'true' : 'false';
+            document.getElementById('componentCount').textContent = document.querySelectorAll('fz-animate').length;
+        }
+
+        // Update debug info
+        window.addEventListener('scroll', updateDebug);
+        window.addEventListener('load', updateDebug);
+        updateDebug();
+
+        // Log when animations are created
+        let animationCount = 0;
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            if (args[0] && args[0].includes && args[0].includes('animation')) {
+                animationCount++;
+                document.getElementById('debug').innerHTML += '<div>Animation #' + animationCount + ' created</div>';
+            }
+            originalConsoleLog.apply(console, args);
+        };
+
+        console.log('Simple scroll test loaded');
+    </script>
+</body>
+</html>
