@@ -1,264 +1,266 @@
-const ANIME_JS_ESM_URL = "https://esm.sh/animejs@4";
-let animeJsModulePromise = null;
+/**
+ * FrenzyAnimate - A simple web component wrapper for Anime.js v4
+ * Provides declarative animations through HTML attributes
+ */
+
+const ANIME_JS_CDN_URL = "https://esm.sh/animejs@4";
+
+// Global anime.js management
+let animeLibrary = null;
+let animeLoadPromise = null;
+
+/**
+ * Check if anime.js is already available globally or load it
+ */
+async function ensureAnimeJs() {
+  // Check if already loaded in our cache
+  if (animeLibrary) {
+    return animeLibrary;
+  }
+
+  // Check if anime.js is already available globally
+  if (typeof window !== 'undefined' && window.anime && typeof window.anime.animate === 'function') {
+    animeLibrary = window.anime;
+    return animeLibrary;
+  }
+
+  // If we're already loading, return the same promise
+  if (animeLoadPromise) {
+    return animeLoadPromise;
+  }
+
+  // Load anime.js from CDN
+  animeLoadPromise = import(ANIME_JS_CDN_URL)
+    .then((module) => {
+      if (module && typeof module.animate === 'function') {
+        animeLibrary = module;
+        return animeLibrary;
+      } else {
+        throw new Error('Anime.js module loaded but animate function not found');
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to load Anime.js:', error);
+      animeLoadPromise = null; // Reset so we can try again
+      throw error;
+    });
+
+  return animeLoadPromise;
+}
 
 class FrenzyAnimate extends HTMLElement {
-  #animeInstance = null;
-  #componentId = "";
-  #slotElement = null;
-  #slotChangeHandler = null;
+  #animation = null;
+  #isInitialized = false;
 
   static get observedAttributes() {
     return [
-      "animation-props",
-      "duration",
-      "ease",
-      "delay",
-      "loop",
-      "direction",
-      "autoplay",
-      "trigger-on-attribute-change",
+      'target',
+      'props',
+      'duration',
+      'easing',
+      'delay',
+      'loop',
+      'direction',
+      'autoplay',
+      'trigger'
     ];
-  }
-
-  static loadAnimeJs() {
-    if (animeJsModulePromise) {
-      return animeJsModulePromise;
-    }
-
-    animeJsModulePromise = import(ANIME_JS_ESM_URL)
-      .then((module) => {
-        if (module && typeof module.animate === "function") {
-          return module;
-        } else {
-          console.error(
-            'Anime.js v4 module loaded, but "animate" function is missing or not a function.',
-            module,
-          );
-          throw new Error(
-            'Anime.js v4 loaded, but "animate" function is not available.',
-          );
-        }
-      })
-      .catch((error) => {
-        console.error(
-          `Error dynamically importing Anime.js v4 module from ${ANIME_JS_ESM_URL}:`,
-          error,
-        );
-        animeJsModulePromise = null;
-        throw error;
-      });
-
-    return animeJsModulePromise;
   }
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
-        .error-message {
-          color: #ef4444;
-          padding: 0.5rem;
-          background-color: #fee2e2;
-          border: 1px solid #fca5a5;
-          border-radius: 0.25rem;
-          margin-top: 0.5rem;
-        }
-      </style>
-      <slot></slot>
-    `;
-    this.#componentId =
-      this.id || `anim-el-${Math.random().toString(36).substr(2, 5)}`;
+    this.style.display = 'contents'; // Don't affect layout
   }
 
   async connectedCallback() {
-    this.#slotElement = this.shadowRoot.querySelector("slot");
-    this.#slotChangeHandler = async () => {
-      await this.#applyAnimation();
-    };
-
-    if (this.#slotElement) {
-      this.#slotElement.addEventListener("slotchange", this.#slotChangeHandler);
+    if (!this.#isInitialized) {
+      await this.#initialize();
+      this.#isInitialized = true;
     }
-    Promise.resolve().then(() => this.#applyAnimation());
   }
 
   disconnectedCallback() {
-    if (this.#slotElement && this.#slotChangeHandler) {
-      this.#slotElement.removeEventListener(
-        "slotchange",
-        this.#slotChangeHandler,
-      );
-    }
-    if (
-      this.#animeInstance &&
-      typeof this.#animeInstance.pause === "function"
-    ) {
-      this.#animeInstance.pause();
-    }
+    this.#cleanup();
   }
 
-  async attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
-    if (name === "ease" || FrenzyAnimate.observedAttributes.includes(name)) {
-      const shouldTrigger =
-        this.getAttribute("trigger-on-attribute-change") !== "false";
-      if (shouldTrigger) {
-        await this.#applyAnimation();
-      }
+    
+    // Only re-animate if we're initialized and trigger allows it
+    if (this.#isInitialized && this.#shouldTriggerOnChange()) {
+      this.#animate();
     }
   }
 
-  #getTargetElement() {
-    if (!this.#slotElement) return null;
-    const assignedNodes = this.#slotElement.assignedNodes({ flatten: true });
-    return assignedNodes.find((node) => node.nodeType === Node.ELEMENT_NODE);
+  async #initialize() {
+    try {
+      await ensureAnimeJs();
+      await this.#animate();
+    } catch (error) {
+      console.error('FrenzyAnimate initialization failed:', error);
+      this.#showError(`Failed to load animation library: ${error.message}`);
+    }
   }
 
-  #getAnimationOptions() {
-    const options = {};
-    const propsAttr = this.getAttribute("animation-props");
+  #getTarget() {
+    const targetSelector = this.getAttribute('target');
+    
+    if (targetSelector) {
+      // Look for target by selector within this element first, then globally
+      return this.querySelector(targetSelector) || document.querySelector(targetSelector);
+    }
+    
+    // Default: animate the first child element
+    return this.children[0] || null;
+  }
+
+  #getAnimationProps() {
+    const propsAttr = this.getAttribute('props');
+    let props = {};
+
     if (propsAttr) {
       try {
-        Object.assign(options, JSON.parse(propsAttr));
-      } catch (e) {
-        console.error(
-          `[${this.#componentId}]`,
-          "Error parsing animation-props JSON:",
-          e,
-          propsAttr,
-        );
-        this.#displayError("Invalid JSON in animation-props.");
+        props = JSON.parse(propsAttr);
+      } catch (error) {
+        console.error('Invalid props JSON:', propsAttr);
+        this.#showError('Invalid props JSON format');
         return null;
       }
-    } else {
-      this.#displayError("animation-props attribute is required.");
-      return null;
     }
 
-    if (this.hasAttribute("duration"))
-      options.duration = parseInt(this.getAttribute("duration"), 10);
-
-    if (this.hasAttribute("ease")) {
-      let easeValue = this.getAttribute("ease");
-      if (easeValue.startsWith("ease")) {
-        if (easeValue.includes("Elastic")) {
-          easeValue = easeValue.replace(/^easeO/, "o");
-        } else if (easeValue.includes("InOu")) {
-          easeValue = easeValue.replace(/^easeInOut/, "inOut");
-        } else if (easeValue.includes("In")) {
-          easeValue = easeValue.replace(/^easeIn/, "in");
-        } else if (easeValue.includes("Out")) {
-          easeValue = easeValue.replace(/^easeOut/, "out");
-        }
-      }
-      options.ease = easeValue;
+    // Apply attribute overrides with defaults
+    if (this.hasAttribute('duration')) {
+      props.duration = parseInt(this.getAttribute('duration')) || 1000;
+    } else if (!props.duration) {
+      props.duration = 1000; // Default duration
     }
 
-    if (this.hasAttribute("delay"))
-      options.delay = parseInt(this.getAttribute("delay"), 10);
-
-    const directionAttr = this.getAttribute("direction");
-    if (directionAttr === "alternate") {
-      options.alternate = true;
-    } else if (directionAttr === "reverse") {
-      options.reversed = true;
+    if (this.hasAttribute('easing')) {
+      props.easing = this.getAttribute('easing') || 'easeOutQuad';
+    } else if (!props.easing) {
+      props.easing = 'easeOutQuad'; // Default easing
     }
 
-    const autoplayAttr = this.getAttribute("autoplay");
-    if (autoplayAttr !== null) {
-      options.autoplay = autoplayAttr !== "false";
-    } else {
-      options.autoplay = true;
+    if (this.hasAttribute('delay')) {
+      props.delay = parseInt(this.getAttribute('delay')) || 0;
     }
 
-    const loopAttr = this.getAttribute("loop");
-    if (loopAttr) {
-      if (loopAttr === "true" || loopAttr === "") {
-        options.loop = true;
+    if (this.hasAttribute('loop')) {
+      const loop = this.getAttribute('loop');
+      if (loop === 'true' || loop === '') {
+        props.loop = true;
+      } else if (loop === 'false') {
+        props.loop = false;
       } else {
-        const loopNum = parseInt(loopAttr, 10);
-        if (!isNaN(loopNum)) {
-          options.loop = loopNum;
-        }
+        props.loop = parseInt(loop) || false;
       }
     }
 
-    this.#clearError();
-    return options;
+    if (this.hasAttribute('direction')) {
+      const direction = this.getAttribute('direction');
+      if (direction === 'reverse') {
+        props.direction = 'reverse';
+      } else if (direction === 'alternate') {
+        props.direction = 'alternate';
+      }
+    }
+
+    // Autoplay handling
+    const autoplay = this.getAttribute('autoplay');
+    if (autoplay !== null) {
+      props.autoplay = autoplay !== 'false';
+    } else {
+      props.autoplay = true; // Default to autoplay
+    }
+
+    return props;
   }
 
-  async #applyAnimation() {
-    let animeModule;
+  #shouldTriggerOnChange() {
+    const trigger = this.getAttribute('trigger');
+    return trigger !== 'manual'; // Default is to trigger on change
+  }
+
+  async #animate() {
+    if (!animeLibrary) {
+      console.warn('Anime.js not loaded yet');
+      return;
+    }
+
+    const target = this.#getTarget();
+    if (!target) {
+      console.warn('No target element found for animation');
+      return;
+    }
+
+    const props = this.#getAnimationProps();
+    if (!props) {
+      return; // Error already handled in #getAnimationProps
+    }
+
     try {
-      animeModule = await loadAnimeJs();
+      // Stop any existing animation
+      if (this.#animation) {
+        this.#animation.pause();
+      }
+
+      // Create new animation
+      this.#animation = animeLibrary.animate(target, props);
+      
+      this.#clearError(); // Clear any previous errors
+      
     } catch (error) {
-      this.#displayError(`Anime.js v4 module failed to load: ${error.message}`);
-      return;
-    }
-
-    const animateFunc = animeModule.animate;
-    if (typeof animateFunc !== "function") {
-      const errorMsg = `Anime.js v4 "animate" is not a function. Found type: ${typeof animateFunc}.`;
-      console.error(`[${this.#componentId}]`, errorMsg, "Module:", animeModule);
-      this.#displayError(errorMsg);
-      return;
-    }
-
-    const targetElement = this.#getTargetElement();
-    if (!targetElement) {
-      return;
-    }
-
-    const animationOptions = this.#getAnimationOptions();
-    if (!animationOptions) {
-      return;
-    }
-
-    try {
-      this.#animeInstance = animateFunc(targetElement, animationOptions);
-    } catch (e) {
-      let errorMessage = "Unknown animation error";
-      if (e instanceof Error) errorMessage = e.message;
-      else if (typeof e === "string") errorMessage = e;
-      else
-        try {
-          errorMessage = JSON.stringify(e);
-        } catch {
-          errorMessage = "Unserializable error object";
-        }
-      console.error(
-        `[${this.#componentId}]`,
-        `[V4 ANIMATION ERROR] ${errorMessage}`,
-        e,
-        "Options:",
-        animationOptions,
-      );
-      this.#displayError(`Animation setup failed: ${errorMessage}`);
+      console.error('Animation failed:', error);
+      this.#showError(`Animation failed: ${error.message}`);
     }
   }
 
-  #displayError(message) {
-    let errorDiv = this.shadowRoot.querySelector(".error-message");
-    if (!errorDiv) {
-      errorDiv = document.createElement("div");
-      errorDiv.className = "error-message";
-      this.shadowRoot.appendChild(errorDiv);
+  #cleanup() {
+    if (this.#animation) {
+      this.#animation.pause();
+      this.#animation = null;
     }
-    errorDiv.textContent = message;
+  }
+
+  #showError(message) {
+    // Simple error display - just log to console and add error class
+    console.error('FrenzyAnimate error:', message);
+    this.classList.add('fz-animate-error');
+    this.setAttribute('data-error', message);
   }
 
   #clearError() {
-    const errorDiv = this.shadowRoot.querySelector(".error-message");
-    if (errorDiv) {
-      errorDiv.remove();
+    this.classList.remove('fz-animate-error');
+    this.removeAttribute('data-error');
+  }
+
+  // Public API methods
+  play() {
+    if (this.#animation && this.#animation.play) {
+      this.#animation.play();
     }
+  }
+
+  pause() {
+    if (this.#animation && this.#animation.pause) {
+      this.#animation.pause();
+    }
+  }
+
+  restart() {
+    if (this.#animation && this.#animation.restart) {
+      this.#animation.restart();
+    } else {
+      this.#animate();
+    }
+  }
+
+  // Trigger animation manually
+  animate() {
+    return this.#animate();
   }
 }
 
-customElements.define("fz-animate", FrenzyAnimate);
+// Register the custom element
+customElements.define('fz-animate', FrenzyAnimate);
 
 export default FrenzyAnimate;

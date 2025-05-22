@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FZ-Animate Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .test-box {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            margin: 20px;
+            display: inline-block;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .error-indicator {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        /* Error state styling */
+        fz-animate.fz-animate-error::after {
+            content: "⚠️ " attr(data-error);
+            display: block;
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 FZ-Animate Component Test</h1>
+    <p>Testing the new overhauled fz-animate component with various animation scenarios.</p>
+
+    <!-- Basic Animations -->
+    <div class="test-section">
+        <h2>Basic Animations</h2>
+        
+        <!-- Simple fade in -->
+        <fz-animate props='{"opacity": [0, 1]}' duration="2000">
+            <div class="test-box">Fade In</div>
+        </fz-animate>
+
+        <!-- Scale animation -->
+        <fz-animate props='{"scale": [0.5, 1.2]}' duration="1500" easing="easeOutBounce">
+            <div class="test-box">Scale Bounce</div>
+        </fz-animate>
+
+        <!-- Translate animation -->
+        <fz-animate props='{"translateX": [-100, 0]}' duration="1000" delay="500">
+            <div class="test-box">Slide In</div>
+        </fz-animate>
+    </div>
+
+    <!-- Complex Animations -->
+    <div class="test-section">
+        <h2>Complex Animations</h2>
+        
+        <!-- Multiple properties -->
+        <fz-animate props='{"translateY": [-50, 0], "rotate": "360deg", "scale": [0.8, 1]}' duration="2000" easing="easeOutElastic">
+            <div class="test-box">Multi-prop</div>
+        </fz-animate>
+
+        <!-- Looping animation -->
+        <fz-animate props='{"rotate": "360deg"}' duration="2000" loop="true" easing="linear">
+            <div class="test-box">Spinning</div>
+        </fz-animate>
+
+        <!-- Alternating direction -->
+        <fz-animate props='{"translateX": [0, 100]}' duration="1000" loop="true" direction="alternate">
+            <div class="test-box">Back & Forth</div>
+        </fz-animate>
+    </div>
+
+    <!-- Target Selection -->
+    <div class="test-section">
+        <h2>Target Selection</h2>
+        
+        <!-- Target specific child -->
+        <fz-animate target=".animate-me" props='{"backgroundColor": ["#4CAF50", "#ff9800"]}' duration="2000" loop="true" direction="alternate">
+            <div class="test-box">Not me</div>
+            <div class="test-box animate-me">Animate me!</div>
+            <div class="test-box">Not me either</div>
+        </fz-animate>
+    </div>
+
+    <!-- Manual Control -->
+    <div class="test-section">
+        <h2>Manual Control</h2>
+        
+        <fz-animate id="manualAnim" trigger="manual" props='{"scale": [1, 1.5], "rotate": "180deg"}' duration="1000">
+            <div class="test-box">Manual Control</div>
+        </fz-animate>
+
+        <div class="controls">
+            <button onclick="document.getElementById('manualAnim').play()">Play</button>
+            <button onclick="document.getElementById('manualAnim').pause()">Pause</button>
+            <button onclick="document.getElementById('manualAnim').restart()">Restart</button>
+            <button onclick="document.getElementById('manualAnim').animate()">Animate</button>
+        </div>
+    </div>
+
+    <!-- Error Testing -->
+    <div class="test-section">
+        <h2>Error Handling</h2>
+        
+        <!-- Invalid JSON -->
+        <fz-animate props='{"invalid": json}' duration="1000">
+            <div class="test-box">Invalid JSON</div>
+        </fz-animate>
+
+        <!-- No target -->
+        <fz-animate target=".nonexistent" props='{"opacity": [0, 1]}' duration="1000">
+            <!-- No children -->
+        </fz-animate>
+    </div>
+
+    <!-- Dynamic Testing -->
+    <div class="test-section">
+        <h2>Dynamic Attribute Changes</h2>
+        
+        <fz-animate id="dynamicAnim" props='{"scale": [1, 1.2]}' duration="1000">
+            <div class="test-box">Dynamic</div>
+        </fz-animate>
+
+        <div class="controls">
+            <button onclick="changeDuration()">Change Duration</button>
+            <button onclick="changeProps()">Change Props</button>
+            <button onclick="toggleLoop()">Toggle Loop</button>
+        </div>
+    </div>
+
+    <!-- Performance Test -->
+    <div class="test-section">
+        <h2>Multiple Elements (Performance Test)</h2>
+        <div class="demo-grid" id="performanceTest">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        <button onclick="createMultipleAnimations()">Create 20 Animations</button>
+        <button onclick="clearAnimations()">Clear All</button>
+    </div>
+
+    <script type="module">
+        // Import the component
+        import './fz-animate.js';
+
+        // Test dynamic attribute changes
+        window.changeDuration = function() {
+            const elem = document.getElementById('dynamicAnim');
+            const currentDuration = parseInt(elem.getAttribute('duration')) || 1000;
+            const newDuration = currentDuration === 1000 ? 3000 : 1000;
+            elem.setAttribute('duration', newDuration);
+        };
+
+        window.changeProps = function() {
+            const elem = document.getElementById('dynamicAnim');
+            const current = elem.getAttribute('props');
+            const newProps = current.includes('scale') ? 
+                '{"rotate": "360deg", "translateX": [0, 50]}' : 
+                '{"scale": [1, 1.2]}';
+            elem.setAttribute('props', newProps);
+        };
+
+        window.toggleLoop = function() {
+            const elem = document.getElementById('dynamicAnim');
+            const currentLoop = elem.getAttribute('loop');
+            elem.setAttribute('loop', currentLoop === 'true' ? 'false' : 'true');
+        };
+
+        // Performance test
+        window.createMultipleAnimations = function() {
+            const container = document.getElementById('performanceTest');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const animate = document.createElement('fz-animate');
+                const box = document.createElement('div');
+                
+                box.className = 'test-box';
+                box.textContent = `Box ${i + 1}`;
+                box.style.fontSize = '10px';
+                
+                animate.setAttribute('props', JSON.stringify({
+                    translateY: [-20, 0],
+                    opacity: [0, 1],
+                    scale: [0.8, 1]
+                }));
+                animate.setAttribute('duration', Math.random() * 2000 + 1000);
+                animate.setAttribute('delay', Math.random() * 1000);
+                animate.setAttribute('easing', ['easeOutQuad', 'easeOutBounce', 'easeOutElastic'][Math.floor(Math.random() * 3)]);
+                
+                animate.appendChild(box);
+                container.appendChild(animate);
+            }
+        };
+
+        window.clearAnimations = function() {
+            document.getElementById('performanceTest').innerHTML = '';
+        };
+
+        // Log when component is ready
+        console.log('FZ-Animate test page loaded');
+    </script>
+</body>
+</html>

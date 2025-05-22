@@ -45,7 +45,7 @@ class FrenzyPager extends HTMLElement {
     this.#leftArrow.part = "arrow arrow-left";
     this.#leftArrow.className = "arrow arrow-left";
     this.#leftArrow.type = "button";
-    this.#leftArrow.innerHTML = "‹";
+    this.#leftArrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="44.424" height="76.168" viewBox="0 0 44.424 76.168"><path d="M1.859 42.567a6.355 6.355 0 0 1 0-8.982L33.584 1.861a6.351 6.351 0 0 1 8.982 8.982L15.322 38.086l27.223 27.243a6.351 6.351 0 0 1-8.982 8.982L1.838 42.586Z" fill="#0033a0"/></svg>`;
     this.#leftArrow.setAttribute("aria-label", "Previous page");
     this.#leftArrow.addEventListener("click", this.#goToPrevPage);
 
@@ -54,7 +54,7 @@ class FrenzyPager extends HTMLElement {
     this.#rightArrow.part = "arrow arrow-right";
     this.#rightArrow.className = "arrow arrow-right";
     this.#rightArrow.type = "button";
-    this.#rightArrow.innerHTML = "›";
+    this.#rightArrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="44.424" height="76.168" viewBox="0 0 44.424 76.168"><path d="M42.565 33.603a6.355 6.355 0 0 1 0 8.982L10.84 74.309a6.351 6.351 0 0 1-8.982-8.982l27.244-27.243L1.879 10.841a6.351 6.351 0 0 1 8.982-8.982l31.725 31.725Z" fill="#0033a0"/></svg>`;
     this.#rightArrow.setAttribute("aria-label", "Next page");
     this.#rightArrow.addEventListener("click", this.#goToNextPage);
 
@@ -375,21 +375,18 @@ class FrenzyPager extends HTMLElement {
         transform: translateY(-50%);
         width: 2.5rem;
         height: 2.5rem;
-        border: 1px solid #d1d5db;
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: transparent;
         color: #374151;
-        border-radius: 50%;
         cursor: pointer;
         font-size: 1.5rem;
         font-weight: bold;
         display: flex;
         align-items: center;
+        filter: brightness(1);
         justify-content: center;
+        border: none;
         z-index: 10;
-        transition:
-          background-color 0.2s ease,
-          border-color 0.2s ease,
-          opacity 0.2s ease;
+        transition: filter 200ms ease-in-out;
         user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
@@ -404,10 +401,7 @@ class FrenzyPager extends HTMLElement {
 
       .arrow:not(:disabled):hover,
       .arrow:not(:disabled):focus-visible {
-        background-color: rgba(243, 244, 246, 0.95);
-        border-color: #9ca3af;
-        outline: 2px solid transparent;
-        outline-offset: 2px;
+        filter: brightness(0.5);
       }
 
       .arrow:not(:disabled):active {
@@ -429,6 +423,7 @@ class FrenzyPager extends HTMLElement {
         cursor: pointer;
         font: inherit;
         font-size: 0.875rem;
+        outline: none;
         transition:
           background-color 0.2s ease,
           border-color 0.2s ease,
@@ -440,8 +435,6 @@ class FrenzyPager extends HTMLElement {
 
       .button:not(:disabled):hover,
       .button:not(:disabled):focus-visible {
-        background-color: #f3f4f6;
-        border-color: #9ca3af;
         outline: 2px solid transparent;
         outline-offset: 2px;
       }
