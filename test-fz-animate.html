@@ -168,6 +168,7 @@
     <!-- Error Testing -->
     <div class="test-section">
         <h2>Error Handling</h2>
+        <p><em>Note: The following examples intentionally show error handling (check console for expected error messages):</em></p>
         
         <!-- Invalid JSON -->
         <fz-animate props='{"invalid": json}' duration="1000">
@@ -238,24 +239,24 @@
             container.innerHTML = '';
             
             for (let i = 0; i < 20; i++) {
-                const animate = document.createElement('fz-animate');
-                const box = document.createElement('div');
+                // Create elements using innerHTML to avoid createElement issues with custom elements
+                const animateHTML = `
+                    <fz-animate 
+                        props='${JSON.stringify({
+                            translateY: [-20, 0],
+                            opacity: [0, 1],
+                            scale: [0.8, 1]
+                        })}'
+                        duration="${Math.floor(Math.random() * 2000 + 1000)}"
+                        delay="${Math.floor(Math.random() * 1000)}"
+                        easing="${['easeOutQuad', 'easeOutBounce', 'easeOutElastic'][Math.floor(Math.random() * 3)]}">
+                        <div class="test-box" style="font-size: 10px;">Box ${i + 1}</div>
+                    </fz-animate>
+                `;
                 
-                box.className = 'test-box';
-                box.textContent = `Box ${i + 1}`;
-                box.style.fontSize = '10px';
-                
-                animate.setAttribute('props', JSON.stringify({
-                    translateY: [-20, 0],
-                    opacity: [0, 1],
-                    scale: [0.8, 1]
-                }));
-                animate.setAttribute('duration', Math.random() * 2000 + 1000);
-                animate.setAttribute('delay', Math.random() * 1000);
-                animate.setAttribute('easing', ['easeOutQuad', 'easeOutBounce', 'easeOutElastic'][Math.floor(Math.random() * 3)]);
-                
-                animate.appendChild(box);
-                container.appendChild(animate);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = animateHTML;
+                container.appendChild(wrapper.firstElementChild);
             }
         };
 
