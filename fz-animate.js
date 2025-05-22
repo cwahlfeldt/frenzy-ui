@@ -32,15 +32,10 @@ async function ensureAnimeJs() {
   // Load anime.js from CDN
   animeLoadPromise = import(ANIME_JS_CDN_URL)
     .then((module) => {
-      console.log('Anime.js module loaded:', module);
       if (module && typeof module.animate === 'function' && typeof module.onScroll === 'function') {
         animeLibrary = module;
         return animeLibrary;
       } else {
-        console.error('Missing functions:', {
-          animate: typeof module.animate,
-          onScroll: typeof module.onScroll
-        });
         throw new Error('Anime.js module loaded but required functions not found');
       }
     })
@@ -56,6 +51,9 @@ async function ensureAnimeJs() {
 class FrenzyAnimate extends HTMLElement {
   #animation = null;
   #isInitialized = false;
+  #target = null;
+  #animationOptions = null;
+  #attributeTimeout = null;
 
   static get observedAttributes() {
     return [
@@ -97,16 +95,34 @@ class FrenzyAnimate extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     
+    // Clear cached values when attributes change
+    this.#target = null;
+    this.#animationOptions = null;
+    
     // Only re-animate if we're initialized and trigger allows it
     if (this.#isInitialized && this.#shouldTriggerOnChange()) {
-      this.#animate();
+      // Throttle attribute-based re-animations
+      if (this.#attributeTimeout) {
+        clearTimeout(this.#attributeTimeout);
+      }
+      this.#attributeTimeout = setTimeout(() => {
+        this.#animate();
+        this.#attributeTimeout = null;
+      }, 16); // ~60fps throttling
     }
   }
 
   async #initialize() {
     try {
       await ensureAnimeJs();
-      await this.#animate();
+      
+      // Cache target and options for performance
+      this.#target = this.#getTarget();
+      this.#animationOptions = this.#getAnimationProps();
+      
+      if (this.#target && this.#animationOptions) {
+        await this.#animate();
+      }
     } catch (error) {
       console.error('FrenzyAnimate initialization failed:', error);
       this.#showError(`Failed to load animation library: ${error.message}`);
@@ -118,15 +134,11 @@ class FrenzyAnimate extends HTMLElement {
     
     if (targetSelector) {
       // Look for target by selector within this element first, then globally
-      const target = this.querySelector(targetSelector) || document.querySelector(targetSelector);
-      console.log(`Target selector "${targetSelector}" found:`, target);
-      return target;
+      return this.querySelector(targetSelector) || document.querySelector(targetSelector);
     }
     
     // Default: animate the first child element
-    const defaultTarget = this.children[0] || null;
-    console.log('Using default target (first child):', defaultTarget);
-    return defaultTarget;
+    return this.children[0] || null;
   }
 
   #getAnimationProps() {
@@ -187,14 +199,12 @@ class FrenzyAnimate extends HTMLElement {
       if (scrollOptions && animeLibrary.onScroll) {
         try {
           props.autoplay = animeLibrary.onScroll(scrollOptions);
-          console.log('Created scroll observer:', props.autoplay);
         } catch (error) {
-          console.error('Failed to create scroll observer:', error, scrollOptions);
+          console.error('Failed to create scroll observer:', error);
           // Fallback to regular autoplay
           props.autoplay = false;
         }
       } else {
-        console.warn('onScroll not available or no scroll options');
         props.autoplay = false;
       }
     } else {
@@ -271,30 +281,25 @@ class FrenzyAnimate extends HTMLElement {
       scrollOptions.horizontal = this.getAttribute('scroll-horizontal') !== 'false';
     }
 
-    console.log('Scroll options:', scrollOptions);
     return Object.keys(scrollOptions).length > 0 ? scrollOptions : null;
   }
 
   async #animate() {
     if (!animeLibrary) {
-      console.warn('Anime.js not loaded yet');
       return;
     }
 
-    const target = this.#getTarget();
-    if (!target) {
-      console.warn('No target element found for animation');
-      return;
-    }
+    // Use cached values or get fresh ones
+    const target = this.#target || this.#getTarget();
+    const props = this.#animationOptions || this.#getAnimationProps();
 
-    const props = this.#getAnimationProps();
-    if (!props) {
-      return; // Error already handled in #getAnimationProps
+    if (!target || !props) {
+      return;
     }
 
     try {
       // Stop any existing animation
-      if (this.#animation) {
+      if (this.#animation && typeof this.#animation.pause === 'function') {
         this.#animation.pause();
       }
 
@@ -313,6 +318,10 @@ class FrenzyAnimate extends HTMLElement {
     if (this.#animation) {
       this.#animation.pause();
       this.#animation = null;
+    }
+    if (this.#attributeTimeout) {
+      clearTimeout(this.#attributeTimeout);
+      this.#attributeTimeout = null;
     }
   }
 

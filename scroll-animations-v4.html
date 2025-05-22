@@ -1,241 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FZ-Animate with Anime.js v4 Scroll Observer</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
 
-        html {
-            scroll-behavior: smooth;
-        }
+      html {
+        scroll-behavior: smooth;
+      }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-        .hero {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-        }
+      .hero {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: white;
+      }
 
-        .hero h1 {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+      .hero h1 {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
 
-        .hero p {
-            font-size: 1.5rem;
-            opacity: 0.9;
-        }
+      .hero p {
+        font-size: 1.5rem;
+        opacity: 0.9;
+      }
 
-        .section {
-            min-height: 100vh;
-            padding: 100px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+      .section {
+        min-height: 100vh;
+        padding: 100px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-        .section:nth-child(even) {
-            background: rgba(255,255,255,0.1);
-        }
+      .section:nth-child(even) {
+        background: rgba(255, 255, 255, 0.1);
+      }
 
-        .content-box {
-            background: white;
-            padding: 60px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-        }
+      .content-box {
+        background: white;
+        padding: 60px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+      }
 
-        .content-box h2 {
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            color: #4a5568;
-        }
+      .content-box h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: #4a5568;
+      }
 
-        .content-box p {
-            font-size: 1.2rem;
-            color: #718096;
-            margin-bottom: 2rem;
-        }
+      .content-box p {
+        font-size: 1.2rem;
+        color: #718096;
+        margin-bottom: 2rem;
+      }
 
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin: 50px 0;
-        }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin: 50px 0;
+      }
 
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-        }
+      .card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
 
-        .card-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: white;
-        }
+      .card-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(45deg, #4caf50, #45a049);
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+      }
 
-        .parallax-section {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+      .parallax-section {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
 
-        .parallax-bg {
-            position: absolute;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            border-radius: 50%;
-            z-index: -1;
-        }
+      .parallax-bg {
+        position: absolute;
+        top: -20%;
+        left: -20%;
+        width: 140%;
+        height: 140%;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        border-radius: 50%;
+        z-index: -1;
+      }
 
-        .moving-element {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            border-radius: 15px;
-            margin: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
+      .moving-element {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(45deg, #4caf50, #45a049);
+        border-radius: 15px;
+        margin: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
 
-        .progress-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            z-index: 1000;
-        }
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        z-index: 1000;
+      }
 
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #4CAF50, #45a049);
-        }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #4caf50, #45a049);
+      }
 
-        .sync-section {
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 100px 0;
-        }
+      .sync-section {
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 100px 0;
+      }
 
-        .sync-element {
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            border-radius: 20px;
-            margin: 20px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-        }
+      .sync-element {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        border-radius: 20px;
+        margin: 20px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+      }
 
-        .horizontal-scroll {
-            height: 100vh;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-        }
+      .horizontal-scroll {
+        height: 100vh;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+      }
 
-        .horizontal-item {
-            min-width: 300px;
-            height: 400px;
-            background: white;
-            margin: 0 20px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
+      .horizontal-item {
+        min-width: 300px;
+        height: 400px;
+        background: white;
+        margin: 0 20px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #333;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
 
-        .debug-info {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            max-width: 300px;
-        }
+      .debug-info {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: monospace;
+        font-size: 12px;
+        max-width: 300px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Scroll Progress Bar -->
-    <div class="progress-bar">
+    <!-- <div class="progress-bar">
         <fz-animate scroll-container="window" scroll-sync="true" props='{"width": "100%"}' duration="1000">
             <div class="progress-fill"></div>
         </fz-animate>
-    </div>
+    </div> -->
 
     <!-- Hero Section -->
     <div class="hero">
-        <div>
-            <h1>Anime.js v4 Scroll Observer</h1>
-            <p>Native scroll-based animations with onScroll</p>
-        </div>
+      <div>
+        <h1>Anime.js v4 Scroll Observer</h1>
+        <p>Native scroll-based animations with onScroll</p>
+      </div>
     </div>
 
     <div class="container">
-            <!-- Basic Scroll Animation -->
-            <div class="section">
+      <!-- Basic Scroll Animation -->
+      <!-- <div class="section">
                 <fz-animate 
                     scroll-container="window" 
                     scroll-enter="0.2" 
@@ -249,27 +249,26 @@
                         <p>Using native Anime.js v4 scroll observer with enter/leave thresholds.</p>
                     </div>
                 </fz-animate>
-            </div>
+            </div> -->
 
-            <!-- Synchronized Animation -->
-            <div class="section sync-section">
-                <fz-animate 
-                    scroll-container="window" 
-                    scroll-sync="true"
-                    props='{"rotate": "360deg", "scale": [0.8, 1.2]}' 
-                    duration="2000" 
-                    easing="easeInOutQuad">
-                    <div class="sync-element">
-                        Synchronized
-                    </div>
-                </fz-animate>
-                <p style="text-align: center; margin-top: 20px;">
-                    This element rotates and scales in sync with scroll position
-                </p>
-            </div>
+      <!-- Synchronized Animation -->
+      <!-- <div class="section sync-section">
+        <fz-animate
+          scroll-container="window"
+          scroll-sync="true"
+          props='{"rotate": "360deg", "scale": [0.8, 1.2]}'
+          duration="2000"
+          easing="easeInOutQuad"
+        >
+          <div class="sync-element">Synchronized</div>
+        </fz-animate>
+        <p style="text-align: center; margin-top: 20px">
+          This element rotates and scales in sync with scroll position
+        </p>
+      </div> -->
 
-            <!-- Repeating Animation -->
-            <div class="section">
+      <!-- Repeating Animation -->
+      <!-- <div class="section">
                 <fz-animate 
                     scroll-container="window" 
                     scroll-repeat="true"
@@ -283,10 +282,10 @@
                         <p>Try scrolling up and down multiple times!</p>
                     </div>
                 </fz-animate>
-            </div>
+            </div> -->
 
-            <!-- Parallax Background -->
-            <div class="parallax-section">
+      <!-- Parallax Background -->
+      <!-- <div class="parallax-section">
                 <fz-animate 
                     scroll-container="window" 
                     scroll-sync="true"
@@ -299,10 +298,10 @@
                     <h2>Parallax Background</h2>
                     <p>The background rotates and scales as you scroll</p>
                 </div>
-            </div>
+            </div> -->
 
-            <!-- Staggered Grid -->
-            <div class="section">
+      <!-- Staggered Grid -->
+      <!-- <div class="section">
                 <div class="content-box">
                     <h2>Staggered Grid Animation</h2>
                     <div class="card-grid">
@@ -346,36 +345,38 @@
                         </fz-animate>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
-            <!-- Moving Elements -->
-            <div class="section">
-                <div class="content-box">
-                    <h2>Moving Elements</h2>
-                    <p>Elements that move across the screen as you scroll</p>
-                    
-                    <fz-animate 
-                        scroll-container="window" 
-                        scroll-sync="true"
-                        props='{"translateX": [-200, 200]}' 
-                        duration="2000" 
-                        easing="easeInOutQuad">
-                        <div class="moving-element">→</div>
-                    </fz-animate>
+      <!-- Moving Elements -->
+      <div class="section">
+        <div class="content-box">
+          <h2>Moving Elements</h2>
+          <p>Elements that move across the screen as you scroll</p>
 
-                    <fz-animate 
-                        scroll-container="window" 
-                        scroll-sync="true"
-                        props='{"translateX": [200, -200]}' 
-                        duration="2000" 
-                        easing="easeInOutQuad">
-                        <div class="moving-element">←</div>
-                    </fz-animate>
-                </div>
-            </div>
+          <!-- <fz-animate
+            scroll-container="window"
+            scroll-sync="true"
+            props='{"translateX": [-200, 200]}'
+            duration="2000"
+            easing="easeInOutQuad"
+          >
+            <div class="moving-element">→</div>
+          </fz-animate> -->
 
-            <!-- Final Section -->
-            <div class="section">
+          <fz-animate
+            scroll-container="window"
+            scroll-sync="true"
+            props='{"translateX": [200, -200]}'
+            duration="2000"
+            easing="easeInOutQuad"
+          >
+            <div class="moving-element">←</div>
+          </fz-animate>
+        </div>
+      </div>
+
+      <!-- Final Section -->
+      <!-- <div class="section">
                 <fz-animate 
                     scroll-container="window" 
                     scroll-enter="0.1"
@@ -388,42 +389,42 @@
                         <p>All animations are perfectly synchronized with scroll position.</p>
                     </div>
                 </fz-animate>
-            </div>
-        </div>
+            </div> -->
+      <!-- </div> -->
     </div>
 
     <!-- Debug Information -->
-    <div class="debug-info" id="debugInfo">
+    <!-- <div class="debug-info" id="debugInfo">
         <div>Scroll Position: <span id="scrollPos">0</span></div>
         <div>Viewport Height: <span id="viewportHeight">0</span></div>
         <div>Total Height: <span id="totalHeight">0</span></div>
-    </div>
+    </div> -->
 
     <script type="module">
-        import './fz-animate.js';
+      import "./fz-animate.js";
 
-        // Debug information
-        function updateDebugInfo() {
-            const scrollPos = window.scrollY;
-            const viewportHeight = window.innerHeight;
-            const totalHeight = document.documentElement.scrollHeight;
+      // // Debug information
+      // function updateDebugInfo() {
+      //     const scrollPos = window.scrollY;
+      //     const viewportHeight = window.innerHeight;
+      //     const totalHeight = document.documentElement.scrollHeight;
 
-            document.getElementById('scrollPos').textContent = Math.round(scrollPos);
-            document.getElementById('viewportHeight').textContent = viewportHeight;
-            document.getElementById('totalHeight').textContent = totalHeight;
-        }
+      //     document.getElementById('scrollPos').textContent = Math.round(scrollPos);
+      //     document.getElementById('viewportHeight').textContent = viewportHeight;
+      //     document.getElementById('totalHeight').textContent = totalHeight;
+      // }
 
-        // Update debug info on scroll
-        window.addEventListener('scroll', updateDebugInfo);
-        window.addEventListener('resize', updateDebugInfo);
-        updateDebugInfo();
+      // // Update debug info on scroll
+      // window.addEventListener('scroll', updateDebugInfo);
+      // window.addEventListener('resize', updateDebugInfo);
+      // updateDebugInfo();
 
-        // console.log('Anime.js v4 Scroll Observer ready!');
-        // console.log('- scroll-container: Set scroll container (window, or CSS selector)');
-        // console.log('- scroll-sync: Synchronize animation with scroll position');
-        // console.log('- scroll-repeat: Repeat animation when scrolling back');
-        // console.log('- scroll-enter: Enter threshold (0-1 or percentage)');
-        // console.log('- scroll-leave: Leave threshold (0-1 or percentage)');
+      // console.log('Anime.js v4 Scroll Observer ready!');
+      // console.log('- scroll-container: Set scroll container (window, or CSS selector)');
+      // console.log('- scroll-sync: Synchronize animation with scroll position');
+      // console.log('- scroll-repeat: Repeat animation when scrolling back');
+      // console.log('- scroll-enter: Enter threshold (0-1 or percentage)');
+      // console.log('- scroll-leave: Leave threshold (0-1 or percentage)');
     </script>
-</body>
+  </body>
 </html>

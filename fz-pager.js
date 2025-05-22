@@ -322,6 +322,8 @@ class FrenzyPager extends HTMLElement {
     if (!this.#styleElement) return;
     this.#styleElement.textContent = /*css*/ `
       :host {
+        --fz-pager--arrows-offset: -7rem;
+
         display: block;
         position: relative;
         box-sizing: border-box;
@@ -363,18 +365,15 @@ class FrenzyPager extends HTMLElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
+        gap: 1.5rem;
         z-index: 10;
       }
 
       /* Left and right arrows */
       .arrow {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 2.5rem;
-        height: 2.5rem;
+        top: 43%;
+        transform: translateY(-43%);
         background-color: transparent;
         color: #374151;
         cursor: pointer;
@@ -392,20 +391,16 @@ class FrenzyPager extends HTMLElement {
       }
 
       .arrow-left {
-        left: -1rem;
+        left: var(--fz-pager--arrows-offset);
       }
 
       .arrow-right {
-        right: -1rem;
+        right: var(--fz-pager--arrows-offset);
       }
 
       .arrow:not(:disabled):hover,
       .arrow:not(:disabled):focus-visible {
         filter: brightness(0.5);
-      }
-
-      .arrow:not(:disabled):active {
-        background-color: rgba(229, 231, 235, 0.95);
       }
 
       .arrow:disabled {
@@ -450,35 +445,25 @@ class FrenzyPager extends HTMLElement {
 
       /* Dot styles */
       .dot {
-        width: 0.75rem;
-        height: 0.75rem;
-        border-radius: 50%;
-        border: 1px solid #d1d5db;
-        background-color: #ffffff;
+        width: 1.2rem;
+        height: 1.2rem;
+        background-color: #E1E1E1;
+        outline: none;
+        border: none;
         cursor: pointer;
-        transition:
-          background-color 0.2s ease,
-          border-color 0.2s ease,
-          transform 0.2s ease;
+        transition: filter 0.2s ease-in-out;
         user-select: none;
+        filter: brightness(1);
         -webkit-tap-highlight-color: transparent;
       }
 
-      .dot:hover,
-      .dot:focus-visible {
-        background-color: #f3f4f6;
-        border-color: #9ca3af;
-        outline: 2px solid transparent;
-        outline-offset: 2px;
+      .dot:not(.active):hover,
+      .dot:not(.active):focus-visible {
+        filter: brightness(0.7);
       }
 
       .dot.active {
-        background-color: #374151;
-        border-color: #374151;
-      }
-
-      .dot:active {
-        transform: scale(0.95);
+        background-color: #0033A0;
       }
 
       #page-info {

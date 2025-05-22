@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FZ-Animate Scroll Animations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            min-height: 100vh;
+            padding: 100px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section:nth-child(even) {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .content-box {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .content-box h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #4a5568;
+        }
+
+        .content-box p {
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin: 50px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .gallery-item {
+            aspect-ratio: 16/9;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            border-radius: 5px;
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        /* Animation states for visibility */
+        .fade-in-element {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+
+        .scale-element {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .rotate-element {
+            opacity: 0;
+            transform: rotate(-10deg) scale(0.9);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <fz-animate props='{"opacity": [0, 1], "translateY": [50, 0]}' duration="2000" easing="easeOutQuad">
+            <div>
+                <h1>Scroll Animations</h1>
+                <p>Experience smooth animations triggered by scroll events</p>
+            </div>
+        </fz-animate>
+    </div>
+
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-indicator">
+        <div>Scroll Progress</div>
+        <div class="progress-bar">
+            <fz-animate id="scrollProgress" trigger="manual" props='{"width": ["0%", "100%"]}' duration="300" easing="easeOutQuad">
+                <div class="progress-fill"></div>
+            </fz-animate>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Fade In Section -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateY": [50, 0]}' duration="1000" easing="easeOutQuad" trigger="manual">
+                <div class="content-box fade-in-element">
+                    <h2>Fade In Animation</h2>
+                    <p>This content fades in smoothly as you scroll down, creating an engaging user experience.</p>
+                    <p>The animation is triggered when the element comes into view.</p>
+                </div>
+            </fz-animate>
+        </div>
+
+        <!-- Slide In From Left -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateX": [-100, 0]}' duration="1200" easing="easeOutBack" trigger="manual">
+                <div class="content-box slide-in-left">
+                    <h2>Slide In From Left</h2>
+                    <p>Elements can slide in from different directions to create dynamic entrances.</p>
+                </div>
+            </fz-animate>
+        </div>
+
+        <!-- Slide In From Right -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateX": [100, 0]}' duration="1200" easing="easeOutBack" trigger="manual">
+                <div class="content-box slide-in-right">
+                    <h2>Slide In From Right</h2>
+                    <p>Alternating slide directions create visual rhythm and maintain user interest.</p>
+                </div>
+            </fz-animate>
+        </div>
+
+        <!-- Scale Animation -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "scale": [0.8, 1]}' duration="1000" easing="easeOutElastic" trigger="manual">
+                <div class="content-box scale-element">
+                    <h2>Scale Animation</h2>
+                    <p>Elements can scale up with elastic easing for a bouncy, playful effect.</p>
+                </div>
+            </fz-animate>
+        </div>
+
+        <!-- Rotate and Scale -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "rotate": ["-10deg", "0deg"], "scale": [0.9, 1]}' duration="1500" easing="easeOutQuint" trigger="manual">
+                <div class="content-box rotate-element">
+                    <h2>Rotate & Scale</h2>
+                    <p>Combining multiple transformations creates more complex and interesting animations.</p>
+                </div>
+            </fz-animate>
+        </div>
+
+        <!-- Staggered Card Grid -->
+        <div class="section">
+            <div class="content-box">
+                <h2>Staggered Card Animations</h2>
+                <div class="card-grid">
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateY": [30, 0]}' duration="800" delay="0" easing="easeOutQuad" trigger="manual">
+                        <div class="card">
+                            <div class="card-icon">🎨</div>
+                            <h3>Design</h3>
+                            <p>Beautiful and modern design elements</p>
+                        </div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateY": [30, 0]}' duration="800" delay="200" easing="easeOutQuad" trigger="manual">
+                        <div class="card">
+                            <div class="card-icon">⚡</div>
+                            <h3>Performance</h3>
+                            <p>Lightning fast animations and interactions</p>
+                        </div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateY": [30, 0]}' duration="800" delay="400" easing="easeOutQuad" trigger="manual">
+                        <div class="card">
+                            <div class="card-icon">🔧</div>
+                            <h3>Customizable</h3>
+                            <p>Easy to customize and extend</p>
+                        </div>
+                    </fz-animate>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animated Statistics -->
+        <div class="section">
+            <div class="content-box" style="background: transparent; box-shadow: none;">
+                <h2 style="color: white;">Our Impact</h2>
+                <div class="stats-container">
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "scale": [0.5, 1]}' duration="1000" delay="0" easing="easeOutBack" trigger="manual">
+                        <div class="stat-item">
+                            <div class="stat-number">1000+</div>
+                            <div class="stat-label">Happy Clients</div>
+                        </div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "scale": [0.5, 1]}' duration="1000" delay="200" easing="easeOutBack" trigger="manual">
+                        <div class="stat-item">
+                            <div class="stat-number">500+</div>
+                            <div class="stat-label">Projects Completed</div>
+                        </div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "scale": [0.5, 1]}' duration="1000" delay="400" easing="easeOutBack" trigger="manual">
+                        <div class="stat-item">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">Team Members</div>
+                        </div>
+                    </fz-animate>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Gallery with Staggered Animation -->
+        <div class="section">
+            <div class="content-box">
+                <h2>Project Gallery</h2>
+                <div class="image-gallery">
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "rotateY": ["45deg", "0deg"]}' duration="1000" delay="0" easing="easeOutQuad" trigger="manual">
+                        <div class="gallery-item">Project Alpha</div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "rotateY": ["-45deg", "0deg"]}' duration="1000" delay="200" easing="easeOutQuad" trigger="manual">
+                        <div class="gallery-item">Project Beta</div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "rotateX": ["45deg", "0deg"]}' duration="1000" delay="400" easing="easeOutQuad" trigger="manual">
+                        <div class="gallery-item">Project Gamma</div>
+                    </fz-animate>
+
+                    <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "rotateX": ["-45deg", "0deg"]}' duration="1000" delay="600" easing="easeOutQuad" trigger="manual">
+                        <div class="gallery-item">Project Delta</div>
+                    </fz-animate>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Section -->
+        <div class="section">
+            <fz-animate class="scroll-trigger" props='{"opacity": [0, 1], "translateY": [100, 0]}' duration="1500" easing="easeOutQuint" trigger="manual">
+                <div class="content-box">
+                    <h2>Ready to Get Started?</h2>
+                    <p>Create amazing scroll animations with just a few HTML attributes!</p>
+                    <p>Scroll back up to see the animations again.</p>
+                </div>
+            </fz-animate>
+        </div>
+    </div>
+
+    <script type="module">
+        import './fz-animate.js';
+
+        // Intersection Observer for scroll-triggered animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'  // Trigger slightly before element is fully visible
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Trigger the animation
+                    entry.target.animate();
+                    
+                    // Optional: stop observing after animation triggers (for one-time animations)
+                    // observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all scroll-triggered elements
+        document.querySelectorAll('.scroll-trigger').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Scroll progress animation
+        let ticking = false;
+        
+        function updateScrollProgress() {
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrolled = window.scrollY;
+            const progress = (scrolled / scrollHeight) * 100;
+            
+            const progressElement = document.getElementById('scrollProgress');
+            if (progressElement) {
+                progressElement.setAttribute('props', `{"width": ["${progress}%", "${progress}%"]}`);
+                progressElement.animate();
+            }
+            
+            ticking = false;
+        }
+
+        function requestTick() {
+            if (!ticking) {
+                requestAnimationFrame(updateScrollProgress);
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', requestTick);
+
+        // Optional: Re-trigger animations when scrolling back up
+        // Uncomment the following code if you want animations to retrigger
+        /*
+        const reverseObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    // Reset animation when element leaves viewport
+                    // You could reset the element's style here if needed
+                }
+            });
+        }, { threshold: 0 });
+
+        document.querySelectorAll('.scroll-trigger').forEach(el => {
+            reverseObserver.observe(el);
+        });
+        */
+
+        console.log('Scroll animations ready!');
+    </script>
+</body>
+</html>
