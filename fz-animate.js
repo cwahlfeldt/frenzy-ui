@@ -32,11 +32,16 @@ async function ensureAnimeJs() {
   // Load anime.js from CDN
   animeLoadPromise = import(ANIME_JS_CDN_URL)
     .then((module) => {
-      if (module && typeof module.animate === 'function') {
+      console.log('Anime.js module loaded:', module);
+      if (module && typeof module.animate === 'function' && typeof module.onScroll === 'function') {
         animeLibrary = module;
         return animeLibrary;
       } else {
-        throw new Error('Anime.js module loaded but animate function not found');
+        console.error('Missing functions:', {
+          animate: typeof module.animate,
+          onScroll: typeof module.onScroll
+        });
+        throw new Error('Anime.js module loaded but required functions not found');
       }
     })
     .catch((error) => {
@@ -62,7 +67,14 @@ class FrenzyAnimate extends HTMLElement {
       'loop',
       'direction',
       'autoplay',
-      'trigger'
+      'trigger',
+      'scroll-container',
+      'scroll-target',
+      'scroll-enter',
+      'scroll-leave',
+      'scroll-sync',
+      'scroll-repeat',
+      'scroll-horizontal'
     ];
   }
 
@@ -106,11 +118,15 @@ class FrenzyAnimate extends HTMLElement {
     
     if (targetSelector) {
       // Look for target by selector within this element first, then globally
-      return this.querySelector(targetSelector) || document.querySelector(targetSelector);
+      const target = this.querySelector(targetSelector) || document.querySelector(targetSelector);
+      console.log(`Target selector "${targetSelector}" found:`, target);
+      return target;
     }
     
     // Default: animate the first child element
-    return this.children[0] || null;
+    const defaultTarget = this.children[0] || null;
+    console.log('Using default target (first child):', defaultTarget);
+    return defaultTarget;
   }
 
   #getAnimationProps() {
@@ -164,12 +180,31 @@ class FrenzyAnimate extends HTMLElement {
       }
     }
 
-    // Autoplay handling
-    const autoplay = this.getAttribute('autoplay');
-    if (autoplay !== null) {
-      props.autoplay = autoplay !== 'false';
+    // Autoplay handling - check for scroll-based autoplay first
+    if (this.hasAttribute('scroll-container') || this.hasAttribute('scroll-target')) {
+      // Use onScroll autoplay
+      const scrollOptions = this.#getScrollOptions();
+      if (scrollOptions && animeLibrary.onScroll) {
+        try {
+          props.autoplay = animeLibrary.onScroll(scrollOptions);
+          console.log('Created scroll observer:', props.autoplay);
+        } catch (error) {
+          console.error('Failed to create scroll observer:', error, scrollOptions);
+          // Fallback to regular autoplay
+          props.autoplay = false;
+        }
+      } else {
+        console.warn('onScroll not available or no scroll options');
+        props.autoplay = false;
+      }
     } else {
-      props.autoplay = true; // Default to autoplay
+      // Regular autoplay handling
+      const autoplay = this.getAttribute('autoplay');
+      if (autoplay !== null) {
+        props.autoplay = autoplay !== 'false';
+      } else {
+        props.autoplay = true; // Default to autoplay
+      }
     }
 
     return props;
@@ -178,6 +213,66 @@ class FrenzyAnimate extends HTMLElement {
   #shouldTriggerOnChange() {
     const trigger = this.getAttribute('trigger');
     return trigger !== 'manual'; // Default is to trigger on change
+  }
+
+  #getScrollOptions() {
+    const scrollOptions = {};
+
+    // Container - can be selector string or element
+    const containerAttr = this.getAttribute('scroll-container');
+    if (containerAttr) {
+      if (containerAttr === 'window') {
+        // For window, we don't set container in the options
+        // Anime.js v4 uses window by default
+      } else {
+        const containerEl = document.querySelector(containerAttr);
+        if (containerEl) {
+          scrollOptions.container = containerEl;
+        }
+      }
+    }
+
+    // Target - defaults to the animation target if not specified
+    const targetAttr = this.getAttribute('scroll-target');
+    if (targetAttr) {
+      const targetEl = document.querySelector(targetAttr);
+      if (targetEl) {
+        scrollOptions.target = targetEl;
+      }
+    } else {
+      const target = this.#getTarget();
+      if (target) {
+        scrollOptions.target = target;
+      }
+    }
+
+    // Enter threshold
+    const enterAttr = this.getAttribute('scroll-enter');
+    if (enterAttr) {
+      scrollOptions.enter = enterAttr.includes('%') ? enterAttr : parseFloat(enterAttr);
+    }
+
+    // Leave threshold  
+    const leaveAttr = this.getAttribute('scroll-leave');
+    if (leaveAttr) {
+      scrollOptions.leave = leaveAttr.includes('%') ? leaveAttr : parseFloat(leaveAttr);
+    }
+
+    // Boolean options
+    if (this.hasAttribute('scroll-sync')) {
+      scrollOptions.sync = this.getAttribute('scroll-sync') !== 'false';
+    }
+
+    if (this.hasAttribute('scroll-repeat')) {
+      scrollOptions.repeat = this.getAttribute('scroll-repeat') !== 'false';
+    }
+
+    if (this.hasAttribute('scroll-horizontal')) {
+      scrollOptions.horizontal = this.getAttribute('scroll-horizontal') !== 'false';
+    }
+
+    console.log('Scroll options:', scrollOptions);
+    return Object.keys(scrollOptions).length > 0 ? scrollOptions : null;
   }
 
   async #animate() {
