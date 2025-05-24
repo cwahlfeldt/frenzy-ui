@@ -23,6 +23,7 @@
   "files": [
     "frenzy.js",
     "fz-carousel.js",
+    "fz-card.js",
     "fz-color-picker.js",
     "fz-edit-image.js",
     "fz-edit-text.js",
