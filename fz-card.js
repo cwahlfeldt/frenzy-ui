@@ -10,7 +10,7 @@ class FrenzyCard extends HTMLElement {
     this._attachEventListeners();
     this._setupSlotChangeListener(); // For dynamic resizing
     // Initial size calculation, might need a slight delay for content to be fully ready
-    requestAnimationFrame(() => this._updateSize());
+    // requestAnimationFrame(() => this._updateSize());
   }
 
   _render() {
@@ -38,7 +38,7 @@ class FrenzyCard extends HTMLElement {
         }
 
         :host(.is-flipped) .card-container {
-          transform: rotateY(180deg);
+          transform: rotateY(-180deg);
         }
 
         .card-face {
@@ -115,8 +115,8 @@ class FrenzyCard extends HTMLElement {
     const backSlot = this.shadowRoot.querySelector('slot[name="back"]');
 
     // Using arrow functions to maintain 'this' context
-    frontSlot.addEventListener("slotchange", () => this._updateSize());
-    backSlot.addEventListener("slotchange", () => this._updateSize());
+    // frontSlot.addEventListener("slotchange", () => this._updateSize());
+    // backSlot.addEventListener("slotchange", () => this._updateSize());
   }
 
   _getSlotContentDimensions(slot) {
@@ -141,6 +141,7 @@ class FrenzyCard extends HTMLElement {
     return { width: contentWidth, height: contentHeight };
   }
 
+  // not being used
   _updateSize() {
     const frontSlot = this.shadowRoot.querySelector('slot[name="front"]');
     const backSlot = this.shadowRoot.querySelector('slot[name="back"]');
